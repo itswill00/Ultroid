@@ -158,7 +158,7 @@ if udB.get_key("PMLOG"):
     )
     async def permitpm(event):
         user = await event.get_sender()
-        if user.bot or user.is_self or user.verified or Logm.contains(user.id):
+        if getattr(user, 'bot', None) or user.is_self or user.verified or Logm.contains(user.id):
             return
         await event.forward_to(udB.get_key("PMLOGGROUP") or LOG_CHANNEL)
 

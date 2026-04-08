@@ -20,7 +20,6 @@ resources/extras/thumbnail.jpg
 resources/auth/
 
 # Directories
-addons/
 vcbot/
 __pycache__/
 venv/

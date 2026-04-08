@@ -28,7 +28,6 @@ except ImportError:
 import qrcode
 from PIL import Image
 from telethon.tl.types import MessageMediaDocument as doc
-from telethon.errors.rpcerrorlist import MessageIdInvalidError
 
 from . import check_filename, get_string, ultroid_bot, ultroid_cmd
 
@@ -47,10 +46,7 @@ async def cd(e):
     elif ultroid_bot.me.photo and not ultroid_bot.me.photo.has_video:
         cimg = (await e.client.get_profile_photos(ultroid_bot.uid, limit=1))[0]
 
-    try:
-        kk = await e.eor(get_string("com_1"))
-    except MessageIdInvalidError:
-        kk = await e.reply(get_string("com_1"))
+    kk = await e.eor(get_string("com_1"))
     img = cimg or default
     ok = Image.open(img)
     logo = ok.resize((60, 60))

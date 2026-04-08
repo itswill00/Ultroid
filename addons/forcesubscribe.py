@@ -209,7 +209,7 @@ async def force_sub_action(ult):
     if not get_forcesetting(ult.chat_id):
         return
     user = await ult.get_user()
-    if user.bot:
+    if getattr(user, 'bot', None):
         return
     joinchat = get_forcesetting(ult.chat_id)
     try:
