@@ -76,15 +76,15 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
                     shell=True,
                 )
 
-        if os.path.exists("addons/addons.txt"):
-            # generally addons req already there so it won't take much time
-            # subprocess.run(
-            #        "rm -rf /usr/local/lib/python3.*/site-packages/pip/_vendor/.wh*"
-            #    )
-            subprocess.run(
-                f"{sys.executable} -m pip install --no-cache-dir -q -r ./addons/addons.txt",
-                shell=True,
-            )
+        # if os.path.exists("addons/addons.txt"):
+        #    # generally addons req already there so it won't take much time
+        #    # subprocess.run(
+        #    #        "rm -rf /usr/local/lib/python3.*/site-packages/pip/_vendor/.wh*"
+        #    #    )
+        #    subprocess.run(
+        #        f"{sys.executable} -m pip install --no-cache-dir -q -r ./addons/addons.txt",
+        #        shell=True,
+        #    )
 
         _exclude = udB.get_key("EXCLUDE_ADDONS")
         _exclude = _exclude.split() if _exclude else []
