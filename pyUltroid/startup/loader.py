@@ -67,23 +67,15 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
 
     # for addons
     if addons:
-        if url := udB.get_key("ADDONS_URL"):
-            subprocess.run(f"git clone -q {url} addons", shell=True)
-        if os.path.exists("addons") and not os.path.exists("addons/.git"):
-            rmtree("addons")
         if not os.path.exists("addons"):
-            subprocess.run(
-                f"git clone -q -b {Repo().active_branch} https://github.com/TeamUltroid/UltroidAddons.git addons",
-                shell=True,
-            )
-        else:
-            subprocess.run("cd addons && git pull -q && cd ..", shell=True)
+            if url := udB.get_key("ADDONS_URL"):
+                subprocess.run(f"git clone -q {url} addons", shell=True)
+            if not os.path.exists("addons"):
+                subprocess.run(
+                    f"git clone -q -b {Repo().active_branch} https://github.com/TeamUltroid/UltroidAddons.git addons",
+                    shell=True,
+                )
 
-        if not os.path.exists("addons"):
-            subprocess.run(
-                "git clone -q https://github.com/TeamUltroid/UltroidAddons.git addons",
-                shell=True,
-            )
         if os.path.exists("addons/addons.txt"):
             # generally addons req already there so it won't take much time
             # subprocess.run(
