@@ -31,7 +31,7 @@ elif Var.MONGO_URI:
         LOGS.info("Installing 'pymongo' for database.")
         os.system(f"{sys.executable} -m pip install -q pymongo[srv]")
         from pymongo import MongoClient
-elif Var.DATABASE_URL:
+elif False:
     try:
         import psycopg2
     except ImportError:
