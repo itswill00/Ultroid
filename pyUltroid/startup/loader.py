@@ -40,7 +40,7 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
     _exclude = _exclude.split() if _exclude else []
     
     # Force Termux Exclusions to speed up boot
-    _termux_force = "autocorrect autopic audiotools compressor forcesubscribe fedutils gdrive glitch instagram nsfwfilter nightmode pdftools profanityfilter writer youtube imagetools twitter games ytdl converter mediatools qrcode search stickertools"
+    _termux_force = "autocorrect autopic audiotools compressor forcesubscribe fedutils gdrive glitch instagram nsfwfilter nightmode pdftools profanityfilter writer youtube imagetools twitter games ytdl"
     for _p in _termux_force.split():
         if _p not in _exclude:
             _exclude.append(_p)
@@ -66,7 +66,7 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
             _exclude = _exclude.split() if _exclude else []
             
             # Also exclude heavy addons in Termux
-            _heavy_addons = "imagetools nightmode nsfwfilter autocorrect converter memify pdftools qrcode search stickertools"
+            _heavy_addons = "imagetools nightmode nsfwfilter autocorrect memify pdftools"
             for _a in _heavy_addons.split():
                 if _a not in _exclude:
                     _exclude.append(_a)
