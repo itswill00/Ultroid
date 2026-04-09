@@ -480,32 +480,28 @@ async def ready():
         if prev_spam:
             try:
                 await ultroid_bot.delete_messages(chat_id, int(prev_spam))
-            except Exception as E:
-                LOGS.info("Error while Deleting Previous Update Message :" + str(E))
+            except Exception:
+                pass
         if await updater():
             BTTS = Button.inline("Update Available", "updtavail")
 
     try:
         spam_sent = await asst.send_message(chat_id, MSG, file=PHOTO, buttons=BTTS)
-    except ValueError as e:
-        try:
-            await (await ultroid_bot.send_message(chat_id, str(e))).delete()
-            spam_sent = await asst.send_message(chat_id, MSG, file=PHOTO, buttons=BTTS)
-        except Exception as g:
-            LOGS.info(g)
     except Exception as el:
-        LOGS.info(el)
+        LOGS.debug(el)
         try:
             spam_sent = await ultroid_bot.send_message(chat_id, MSG)
-        except Exception as ef:
-            LOGS.exception(ef)
+        except Exception:
+            pass
     if spam_sent and not spam_sent.media:
         udB.set_key("LAST_UPDATE_LOG_SPAM", spam_sent.id)
 
-    try:
-        await ultroid_bot(JoinChannelRequest("TheUltroid"))
-    except Exception as er:
-        LOGS.exception(er)
+    if not udB.get_key("NO_JOIN_CHANNEL"):
+        try:
+            from telethon.tl.functions.channels import JoinChannelRequest
+            await ultroid_bot(JoinChannelRequest("TheUltroid"))
+        except Exception:
+            pass
 
 
 async def WasItRestart(udb):
@@ -520,8 +516,8 @@ async def WasItRestart(udb):
         await who.edit_message(
             int(data[1]), int(data[2]), "__Restarted Successfully.__"
         )
-    except Exception as er:
-        LOGS.exception(er)
+    except Exception:
+        pass
     udb.del_key("_RESTART")
 
 

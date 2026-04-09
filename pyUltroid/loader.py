@@ -60,14 +60,13 @@ class Loader:
                 plugin = plugin.replace(".py", "").replace("/", ".").replace("\\", ".")
             try:
                 modl = func(plugin)
-            except ModuleNotFoundError as er:
+            except ModuleNotFoundError:
                 modl = None
-                self._logger.error(f"{plugin}: '{er.name}' not installed!")
                 continue
             except Exception as exc:
                 modl = None
-                self._logger.error(f"pyUltroid - {self.key} - ERROR - {plugin}")
-                self._logger.exception(exc)
+                self._logger.debug(f"pyUltroid - {self.key} - ERROR - {plugin}")
+                self._logger.debug(exc)
                 continue
             if _single and log:
                 self._logger.info(f"Successfully Loaded {plugin}!")
