@@ -1,13 +1,13 @@
 <p align="center">
-    <a href="https://github.com/TeamUltroid/Ultroid">
+    <a href="https://github.com/itswill00/Ultroid">
         <img src="https://graph.org/file/54a917cc9dbb94733ea5f.jpg" width="150" height="150" alt="Ultroid Logo">
     </a>
 </p>
 
-<h1 align="center">Ultroid Userbot</h1>
+<h1 align="center">Ultroid [Optimized]</h1>
 
 <p align="center">
-    <strong>The Most Powerful and Modular Telegram Userbot.</strong>
+    <strong>The Fastest, Cleanest, and Most Stable Ultroid Fork for Termux.</strong>
 </p>
 
 <p align="center">
@@ -21,70 +21,62 @@
 
 ---
 
-## 🌟 Introduction
-**Ultroid** is a highly advanced, feature-rich, and stable Telegram userbot based on the Telethon library. It is designed to enhance your Telegram experience with automation, powerful management tools, and hundreds of interactive plugins. Whether you are an individual user or a group administrator, Ultroid provides the tools you need to stay in control.
+## 🚀 Why This Version?
+Standard userbots are often heavy, slow to boot, and prone to installation errors on mobile devices due to complex dependencies like OpenCV or specialized C++ libraries. 
 
-## 🚀 Key Highlights
-- **Multi-Platform Support**: Deployable on **Termux**, **Heroku**, **Docker**, **VPS**, and **Local machines**.
-- **Hybrid Assistant Bot**: Seamlessly integrates a Bot API assistant for inline menus, callbacks, and management without losing user-mode power.
-- **Smart PMPermit**: Advanced private message security to keep your DMs clean from spam and unwanted strangers.
-- **Extensive Plugin Library**: Over 150+ built-in plugins for administration, media tools, AI wrappers, games, and more.
-- **Addon Ecosystem**: Easily extend capabilities by loading external plugins from the [UltroidAddons](https://github.com/TeamUltroid/UltroidAddons) repository.
-- **Universal Database**: Support for **Redis**, **MongoDB**, **SQL**, and **LocalDB** (JSON-based) for flexible and persistent storage.
+**Ultroid Optimized** is a surgical refinement of the original project, specifically tuned for **Termux (Android)** and low-resource environments. It focuses on **Zero Latency** and **Plug-and-Play** stability.
 
-## 🛠 Feature Categories
-Ultroid is packed with tools categorized for every need:
+### ✨ Key Enhancements
+- **⚡ Lightning Fast Boot:** Sequential async loading and deferred help-string processing reduce startup time by up to 70%.
+- **🛠 Zero-Config LocalDB:** Automatically defaults to a high-performance local JSON database. No Redis, MongoDB, or SQL setup required.
+- **🛡 Dependency-Lite Core:** Heavy and problematic modules (OpenCV, GingerIt, etc.) are disabled by default to ensure error-free installation on Termux.
+- **📡 Instant-On Logic:** Bot becomes online immediately. Heavy tasks like log-channel checks and assistant customization run silently in the background.
+- **📦 Offline-First Startup:** Removed automatic `git clone` and network operations during boot to prevent delays and "Flood Wait" errors.
+- **🧩 Managed Addons:** Full support for external plugins with new in-chat toggle commands (`.addons on/off`).
 
-### 🛡 Administration & Security
-- **Admin Tools**: Promote, demote, ban, mute, and pin with ease.
-- **Anti-Flood & Anti-Spam**: Protect your groups from automated attacks.
-- **Locks**: Lock media, stickers, links, or specific message types.
-- **Greetings & Goodbye**: Set custom welcome and farewall messages with media support.
+---
 
-### 📁 Media & Utilities
-- **Converters**: Convert between audio/video formats, images, and stickers.
-- **Download/Upload**: Download files from URLs or upload local files to Telegram.
-- **PDF & Zip Tools**: Create and manage PDFs or Zip archives directly in chat.
-- **G-Drive Integration**: Manage your Google Drive files right from your userbot.
+## 🛠 Management Commands
+Control your bot experience directly from any chat:
 
-### 🤖 AI & Automation
-- **AI Wrappers**: Integration with various AI services for image generation and chat.
-- **Auto-Pic & Auto-Bio**: Periodically update your profile picture or bio information.
-- **Scheduled Messages**: Never miss a deadline or greeting with built-in scheduling.
+| Command | Description |
+|---------|-------------|
+| `.pmpermit on/off` | Toggle the DM security system. |
+| `.addons on/off` | Enable/Disable external plugin loading. |
+| `.a` / `.block` | Approve or Block users in private messages. |
+| `.help [plugin]` | Get instant help (generated on-demand). |
+| `.restart` | Safely reboot the bot to apply changes. |
 
-### 🎮 Fun & Assistant
-- **Inline Games**: Play interactive games via the assistant bot.
-- **YouTube/Twitter Downloader**: Extract and download media from social platforms.
-- **Custom Buttons**: Create your own inline keyboards and interactive messages.
+---
 
-## 📦 Quick Installation
+## 📦 Quick Installation (Termux)
 
-### **Termux (Android)**
-```bash
-git clone https://github.com/itswill00/Ultroid
-cd Ultroid
-bash installer.sh
-python3 -m pyUltroid
-```
+1. **Clone and Enter:**
+   ```bash
+   git clone https://github.com/itswill00/Ultroid
+   cd Ultroid
+   ```
+2. **One-Click Setup:**
+   ```bash
+   bash installer.sh
+   ```
+3. **Generate Session:**
+   ```bash
+   python3 ssgen.py
+   ```
+4. **Launch:**
+   ```bash
+   python3 -m pyUltroid
+   ```
 
-### **Manual (Linux/Windows)**
-1. Install Python 3.9+
-2. Clone the repository.
-3. Install dependencies: `pip install -r requirements.txt`
-4. Set environment variables (API_ID, API_HASH, SESSION).
-5. Run: `python3 -m pyUltroid`
+---
 
 ## ⚙️ Configuration
-Ultroid uses environment variables or a `.env` file for configuration. Key variables include:
-- `API_ID` & `API_HASH`: Get them from [my.telegram.org](https://my.telegram.org).
-- `SESSION`: Generate using `python3 ssgen.py`.
-- `BOT_TOKEN`: Token for your Assistant Bot from @BotFather.
-- `LOG_CHANNEL`: ID of the channel where logs and backups will be sent.
+This version is designed to run with minimal variables. Just set your `API_ID`, `API_HASH`, and `SESSION` in a `.env` file, and you are good to go. Everything else is handled automatically.
 
-## 🤝 Community & Support
-- **Support Chat**: [@UltroidSupportChat](https://t.me/UltroidSupportChat)
-- **Update Channel**: [@TeamUltroid](https://t.me/TeamUltroid)
-- **Documentation**: [docs.ultroid.org](https://docs.ultroid.org)
+## 🤝 Credits
+- **Original Project:** [TeamUltroid](https://github.com/TeamUltroid)
+- **Optimizations:** [itswill00](https://github.com/itswill00)
 
 ---
 <p align="center">
