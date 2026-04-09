@@ -15,46 +15,68 @@ CMD_HELP = {}
 class _SudoManager:
     def __init__(self):
         self.db = None
-        self.owner = None
-        self._owner_sudos = []
+        self._owner = None
+        self._sudos = None
+        self._fullsudos = None
+        self._should_allow_sudo = None
 
     def _init_db(self):
         if not self.db:
             from .. import udB
-
             self.db = udB
         return self.db
 
     def get_sudos(self):
+        if self._sudos is not None:
+            return self._sudos
         db = self._init_db()
-        SUDOS = db.get_key("SUDOS")
-        return SUDOS or []
+        self._sudos = db.get_key("SUDOS") or []
+        return self._sudos
 
     @property
     def should_allow_sudo(self):
+        if self._should_allow_sudo is not None:
+            return self._should_allow_sudo
         db = self._init_db()
-        return db.get_key("SUDO")
+        self._should_allow_sudo = db.get_key("SUDO")
+        return self._should_allow_sudo
 
     def owner_and_sudos(self):
-        if not self.owner:
+        if not self._owner:
             db = self._init_db()
-            self.owner = db.get_key("OWNER_ID")
-        return [self.owner, *self.get_sudos()]
+            self._owner = db.get_key("OWNER_ID")
+        return [self._owner, *self.get_sudos()]
 
     @property
     def fullsudos(self):
+        if self._fullsudos is not None:
+            return self._fullsudos
         db = self._init_db()
-        fsudos = db.get("FULLSUDO")
-        if not self.owner:
-            self.owner = db.get_key("OWNER_ID")
+        fsudos = db.get_key("FULLSUDO")
+        if not self._owner:
+            self._owner = db.get_key("OWNER_ID")
         if not fsudos:
-            return [self.owner]
-        fsudos = fsudos.split()
-        fsudos.append(self.owner)
-        return [int(_) for _ in fsudos]
+            self._fullsudos = [self._owner]
+            return self._fullsudos
+        if isinstance(fsudos, str):
+            fsudos = [int(_) for _ in fsudos.split()]
+        elif isinstance(fsudos, list):
+            fsudos = [int(_) for _ in fsudos]
+        else:
+            fsudos = []
+        if self._owner and self._owner not in fsudos:
+            fsudos.append(self._owner)
+        self._fullsudos = fsudos
+        return self._fullsudos
 
     def is_sudo(self, id_):
-        return bool(id_ in self.get_sudos())
+        return id_ in self.get_sudos()
+
+    def refresh(self):
+        self._sudos = None
+        self._fullsudos = None
+        self._should_allow_sudo = None
+        self._owner = None
 
 
 SUDO_M = _SudoManager()

@@ -79,30 +79,22 @@ def ultroid_cmd(
     def decor(dec):
         async def wrapp(ult):
             if udB.get_key("COMMAND_LOGGER"):
-                user_id = ult.sender_id
-                chat_id = ult.chat_id
-                command_name = pattern if pattern else ult.text.split()[0].lstrip(HNDLR)
-                chat_name = get_display_name(ult.chat)
-                LOGS.info(f"Command '{command_name}' executed by user ID {user_id} in chat {chat_id} ({chat_name})")
+                command_name = pattern or ult.text.split()[0].lstrip(HNDLR)
                 log_channel = udB.get_key("LOG_CHANNEL")
+                LOGS.info(f"Command '{command_name}' executed by {ult.sender_id} in {ult.chat_id}")
                 if log_channel:
                     try:
                         await asst.send_message(
                             log_channel,
-                            f"Command '{command_name}' executed by user ID {user_id} in chat {chat_id} ({chat_name})"
+                            f"Command `{command_name}` executed by `{ult.sender_id}` in `{ult.chat_id}`"
                         )
-                    except Exception as e:
-                        LOGS.warning(f"Failed to send command log to log channel {log_channel}: {e}")
+                    except Exception:
+                        pass
             if not ult.out:
-                if owner_only:
-                    return
-                if ult.sender_id not in owner_and_sudos():
+                if owner_only or ult.sender_id not in owner_and_sudos():
                     return
                 if ult.sender_id in _ignore_eval:
-                    return await eod(
-                        ult,
-                        get_string("py_d1"),
-                    )
+                    return await eod(ult, get_string("py_d1"))
                 if fullsudo and ult.sender_id not in SUDO_M.fullsudos:
                     return await eod(ult, get_string("py_d2"), time=15)
             chat = ult.chat
