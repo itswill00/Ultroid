@@ -85,15 +85,18 @@ def load_addons(plugin_name):
 
     spec.loader.exec_module(mod)
     modules[name] = mod
-    doc = modules[name].__doc__.format(i=HNDLR) if modules[name].__doc__ else ""
-    if "Addons" in HELP.keys():
-        update_cmd = HELP["Addons"]
+    
+    # Store raw help string to prevent formatting crashes and speed up loading
+    doc = modules[name].__doc__ or "No description available."
+    if "Addons" in HELP:
         try:
-            update_cmd.update({base_name: doc})
+            HELP["Addons"].update({base_name: doc})
         except BaseException:
             pass
     else:
         try:
             HELP.update({"Addons": {base_name: doc}})
-        except BaseException as em:
+        except BaseException:
             pass
+
+    return mod
