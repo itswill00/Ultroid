@@ -48,8 +48,10 @@ def main():
         udB.set_key("OWNER_ID", ultroid_bot.uid)
 
     LOGS.info("Initialising...")
+    
+    # Re-cache all database keys once to avoid repeated disk I/O
+    udB.re_cache()
 
-    ultroid_bot.run_in_loop(autopilot())
     ultroid_bot.loop.create_task(keep_redis_alive())
 
     pmbot = udB.get_key("PMBOT")
@@ -73,36 +75,37 @@ def main():
         udB.set_key("EXCLUDE_ADDONS", "imagetools nightmode nsfwfilter")
         udB.set_key("NO_JOIN_CHANNEL", "True")
 
+    # Load Essential Plugins First
     load_other_plugins(addons=addons, pmbot=pmbot, manager=manager, vcbot=vcbot)
+
+    async def background_tasks():
+        # Heavy tasks moved to background
+        await autopilot()
+        # Customize Ultroid Assistant...
+        await customize()
+        # for channel plugins
+        plugin_channels = udB.get_key("PLUGIN_CHANNEL")
+        if plugin_channels:
+            await plug(plugin_channels)
+        # Send/Ignore Deploy Message..
+        if not udB.get_key("LOG_OFF"):
+            await ready()
+        # Edit Restarting Message (if It's restarting)
+        await WasItRestart(udB)
+        try:
+            cleanup_cache()
+        except BaseException:
+            pass
+        LOGS.info("All Background Tasks Completed.")
+
+    # Run heavy tasks in background
+    ultroid_bot.loop.create_task(background_tasks())
 
     suc_msg = """
             ----------------------------------------------------------------------
-                Ultroid has been deployed! Visit @TheUltroid for updates!!
+                Ultroid is Online! (Background tasks are still running...)
             ----------------------------------------------------------------------
     """
-
-    # for channel plugins
-    plugin_channels = udB.get_key("PLUGIN_CHANNEL")
-
-    # Customize Ultroid Assistant...
-    ultroid_bot.run_in_loop(customize())
-
-    # Load Addons from Plugin Channels.
-    if plugin_channels:
-        ultroid_bot.run_in_loop(plug(plugin_channels))
-
-    # Send/Ignore Deploy Message..
-    if not udB.get_key("LOG_OFF"):
-        ultroid_bot.run_in_loop(ready())
-
-    # Edit Restarting Message (if It's restarting)
-    ultroid_bot.run_in_loop(WasItRestart(udB))
-
-    try:
-        cleanup_cache()
-    except BaseException:
-        pass
-
     LOGS.info(
         f"Took {time_formatter((time.time() - start_time)*1000)} to start •ULTROID•"
     )
