@@ -25,24 +25,18 @@ def _after_load(loader, module, plugin_name=""):
         return
     from strings import get_help
 
-    if doc_ := get_help(plugin_name) or module.__doc__:
-        try:
-            doc = doc_.format(i=HNDLR)
-        except Exception as er:
-            loader._logger.exception(er)
-            loader._logger.info(f"Error in {plugin_name}: {module}")
-            return
+    if doc := get_help(plugin_name) or module.__doc__:
         if loader.key in HELP.keys():
             update_cmd = HELP[loader.key]
             try:
                 update_cmd.update({plugin_name: doc})
-            except BaseException as er:
-                loader._logger.exception(er)
+            except BaseException:
+                pass
         else:
             try:
                 HELP.update({loader.key: {plugin_name: doc}})
-            except BaseException as em:
-                loader._logger.exception(em)
+            except BaseException:
+                pass
 
 
 def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):

@@ -30,47 +30,48 @@ class Loader:
         after_load=None,
         load_all=False,
     ):
-        _single = os.path.isfile(self.path)
-        if include:
+        files = []
+        if os.path.isfile(self.path):
+            files = [self.path]
+        elif include:
             if log:
                 self._logger.info("Including: {}".format("• ".join(include)))
-            files = glob.glob(f"{self.path}/_*.py")
+            # Load only required files
             for file in include:
                 path = f"{self.path}/{file}.py"
                 if os.path.exists(path):
                     files.append(path)
-        elif _single:
-            files = [self.path]
+            # Add hidden/internal files
+            files.extend(glob.glob(f"{self.path}/_*.py"))
         else:
             if load_all:
                 files = get_all_files(self.path, ".py")
             else:
-                files = glob.glob(f"{self.path}/*.py")
+                with os.scandir(self.path) as it:
+                    for entry in it:
+                        if entry.is_file() and entry.name.endswith(".py") and not entry.name.startswith("__"):
+                            files.append(entry.path)
+            
             if exclude:
-                for path in exclude:
-                    if not path.startswith("_"):
-                        with contextlib.suppress(ValueError):
-                            files.remove(f"{self.path}/{path}.py")
-        if log and not _single:
+                exclude_set = {f"{self.path}/{x}.py" for x in exclude if not x.startswith("_")}
+                files = [f for f in files if f not in exclude_set]
+
+        if log and files:
             self._logger.info(
                 f"• Installing {self.key} Plugins || Count : {len(files)} •"
             )
+        
         for plugin in sorted(files):
             if func == import_module:
                 plugin = plugin.replace(".py", "").replace("/", ".").replace("\\", ".")
             try:
                 modl = func(plugin)
             except ModuleNotFoundError:
-                modl = None
                 continue
             except Exception as exc:
-                modl = None
-                self._logger.debug(f"pyUltroid - {self.key} - ERROR - {plugin}")
-                self._logger.debug(exc)
+                self._logger.debug(f"pyUltroid - {self.key} - ERROR - {plugin}: {exc}")
                 continue
-            if _single and log:
-                self._logger.info(f"Successfully Loaded {plugin}!")
+            
             if callable(after_load):
-                if func == import_module:
-                    plugin = plugin.split(".")[-1]
-                after_load(self, modl, plugin_name=plugin)
+                p_name = plugin.split(".")[-1] if func == import_module else plugin
+                after_load(self, modl, plugin_name=p_name)
