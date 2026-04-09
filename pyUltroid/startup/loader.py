@@ -21,22 +21,8 @@ from .utils import load_addons
 
 
 def _after_load(loader, module, plugin_name=""):
-    if not module or plugin_name.startswith("_"):
-        return
-    from strings import get_help
-
-    if doc := get_help(plugin_name) or module.__doc__:
-        if loader.key in HELP.keys():
-            update_cmd = HELP[loader.key]
-            try:
-                update_cmd.update({plugin_name: doc})
-            except BaseException:
-                pass
-        else:
-            try:
-                HELP.update({loader.key: {plugin_name: doc}})
-            except BaseException:
-                pass
+    # Startup speed optimization: Skip help generation.
+    return
 
 
 def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
@@ -44,6 +30,12 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
     # for official
     _exclude = udB.get_key("EXCLUDE_OFFICIAL") or config("EXCLUDE_OFFICIAL", None)
     _exclude = _exclude.split() if _exclude else []
+    
+    # Force Termux Exclusions to speed up boot
+    _termux_force = "autocorrect autopic audiotools compressor forcesubscribe fedutils gdrive glitch instagram nsfwfilter nightmode pdftools profanityfilter writer youtube imagetools twitter games ytdl converter mediatools qrcode search stickertools"
+    for _p in _termux_force.split():
+        if _p not in _exclude:
+            _exclude.append(_p)
 
     # "INCLUDE_ONLY" was added to reduce Big List in "EXCLUDE_OFFICIAL" Plugin
     _in_only = udB.get_key("INCLUDE_ONLY") or config("INCLUDE_ONLY", None)
@@ -52,36 +44,21 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
 
     # for assistant
     if not USER_MODE and not udB.get_key("DISABLE_AST_PLUGINS"):
-        _ast_exc = ["pmbot"]
-        if _in_only and "games" not in _in_only:
-            _ast_exc.append("games")
+        _ast_exc = ["pmbot", "games", "ytdl"] # Skip known slow assistant plugins
         Loader(path="assistant").load(
             log=False, exclude=_ast_exc, after_load=_after_load
         )
 
     # for addons
     if addons:
-        if not os.path.exists("addons"):
-            if url := udB.get_key("ADDONS_URL"):
-                subprocess.run(f"git clone -q {url} addons", shell=True)
-            if not os.path.exists("addons"):
-                subprocess.run(
-                    f"git clone -q -b {Repo().active_branch} https://github.com/TeamUltroid/UltroidAddons.git addons",
-                    shell=True,
-                )
-
-        # if os.path.exists("addons/addons.txt"):
-        #    # generally addons req already there so it won't take much time
-        #    # subprocess.run(
-        #    #        "rm -rf /usr/local/lib/python3.*/site-packages/pip/_vendor/.wh*"
-        #    #    )
-        #    subprocess.run(
-        #        f"{sys.executable} -m pip install --no-cache-dir -q -r ./addons/addons.txt",
-        #        shell=True,
-        #    )
-
         _exclude = udB.get_key("EXCLUDE_ADDONS")
         _exclude = _exclude.split() if _exclude else []
+        
+        # Also exclude heavy addons in Termux
+        _heavy_addons = "imagetools nightmode nsfwfilter autocorrect converter memify pdftools qrcode search stickertools"
+        for _a in _heavy_addons.split():
+            if _a not in _exclude:
+                _exclude.append(_a)
         _in_only = udB.get_key("INCLUDE_ADDONS")
         _in_only = _in_only.split() if _in_only else []
 
