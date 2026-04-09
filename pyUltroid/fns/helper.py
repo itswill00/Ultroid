@@ -471,23 +471,22 @@ def mediainfo(media):
 
 
 def time_formatter(milliseconds):
-    minutes, seconds = divmod(int(milliseconds / 1000), 60)
+    if not milliseconds:
+        return "0s"
+    seconds, milliseconds = divmod(int(milliseconds), 1000)
+    minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     weeks, days = divmod(days, 7)
-    tmp = (
-        ((str(weeks) + "w:") if weeks else "")
-        + ((str(days) + "d:") if days else "")
-        + ((str(hours) + "h:") if hours else "")
-        + ((str(minutes) + "m:") if minutes else "")
-        + ((str(seconds) + "s") if seconds else "")
-    )
-    if not tmp:
-        return "0s"
-
-    if tmp.endswith(":"):
-        return tmp[:-1]
-    return tmp
+    
+    parts = []
+    if weeks: parts.append(f"{weeks}w")
+    if days: parts.append(f"{days}d")
+    if hours: parts.append(f"{hours}h")
+    if minutes: parts.append(f"{minutes}m")
+    if seconds: parts.append(f"{seconds}s")
+    
+    return ":".join(parts) if parts else "0s"
 
 
 def humanbytes(size):
@@ -524,40 +523,40 @@ No_Flood = {}
 
 async def progress(current, total, event, start, type_of_ps, file_name=None):
     now = time.time()
-    if No_Flood.get(event.chat_id):
-        if No_Flood[event.chat_id].get(event.id):
-            if (now - No_Flood[event.chat_id][event.id]) < 1.1:
+    chat_id = event.chat_id
+    msg_id = event.id
+    
+    # Manage No_Flood to prevent memory leaks
+    if len(No_Flood) > 100:
+        No_Flood.clear()
+        
+    if chat_id in No_Flood:
+        if msg_id in No_Flood[chat_id]:
+            if (now - No_Flood[chat_id][msg_id]) < 1.1:
                 return
-        else:
-            No_Flood[event.chat_id].update({event.id: now})
+        No_Flood[chat_id][msg_id] = now
     else:
-        No_Flood.update({event.chat_id: {event.id: now}})
-    diff = time.time() - start
+        No_Flood[chat_id] = {msg_id: now}
+
+    diff = now - start
     if round(diff % 10.00) == 0 or current == total:
         percentage = current * 100 / total
-        speed = current / diff
-        time_to_completion = round((total - current) / speed) * 1000
-        progress_str = "`[{0}{1}] {2}%`\n\n".format(
-            "".join("●" for i in range(math.floor(percentage / 5))),
-            "".join("" for i in range(20 - math.floor(percentage / 5))),
-            round(percentage, 2),
-        )
+        speed = current / diff if diff > 0 else 0
+        eta = round((total - current) / speed) * 1000 if speed > 0 else 0
+        
+        filled = math.floor(percentage / 5)
+        progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
 
         tmp = (
-            progress_str
-            + "`{0} of {1}`\n\n`✦ Speed: {2}/s`\n\n`✦ ETA: {3}`\n\n".format(
-                humanbytes(current),
-                humanbytes(total),
-                humanbytes(speed),
-                time_formatter(time_to_completion),
-            )
+            f"{progress_str}\n\n"
+            f"`{humanbytes(current)} of {humanbytes(total)}`\n\n"
+            f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
+            f"`✦ ETA: {time_formatter(eta)}`"
         )
+        caption = f"`✦ {type_of_ps}`\n\n"
         if file_name:
-            await event.edit(
-                "`✦ {}`\n\n`File Name: {}`\n\n{}".format(type_of_ps, file_name, tmp)
-            )
-        else:
-            await event.edit("`✦ {}`\n\n{}".format(type_of_ps, tmp))
+            caption += f"`File Name: {file_name}`\n\n"
+        await event.edit(caption + tmp)
 
 
 # ------------------System\\Heroku stuff----------------

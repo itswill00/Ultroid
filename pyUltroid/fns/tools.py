@@ -84,17 +84,15 @@ def json_parser(data, indent=None, ascii=False):
     parsed = {}
     try:
         if isinstance(data, str):
-            parsed = json.loads(str(data))
+            parsed = json.loads(data)
             if indent:
-                parsed = json.dumps(
-                    json.loads(str(data)), indent=indent, ensure_ascii=ascii
-                )
+                parsed = json.dumps(parsed, indent=indent, ensure_ascii=ascii)
         elif isinstance(data, dict):
             parsed = data
             if indent:
                 parsed = json.dumps(data, indent=indent, ensure_ascii=ascii)
-    except JSONDecodeError:
-        parsed = eval(data)
+    except (JSONDecodeError, TypeError):
+        return data
     return parsed
 
 
@@ -260,46 +258,41 @@ async def webuploader(chat_id: int, msg_id: int, uploader: str):
 
     files = {"file": open(file, "rb")}  # Adjusted for both formats
 
-    try:
-        if uploader == "filebin":
-            cmd = f"curl -X POST --data-binary '@{file}' -H 'filename: \"{file}\"' \"{url}\""
-            response = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            if response.returncode == 0:
-                response_json = json.loads(response.stdout)
+    if uploader == "filebin":
+        cmd = f"curl -X POST --data-binary '@{file}' -H 'filename: \"{file}\"' \"{url}\""
+        out, er = await bash(cmd)
+        if not er:
+            try:
+                response_json = json.loads(out)
                 bin_id = response_json.get("bin", {}).get("id")
                 if bin_id:
-                    filebin_url = f"https://filebin.net/{bin_id}"
-                    return filebin_url
-                else:
-                    return "Failed to extract bin ID from Filebin response"
-            else:
-                return f"Failed to upload file to Filebin: {response.stderr.strip()}"
-        elif uploader == "catbox":
-            cmd = f"curl -F reqtype=fileupload -F time=24h -F 'fileToUpload=@{file}' {url}"
-        elif uploader == "0x0.st":
-            cmd = f"curl -F 'file=@{file}' {url}"
-        elif uploader == "file.io" or uploader == "siasky":
-            try:
-                status = await async_searcher(
-                    url, data=files, post=True, re_json=json_format
-                )
-            except Exception as e:
-                return f"Failed to upload file: {e}"
+                    return f"https://filebin.net/{bin_id}"
+                return "Failed to extract bin ID from Filebin response"
+            except JSONDecodeError:
+                return f"Failed to parse Filebin response: {out}"
+        return f"Failed to upload file to Filebin: {er}"
+    elif uploader == "catbox":
+        cmd = f"curl -F reqtype=fileupload -F time=24h -F 'fileToUpload=@{file}' {url}"
+    elif uploader == "0x0.st":
+        cmd = f"curl -F 'file=@{file}' {url}"
+    elif uploader in ["file.io", "siasky"]:
+        try:
+            status = await async_searcher(url, data=files, post=True, re_json=json_format)
             if isinstance(status, dict):
                 if "skylink" in status:
                     return f"https://siasky.net/{status['skylink']}"
                 if status.get("status") == 200:
                     return status.get("link")
-        else:
-            raise ValueError("Uploader not supported")
+            return "Failed to upload file."
+        except Exception as e:
+            return f"Failed to upload file: {e}"
+    else:
+        return "Uploader not supported"
 
-        response = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        if response.returncode == 0:
-            return response.stdout.strip()
-        else:
-            return f"Failed to upload file: {response.stderr.strip()}"
-    except Exception as e:
-        return f"Failed to upload file: {e}"
+    out, er = await bash(cmd)
+    if not er:
+        return out.strip()
+    return f"Failed to upload file: {er.strip()}"
 
     del _webupload_cache.get(chat_id, {})[msg_id]
     return "Failed to get valid URL for the uploaded file."
@@ -541,17 +534,7 @@ async def duration_s(file, stime):
 def stdr(seconds):
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    if len(str(minutes)) == 1:
-        minutes = "0" + str(minutes)
-    if len(str(hours)) == 1:
-        hours = "0" + str(hours)
-    if len(str(seconds)) == 1:
-        seconds = "0" + str(seconds)
-    return (
-        ((str(hours) + ":") if hours else "00:")
-        + ((str(minutes) + ":") if minutes else "00:")
-        + ((str(seconds)) if seconds else "")
-    )
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 
 # ------------------- used in pdftools --------------------#
