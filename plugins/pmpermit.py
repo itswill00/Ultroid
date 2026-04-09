@@ -123,6 +123,25 @@ async def delete_pm_warn_msgs(chat: int):
 
 # =================================================================
 
+@ultroid_cmd(pattern="pmpermit (on|off)$", fullsudo=True)
+async def toggle_pm(e):
+    choice = e.pattern_match.group(1)
+    if choice == "on":
+        if udB.get_key("PMSETTING"):
+            return await e.eor("`PM Permit is already ENABLED.`", time=5)
+        udB.set_key("PMSETTING", "True")
+        await e.eor("`PM Permit has been ENABLED. Restarting to apply changes...`", time=5)
+    else:
+        if not udB.get_key("PMSETTING"):
+            return await e.eor("`PM Permit is already DISABLED.`", time=5)
+        udB.del_key("PMSETTING")
+        await e.eor("`PM Permit has been DISABLED. Restarting to apply changes...`", time=5)
+    
+    # Trigger restart to reload the plugin with new PMSETTING state
+    if hasattr(e.client, "re_start"):
+         await e.client.re_start()
+    else:
+         await e.respond(f"{HNDLR}restart")
 
 if udB.get_key("PMLOG"):
 
