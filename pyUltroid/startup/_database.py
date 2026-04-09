@@ -321,32 +321,32 @@ class LocalDB(_BaseDatabase):
 
 
 def UltroidDB():
-    _er = False
     from .. import HOSTED_ON
 
     try:
-        if Redis:
-            return RedisDB(
-                host=Var.REDIS_URI or Var.REDISHOST,
-                password=Var.REDIS_PASSWORD or Var.REDISPASSWORD,
-                port=Var.REDISPORT,
-                platform=HOSTED_ON,
-                decode_responses=True,
-                socket_timeout=5,
-                retry_on_timeout=True,
-            )
-        elif MongoClient:
-            return MongoDB(Var.MONGO_URI)
-        elif psycopg2:
-            return SqlDB(Var.DATABASE_URL)
-        else:
-            LOGS.critical(
-                "No DB requirement fullfilled!\nPlease install redis, mongo or sql dependencies...\nTill then using local file as database."
-            )
-            return LocalDB()
-    except BaseException as err:
-        LOGS.exception(err)
-    exit()
+        if Var.REDIS_URI or Var.REDISHOST:
+            if Redis:
+                return RedisDB(
+                    host=Var.REDIS_URI or Var.REDISHOST,
+                    password=Var.REDIS_PASSWORD or Var.REDISPASSWORD,
+                    port=Var.REDISPORT,
+                    platform=HOSTED_ON,
+                    decode_responses=True,
+                    socket_timeout=5,
+                    retry_on_timeout=True,
+                )
+        elif Var.MONGO_URI:
+            if MongoClient:
+                return MongoDB(Var.MONGO_URI)
+        elif Var.DATABASE_URL:
+            if psycopg2:
+                return SqlDB(Var.DATABASE_URL)
+        
+        # Default to LocalDB silently
+        return LocalDB()
+    except Exception as err:
+        LOGS.debug(err)
+        return LocalDB()
 
 
 # --------------------------------------------------------------------------------------------- #
