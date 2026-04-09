@@ -44,9 +44,8 @@ _settings = [
     ],
     [
         Button.inline("Features", data="cbs_otvars"),
-        Button.inline("VC Song Bot", data="cbs_vcb"),
+        Button.inline("« Back", data="mainmenu"),
     ],
-    [Button.inline("« Back", data="mainmenu")],
 ]
 
 _start = [

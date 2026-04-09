@@ -153,13 +153,6 @@ _buttons = {
             [Button.inline("« Bᴀᴄᴋ", data="setter")],
         ],
     },
-    "vcb": {
-        "text": "From This Feature U can play songs in group voice chat\n\n[moreinfo](https://t.me/UltroidUpdates/4)",
-        "buttons": [
-            [Button.inline("VC Sᴇssɪᴏɴ", data="abs_vcs")],
-            [Button.inline("« Bᴀᴄᴋ", data="setter")],
-        ],
-    },
     "oofdm": {
         "text": "About [Dual Mode](https://t.me/UltroidUpdates/18)",
         "buttons": [
