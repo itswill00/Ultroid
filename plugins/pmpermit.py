@@ -200,6 +200,14 @@ if udB.get_key("PMSETTING"):
             keym.add(miss.id)
             await delete_pm_warn_msgs(miss.id)
             try:
+                from telethon.tl.functions.account import UpdateNotifySettingsRequest
+                from telethon.tl.types import InputPeerNotifySettings
+                
+                # Unmute the chat
+                await ultroid_bot(UpdateNotifySettingsRequest(
+                    peer=miss.id,
+                    settings=InputPeerNotifySettings(mute_until=0)
+                ))
                 await ultroid_bot.edit_folder(miss.id, folder=0)
             except BaseException:
                 pass
@@ -234,11 +242,21 @@ if udB.get_key("PMSETTING"):
         inline_pm = Redis("INLINE_PM") or False
         user = event.sender
         if not keym.contains(user.id) and event.text != UND:
-            if Redis("MOVE_ARCHIVE"):
-                try:
-                    await ultroid_bot.edit_folder(user.id, folder=1)
-                except BaseException as er:
-                    LOGS.info(er)
+            # Enhanced Privacy: Auto Archive and Mute
+            try:
+                from telethon.tl.functions.account import UpdateNotifySettingsRequest
+                from telethon.tl.types import InputPeerNotifySettings
+                
+                # Mute the chat permanently
+                await event.client(UpdateNotifySettingsRequest(
+                    peer=event.input_chat,
+                    settings=InputPeerNotifySettings(mute_until=2**31-1)
+                ))
+                # Archive the chat
+                await ultroid_bot.edit_folder(user.id, folder=1)
+            except Exception:
+                pass
+
             if event.media and not udB.get_key("DISABLE_PMDEL"):
                 await event.delete()
             name = user.first_name
@@ -435,8 +453,15 @@ if udB.get_key("PMSETTING"):
             keym.add(user.id)
             try:
                 await delete_pm_warn_msgs(user.id)
+                from telethon.tl.functions.account import UpdateNotifySettingsRequest
+                from telethon.tl.types import InputPeerNotifySettings
+                # Unmute and Unarchive
+                await apprvpm.client(UpdateNotifySettingsRequest(
+                    peer=user.id,
+                    settings=InputPeerNotifySettings(mute_until=0)
+                ))
                 await apprvpm.client.edit_folder(user.id, folder=0)
-            except BaseException:
+            except Exception:
                 pass
             await eod(
                 apprvpm,
