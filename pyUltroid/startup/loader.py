@@ -21,8 +21,13 @@ from .utils import load_addons
 
 
 def _after_load(loader, module, plugin_name=""):
-    # Startup speed optimization: Skip help generation.
-    return
+    # Registration optimization: only store keys for counting.
+    # Help content will be fetched on-demand.
+    if not module or plugin_name.startswith("_"):
+        return
+    if loader.key not in HELP:
+        HELP[loader.key] = {}
+    HELP[loader.key][plugin_name] = module.__doc__ or "No description available."
 
 
 def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
