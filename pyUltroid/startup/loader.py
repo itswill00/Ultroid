@@ -51,24 +51,27 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
 
     # for addons
     if addons:
-        _exclude = udB.get_key("EXCLUDE_ADDONS")
-        _exclude = _exclude.split() if _exclude else []
-        
-        # Also exclude heavy addons in Termux
-        _heavy_addons = "imagetools nightmode nsfwfilter autocorrect converter memify pdftools qrcode search stickertools"
-        for _a in _heavy_addons.split():
-            if _a not in _exclude:
-                _exclude.append(_a)
-        _in_only = udB.get_key("INCLUDE_ADDONS")
-        _in_only = _in_only.split() if _in_only else []
+        if not os.path.exists("addons"):
+            LOGS.warning("Addons folder not found. Skipping addons loading.")
+        else:
+            _exclude = udB.get_key("EXCLUDE_ADDONS")
+            _exclude = _exclude.split() if _exclude else []
+            
+            # Also exclude heavy addons in Termux
+            _heavy_addons = "imagetools nightmode nsfwfilter autocorrect converter memify pdftools qrcode search stickertools"
+            for _a in _heavy_addons.split():
+                if _a not in _exclude:
+                    _exclude.append(_a)
+            _in_only = udB.get_key("INCLUDE_ADDONS")
+            _in_only = _in_only.split() if _in_only else []
 
-        Loader(path="addons", key="Addons").load(
-            func=load_addons,
-            include=_in_only,
-            exclude=_exclude,
-            after_load=_after_load,
-            load_all=True,
-        )
+            Loader(path="addons", key="Addons").load(
+                func=load_addons,
+                include=_in_only,
+                exclude=_exclude,
+                after_load=_after_load,
+                load_all=True,
+            )
 
     if not USER_MODE:
         # group manager
@@ -85,19 +88,13 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
             import pytgcalls  # ignore: pylint
 
             if os.path.exists("vcbot"):
-                if os.path.exists("vcbot/.git"):
-                    subprocess.run("cd vcbot && git pull", shell=True)
-                else:
-                    rmtree("vcbot")
-            if not os.path.exists("vcbot"):
-                subprocess.run(
-                    "git clone https://github.com/TeamUltroid/VcBot vcbot", shell=True
-                )
-            try:
-                if not os.path.exists("vcbot/downloads"):
-                    os.mkdir("vcbot/downloads")
-                Loader(path="vcbot", key="VCBot").load(after_load=_after_load)
-            except FileNotFoundError as e:
-                LOGS.error(f"{e} Skipping VCBot Installation.")
+                try:
+                    if not os.path.exists("vcbot/downloads"):
+                        os.mkdir("vcbot/downloads")
+                    Loader(path="vcbot", key="VCBot").load(after_load=_after_load)
+                except FileNotFoundError as e:
+                    LOGS.error(f"{e} Skipping VCBot Installation.")
+            else:
+                LOGS.warning("VCBot folder not found. Skipping VCBot loading.")
         except ModuleNotFoundError:
             LOGS.error("'pytgcalls' not installed!\nSkipping loading of VCBOT.")
