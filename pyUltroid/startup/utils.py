@@ -86,17 +86,10 @@ def load_addons(plugin_name):
     spec.loader.exec_module(mod)
     modules[name] = mod
     
-    # Store raw help string to prevent formatting crashes and speed up loading
-    doc = modules[name].__doc__ or "No description available."
-    if "Addons" in HELP:
-        try:
-            HELP["Addons"].update({base_name: doc})
-        except BaseException:
-            pass
-    else:
-        try:
-            HELP.update({"Addons": {base_name: doc}})
-        except BaseException:
-            pass
+    # Store plugin in global HELP for counting
+    if "Addons" not in HELP:
+        HELP["Addons"] = {}
+    
+    HELP["Addons"][base_name] = mod.__doc__ or "No description available."
 
     return mod
