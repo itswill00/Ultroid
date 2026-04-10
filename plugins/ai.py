@@ -95,8 +95,18 @@ async def groq_ai(e):
         
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
-            # Formatting for a minimalist 'In/Out' look
-            formatted_res = f"**In:** `{full_prompt[:200]}{'...' if len(full_prompt) > 200 else ''}`\n\n**Out:**\n{ans}"
+            
+            # Refined technical formatting
+            input_display = ""
+            if image_text:
+                input_display += f"**IMAGE:**\n> `{image_text[:150]}{'...' if len(image_text) > 150 else ''}`\n"
+            if query:
+                input_display += f"**QUERY:**\n> {query}\n"
+            
+            if not input_display and reply and reply.text:
+                 input_display = f"**REPLY:**\n> {reply.text[:150]}...\n"
+                 
+            formatted_res = f"{input_display}\n---\n**RESULT:**\n\n{ans}"
             await msg.edit(formatted_res)
             
             # Update history (keep last 5 interactions)
