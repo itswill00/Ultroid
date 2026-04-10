@@ -294,9 +294,6 @@ async def webuploader(chat_id: int, msg_id: int, uploader: str):
         return out.strip()
     return f"Failed to upload file: {er.strip()}"
 
-    del _webupload_cache.get(chat_id, {})[msg_id]
-    return "Failed to get valid URL for the uploaded file."
-
 
 def get_all_files(path, extension=None):
     filelist = []
@@ -425,24 +422,14 @@ async def get_google_images(query):
     """
     LOGS.info(f"Searching Google Images for: {query}")
     
-    # Google Custom Search API credentials
-    google_keys = [
-        {
-            "key": "AIzaSyAj75v6vHWLJdJaYcj44tLz7bdsrh2g7Y0",
-            "cx": "712a54749d99a449e"
-        },
-        {
-            "key": "AIzaSyDFQQwPLCzcJ9FDao-B7zDusBxk8GoZ0HY", 
-            "cx": "001bbd139705f44a6"
-        },
-        {
-            "key": "AIzaSyD0sRNZUa8-0kq9LAREDAFKLNO1HPmikRU",
-            "cx": "4717c609c54e24250"
-        }
-    ]
-    key_index = random.randint(0, len(google_keys) - 1)
-    GOOGLE_API_KEY = google_keys[key_index]["key"]
-    GOOGLE_CX = google_keys[key_index]["cx"]
+    # Google Custom Search API credentials (set these in your .env or DB)
+    GOOGLE_API_KEY = udB.get_key("GOOGLE_API_KEY") if run_as_module else os.environ.get("GOOGLE_API_KEY")
+    GOOGLE_CX = udB.get_key("GOOGLE_CX") if run_as_module else os.environ.get("GOOGLE_CX")
+    
+    if not GOOGLE_API_KEY or not GOOGLE_CX:
+        LOGS.warning("Google API key or CX not configured. Set GOOGLE_API_KEY and GOOGLE_CX.")
+        return []
+    
     try:
         # Construct API URL
         url = (
@@ -451,12 +438,11 @@ async def get_google_images(query):
             f"&cx={GOOGLE_CX}"
             f"&key={GOOGLE_API_KEY}"
             "&searchType=image"
-            "&num=10"  # Number of results
+            "&num=10"
         )
         
         # Make API request
         response = await async_searcher(url, re_json=True)
-        print("response")
         if not response or "items" not in response:
             LOGS.error("No results from Google Custom Search API")
             return []
@@ -467,18 +453,16 @@ async def get_google_images(query):
             try:
                 google_images.append({
                     "title": item.get("title", ""),
-                    "link": item.get("contextLink", ""),  # Page containing image
+                    "link": item.get("contextLink", ""),
                     "source": item.get("displayLink", ""),
                     "thumbnail": item.get("image", {}).get("thumbnailLink", item["link"]),
-                    "original": item["link"]  # Original image URL
+                    "original": item["link"]
                 })
             except Exception as e:
                 LOGS.warning(f"Failed to process image result: {str(e)}")
                 continue
                 
-        # Randomize results order
         random.shuffle(google_images)
-        
         LOGS.info(f"Found {len(google_images)} images for query: {query}")
         return google_images
         
@@ -790,7 +774,7 @@ class TgConverter:
             image = Image.open(photo)
             original_size = (image.width, image.height)
             
-            if (image.width and image.height) < 512:
+            if (image.width < 512 or image.height < 512):
                 size1 = image.width
                 size2 = image.height
                 if image.width > image.height:
@@ -1090,19 +1074,19 @@ async def ocr_space(file_path, api_key="helloworld", language="eng"):
     data = aiohttp.FormData()
     data.add_field('apikey', api_key)
     data.add_field('language', language)
-    data.add_field('file', open(file_path, 'rb'))
-    
-    try:
-        response = await async_searcher(
-            "https://api.ocr.space/parse/image",
-            post=True,
-            data=data,
-            re_json=True
-        )
-        if response and response.get("ParsedResults"):
-            return response["ParsedResults"][0].get("ParsedText")
-    except Exception:
-        pass
+    with open(file_path, 'rb') as f:
+        data.add_field('file', f)
+        try:
+            response = await async_searcher(
+                "https://api.ocr.space/parse/image",
+                post=True,
+                data=data,
+                re_json=True
+            )
+            if response and response.get("ParsedResults"):
+                return response["ParsedResults"][0].get("ParsedText")
+        except Exception:
+            pass
     return None
 
 def encode_image_base64(file_path):
