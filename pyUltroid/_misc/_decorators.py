@@ -72,7 +72,15 @@ async def command_logger(ult, pattern):
     log_channel = ULT_CONFIG.get("LOG_CHANNEL")
     if not log_channel:
         return
-    command_name = pattern or ult.text.split()[0].lstrip(HNDLR)
+    try:
+        if pattern:
+            command_name = pattern
+        else:
+            text = ult.text or ""
+            parts = text.split()
+            command_name = parts[0].lstrip(HNDLR) if parts else "unknown"
+    except (AttributeError, IndexError):
+        command_name = "unknown"
     LOGS.info(f"Command '{command_name}' executed by {ult.sender_id} in {ult.chat_id}")
     try:
         await asst.send_message(
