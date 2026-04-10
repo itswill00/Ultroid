@@ -1078,4 +1078,31 @@ def get_chat_and_msgid(link):
     return None, None
 
 
+# ~~~~~~~~~~~~~~~~~~~~OCR Helper~~~~~~~~~~~~~~~~~~~~
+
+async def ocr_space(file_path, api_key="helloworld", language="eng"):
+    """
+    OCR.space API Helper
+    """
+    from .helper import async_searcher
+    import aiohttp
+    
+    data = aiohttp.FormData()
+    data.add_field('apikey', api_key)
+    data.add_field('language', language)
+    data.add_field('file', open(file_path, 'rb'))
+    
+    try:
+        response = await async_searcher(
+            "https://api.ocr.space/parse/image",
+            post=True,
+            data=data,
+            re_json=True
+        )
+        if response and response.get("ParsedResults"):
+            return response["ParsedResults"][0].get("ParsedText")
+    except Exception:
+        pass
+    return None
+
 # --------- END --------- #

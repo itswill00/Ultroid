@@ -23,33 +23,13 @@ async def ocr_reader(e):
     dl = await reply.download_media("temp/")
     
     try:
-        # OCR.space API works well with direct reachable URLs or multipart upload.
-        # For simplicity and to avoid complex Form-Data in async_searcher, 
-        # we'll use a direct POST to the API if possible, or use the multipart helper.
+        from pyUltroid.fns.tools import ocr_space
+        results = await ocr_space(dl, api_key=OCR_API_KEY)
         
-        # Since async_searcher is already there, let's use it with the 'data' kwarg.
-        import aiohttp
-        data = aiohttp.FormData()
-        data.add_field('apikey', OCR_API_KEY)
-        data.add_field('language', 'eng')
-        data.add_field('file', open(dl, 'rb'))
-        
-        response = await async_searcher(
-            "https://api.ocr.space/parse/image",
-            post=True,
-            data=data,
-            re_json=True
-        )
-        
-        if response and response.get("ParsedResults"):
-            results = response["ParsedResults"][0].get("ParsedText")
-            if results:
-                await msg.edit(f"**OCR Result:**\n\n`{results}`")
-            else:
-                await msg.edit("`Could not find any text in this image.`")
+        if results:
+            await msg.edit(f"**OCR Result:**\n\n`{results}`")
         else:
-            error = response.get("ErrorMessage") or "Unknown error"
-            await msg.edit(f"**OCR Error:** `{error}`")
+            await msg.edit("`Could not find any text in this image or processing failed.`")
             
     except Exception as er:
         LOGS.exception(er)
