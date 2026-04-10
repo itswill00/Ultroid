@@ -200,18 +200,23 @@ heroku_api = Var.HEROKU_API
 
 
 @ultroid_cmd(
-    pattern="restart$",
+    pattern="restart( (.*)|$)",
     fullsudo=True,
 )
 async def restartbt(ult):
+    # Optimization: Default restart is now fast. Use '.restart -u' for update+restart.
+    match = ult.pattern_match.group(1).strip()
     ok = await ult.eor(get_string("bot_5"))
     call_back()
     who = "bot" if ult.client._bot else "user"
     udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{ok.id}")
     if heroku_api:
         return await restart(ok)
-    await bash("git pull && pip3 install -r requirements.txt")
-    await bash("pip3 install -r requirements.txt --break-system-packages")
+    
+    if match in ["-u", "--update"]:
+        await ok.edit("`Updating and Restarting... (this may take a while)`")
+        await bash("git pull && pip install -r requirements.txt --break-system-packages")
+    
     if len(sys.argv) > 1:
         os.execl(sys.executable, sys.executable, "main.py")
     else:
