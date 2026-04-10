@@ -10,6 +10,7 @@ import platform
 import sys
 from logging import INFO, WARNING, FileHandler, StreamHandler, basicConfig, getLogger
 
+import shutil
 from .. import run_as_module
 from ._extra import _ask_input
 
@@ -92,6 +93,16 @@ if run_as_module:
     LOGS.info(f"py-Ultroid Version - {__pyUltroid__}")
     LOGS.info(f"Telethon Version - {__version__} [Layer: {LAYER}]")
     LOGS.info(f"Ultroid Version - {ultroid_version} [{HOSTED_ON}]")
+
+    # Resource Awareness
+    try:
+        import psutil
+        total_ram = psutil.virtual_memory().total / (1024**3)
+        LOGS.info(f"System RAM: {total_ram:.2f} GB")
+        if total_ram < 1.0:
+            LOGS.warning("Low RAM detected! Avoid heavy plugins like image-filters.")
+    except (ImportError, Exception):
+        pass
 
     try:
         from safety.tools import *
