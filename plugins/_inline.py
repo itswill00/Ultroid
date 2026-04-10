@@ -185,20 +185,19 @@ async def uptd_plugin(event):
     index = None
     if "|" in file:
         file, index = file.split("|")
-    key_ = HELP.get(key, [])
-    hel_p = f"Plugin Name - `{file}`\n"
-    help_ = ""
-    try:
-        for i in key_[file]:
-            help_ += i
-    except BaseException:
+    key_ = HELP.get(key, {})
+    help_ = key_.get(file, "")
+    if not help_ or help_ == "No description available.":
         if file in LIST:
             help_ = get_string("help_11").format(file)
             for d in LIST[file]:
-                help_ += HNDLR + d
-                help_ += "\n"
-    if not help_:
-        help_ = f"{file} has no Detailed Help!"
+                help_ += f"{HNDLR}{d}\n"
+        else:
+            help_ = f"**Plugin Name** - `{file}`\n\n{file} has no Detailed Help!"
+    
+    if help_ and not help_.startswith(f"**Plugin Name** - `{file}`"):
+         help_ = f"**Plugin Name** - `{file}`\n\n" + help_
+
     help_ += "\n© @TeamUltroid"
     buttons = []
     if inline_pic():

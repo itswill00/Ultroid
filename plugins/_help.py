@@ -41,33 +41,29 @@ async def _help(ult):
     chat = await ult.get_chat()
     if plug:
         try:
-            if plug in HELP["Official"]:
-                output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["Official"][plug]:
-                    output += i
-                output += "\n© @TeamUltroid"
-                await ult.eor(output)
-            elif HELP.get("Addons") and plug in HELP["Addons"]:
-                output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["Addons"][plug]:
-                    output += i
-                output += "\n© @TeamUltroid"
-                await ult.eor(output)
-            elif HELP.get("VCBot") and plug in HELP["VCBot"]:
-                output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["VCBot"][plug]:
-                    output += i
-                output += "\n© @TeamUltroid"
-                await ult.eor(output)
-            else:
-                try:
+            # Check all categories in HELP
+            _help_found = False
+            for key in ["Official", "Addons", "VCBot"]:
+                if HELP.get(key) and plug in HELP[key]:
+                    desc = HELP[key][plug]
+                    if desc and desc != "No description available.":
+                        output = f"**Plugin** - `{plug}`\n" + desc
+                        output += "\n© @TeamUltroid"
+                        await ult.eor(output)
+                        _help_found = True
+                        break
+            
+            if not _help_found:
+                # If specifically requested by plugin name but no description, try LIST
+                if plug in LIST:
                     x = get_string("help_11").format(plug)
                     for d in LIST[plug]:
                         x += HNDLR + d
                         x += "\n"
                     x += "\n© @TeamUltroid"
                     await ult.eor(x)
-                except BaseException:
+                else:
+                    # Search if 'plug' is a command name inside any plugin
                     file = None
                     compare_strings = []
                     for file_name in LIST:
@@ -80,7 +76,7 @@ async def _help(ult):
                                 file = file_name
                                 break
                     if not file:
-                        # the enter command/plugin name is not found
+                        # the entered command/plugin name is not found
                         text = f"`{plug}` is not a valid plugin!"
                         best_match = None
                         for _ in compare_strings:
@@ -91,15 +87,17 @@ async def _help(ult):
                             text += f"\nDid you mean `{best_match}`?"
                         return await ult.eor(text)
                     output = f"**Command** `{plug}` **found in plugin** - `{file}`\n"
-                    if file in HELP["Official"]:
-                        for i in HELP["Official"][file]:
-                            output += i
-                    elif HELP.get("Addons") and file in HELP["Addons"]:
-                        for i in HELP["Addons"][file]:
-                            output += i
-                    elif HELP.get("VCBot") and file in HELP["VCBot"]:
-                        for i in HELP["VCBot"][file]:
-                            output += i
+                    for key in ["Official", "Addons", "VCBot"]:
+                        if HELP.get(key) and file in HELP[key]:
+                            desc = HELP[key][file]
+                            if desc and desc != "No description available.":
+                                output += desc
+                                break
+                    else:
+                        output += get_string("help_11").format(file)
+                        for d in LIST[file]:
+                            output += HNDLR + d
+                            output += "\n"
                     output += "\n© @TeamUltroid"
                     await ult.eor(output)
         except BaseException as er:
