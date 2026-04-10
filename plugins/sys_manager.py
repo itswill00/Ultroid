@@ -57,7 +57,7 @@ async def manual_cleanup(e):
                     continue
     await ok.edit(f"✅ **Cleanup Success!**\n**Space Freed:** `{humanbytes(cleaned)}`")
 
-@ultroid_cmd(pattern="sysinfo$", fullsudo=True)
+@ultroid_cmd(pattern="sysstats$", fullsudo=True)
 async def system_stats(e):
     """Get Termux system information."""
     # Battery info (Termux specific)
@@ -87,5 +87,13 @@ async def system_stats(e):
 
 # Start background cleaner if not already running
 if not hasattr(udB, "_cleaner_started"):
-    asyncio.ensure_future(auto_cleaner())  # safe alternative to deprecated get_event_loop().create_task()
+    try:
+        import asyncio as _asyncio
+        loop = _asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(auto_cleaner())
+        else:
+            _asyncio.ensure_future(auto_cleaner())
+    except Exception:
+        pass  # Will be skipped gracefully if no event loop is available at import time
     udB._cleaner_started = True
