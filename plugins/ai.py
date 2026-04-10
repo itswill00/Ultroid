@@ -105,6 +105,10 @@ async def unified_ai(e):
         "temperature": 0.2
     }
     
+    # Measure execution time
+    import time
+    start_time = time.time() * 1000 
+    
     try:
         response = await async_searcher(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -114,21 +118,20 @@ async def unified_ai(e):
             re_json=True
         )
         
+        duration = round(time.time() * 1000 - start_time)
+        
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
             
-            # Formatting for clean output
-            input_display = ""
-            if image_b64:
-                input_display += "**VISUAL CONTEXT DETECTED**\n"
-            if query:
-                input_display += f"**QUERY:**\n> {query}\n"
-            elif not input_display and reply and reply.text:
-                input_display = f"**REPLY:**\n> {reply.text[:100]}...\n"
+            # Formatting as per reference image
+            input_text = query or (image_text[:50] + "..." if image_text else "Visual Analysis")
             
-            divider = "\n---\n" if input_display else ""
-            formatted_res = f"{input_display}{divider}**RESULT:**\n\n{ans}"
-            await msg.edit(formatted_res)
+            out = f"**In:**\n```text\n{input_text}\n```\n"
+            out += f"**Out:**\n\n{ans}\n\n"
+            out += f"---\n"
+            out += f"**Model:** `{model.split('/')[-1]}` | **Time:** `{duration}ms`"
+            
+            await msg.edit(out)
             
             # Update history (keep last 5 interactions, text-only)
             CHAT_HISTORY[chat_id].append({"role": "user", "content": query or "[Visual Inquiry]"})
