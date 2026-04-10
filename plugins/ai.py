@@ -94,7 +94,9 @@ async def groq_ai(e):
         
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
-            await msg.edit(ans)
+            # Formatting for a minimalist 'In/Out' look
+            formatted_res = f"**In:** `{full_prompt[:200]}{'...' if len(full_prompt) > 200 else ''}`\n\n**Out:**\n{ans}"
+            await msg.edit(formatted_res)
             
             # Update history (keep last 5 interactions)
             CHAT_HISTORY[chat_id].append({"role": "user", "content": full_prompt})
