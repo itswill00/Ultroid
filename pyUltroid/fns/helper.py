@@ -585,21 +585,8 @@ async def restart(ult=None):
                 )
             LOGS.exception(er)
     else:
-        if len(sys.argv) == 1:
-            os.execl(sys.executable, sys.executable, "-m", "pyUltroid")
-        else:
-            os.execl(
-                sys.executable,
-                sys.executable,
-                "-m",
-                "pyUltroid",
-                sys.argv[1],
-                sys.argv[2],
-                sys.argv[3],
-                sys.argv[4],
-                sys.argv[5],
-                sys.argv[6],
-            )
+        args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
+        os.execl(sys.executable, *args)
 
 
 async def shutdown(ult):
@@ -620,9 +607,11 @@ async def shutdown(ult):
             return await ult.edit(
                 "`HEROKU_API` and `HEROKU_APP_NAME` is wrong! Kindly re-check in config vars."
             )
+
 async def aexec(code, event):
     """
-    Optimized async execution for code blocks.
+    Async execution for code blocks — used internally by helper utilities.
+    For eval command execution, the authoritative version is in devtools.py.
     """
     exec_globals = {
         'asyncio': asyncio,
@@ -636,7 +625,6 @@ async def aexec(code, event):
         '__builtins__': __builtins__,
     }
 
-    # Use a localized function definition for better performance
     wrapped_code = f"async def __aexec(e, client):\n" + "".join(f"    {line}\n" for line in code.split("\n"))
 
     try:
