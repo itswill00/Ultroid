@@ -8,8 +8,10 @@ from pyUltroid.fns.tools import encode_image_base64
 
 GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
 
-# Simple in-memory chat history (sliding window of 5 messages)
+# In-memory chat history (sliding window of 5 interactions per chat)
+# Hard cap: max 500 active chat sessions to prevent memory leak
 CHAT_HISTORY = {}
+_CHAT_HISTORY_MAX_SESSIONS = 500
 
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
 async def unified_ai(e):
@@ -27,6 +29,7 @@ async def unified_ai(e):
     # Check if reply is image/document for Vision integration
     if reply and (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
         msg = await eor(e, "`Analyzing image...`")
+        os.makedirs("temp", exist_ok=True)
         dl = await reply.download_media("temp/")
         try:
             # Check file size (Groq limit is 4MB)
@@ -55,6 +58,10 @@ async def unified_ai(e):
         await msg.edit("`Thinking...`")
     
     # Initialize history for this chat
+    # Evict oldest sessions if at capacity
+    if len(CHAT_HISTORY) >= _CHAT_HISTORY_MAX_SESSIONS and chat_id not in CHAT_HISTORY:
+        oldest = next(iter(CHAT_HISTORY))
+        del CHAT_HISTORY[oldest]
     if chat_id not in CHAT_HISTORY:
         CHAT_HISTORY[chat_id] = []
         
@@ -130,12 +137,12 @@ async def unified_ai(e):
             # We replace triple backticks inside the answer to avoid breaking the outer block
             sanitized_ans = ans.replace("```", "'''")
             
-            # Simplify model name for better UI comfort
+            # Simplify model name for display
             model_map = {
-                "meta-llama/llama-4-scout": "Llama 4 Scout",
+                "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout",
                 "llama-3.1-8b-instant": "Llama 3.1 8B",
             }
-            short_model = model_map.get(model.split('-17b')[0], model.split('/')[-1])
+            short_model = model_map.get(model, model.split('/')[-1])
             # Generate display text for the input
             input_text = query or ("[Image Analysis]" if image_b64 else "[Reply Context]")
             
@@ -163,8 +170,8 @@ async def unified_ai(e):
 __doc__ = """
 **Unified AI Assistant (Groq)**
 
-- `.ai <query>`: Fast AI response.
-- `.ai` (reply to image): Native Computer Vision analysis.
-- `.ai` (reply to text): Context-aware chat.
-- Uses Llama 3.3 70B for text and Llama 3.2 90B for Vision.
+- `.ai <query>` — Fast AI text response (Llama 3.1 8B).
+- `.ai` (reply to image) — Computer Vision analysis (Llama 4 Scout).
+- `.ai` (reply to text) — Context-aware chat with history.
+- `.chat <query>` — Alias for `.ai`.
 """
