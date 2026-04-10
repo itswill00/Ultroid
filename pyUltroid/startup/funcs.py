@@ -96,13 +96,21 @@ def update_envs():
     from .. import udB
     _envs = [*list(os.environ)]
     if ".env" in os.listdir("."):
-        [_envs.append(_) for _ in list(RepositoryEnv(config._find_file(".")).data)]
+        try:
+            [_envs.append(_) for _ in list(RepositoryEnv(config._find_file(".")).data)]
+        except Exception:
+            pass
     for envs in _envs:
         if (
             envs in ["LOG_CHANNEL", "BOT_TOKEN", "BOTMODE", "DUAL_MODE", "language"]
             or envs in udB.keys()
         ):
-            _value = os.environ.get(envs) or config.config.get(envs)
+            _value = os.environ.get(envs)
+            if not _value:
+                try:
+                    _value = config(envs, default=None)
+                except Exception:
+                    _value = None
             if _value:
                 udB.set_key(envs, _value)
 
