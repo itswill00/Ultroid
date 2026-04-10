@@ -489,39 +489,150 @@ async def plug(plugin_channels):
 
 
 
+
 async def ready():
     from .. import asst, udB, ultroid_bot
+    import platform
+    from ..version import __version__ as pyver, ultroid_version as ult_ver
+    from ..dB._core import HELP, LIST
+    from telethon import __version__ as telever
 
     chat_id = udB.get_key("LOG_CHANNEL")
-    spam_sent = None
-    if not udB.get_key("INIT_DEPLOY"):  # Detailed Message at Initial Deploy
-        MSG = """🎇 **Thanks for Deploying Ultroid Userbot!**
-• Here, are the Some Basic stuff from, where you can Know, about its Usage."""
-        PHOTO = "https://graph.org/file/54a917cc9dbb94733ea5f.jpg"
-        BTTS = Button.inline("• Click to Start •", "initft_2")
-        udB.set_key("INIT_DEPLOY", "Done")
-    else:
-        MSG = f"**Ultroid has been deployed!**\n➖➖➖➖➖➖➖➖➖➖\n**UserMode**: {inline_mention(ultroid_bot.me)}\n**Assistant**: @{asst.me.username}\n➖➖➖➖➖➖➖➖➖➖\n**Support**: @TeamUltroid\n➖➖➖➖➖➖➖➖➖➖"
-        BTTS, PHOTO = None, None
-        prev_spam = udB.get_key("LAST_UPDATE_LOG_SPAM")
-        if prev_spam:
-            try:
-                await ultroid_bot.delete_messages(chat_id, int(prev_spam))
-            except Exception:
-                pass
-        if await updater():
-            BTTS = Button.inline("Update Available", "updtavail")
+    if not chat_id:
+        LOGS.warning("LOG_CHANNEL not set — skipping startup notification.")
+        return
 
+    # ── Runtime Metrics ──────────────────────────────────────
+    boot_ts = datetime.now(dt_timezone.utc).strftime("%d %b %Y  %H:%M:%S UTC")
+    py_ver  = platform.python_version()
+    arch    = platform.machine() or "unknown"
+    hosted  = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
+
+    # Plugin count from registered LIST
+    plugin_count = sum(len(v) for v in LIST.values())
+    official_count = len(HELP.get("Official", []))
+    addon_count    = len(HELP.get("Addons", []))
+
+    # Memory usage (optional)
+    mem_line = ""
     try:
-        spam_sent = await asst.send_message(chat_id, MSG, file=PHOTO, buttons=BTTS)
-    except Exception as el:
-        LOGS.debug(el)
+        import psutil
+        mem_mb = psutil.Process().memory_info().rss / 1024 / 1024
+        mem_line = f"\n**Memory**    `{mem_mb:.1f} MB RSS`"
+    except ImportError:
+        pass
+
+    # DB connectivity
+    try:
+        db_ok   = bool(udB.ping())
+        db_icon = "●" if db_ok else "○"
+    except Exception:
+        db_icon = "?"
+
+    # User identifiers
+    me           = ultroid_bot.me
+    asst_me      = asst.me
+    username     = f"@{me.username}" if me.username else f"{me.first_name} (no username)"
+    asst_handle  = f"@{asst_me.username}" if asst_me.username else "—"
+
+    SEP = "─" * 33
+
+    # ── Compose Boot Card ─────────────────────────────────────
+    CARD = (
+        f"{SEP}\n"
+        f"⚡ **ULTROID**\n"
+        f"{SEP}\n"
+        f"**Session**    {inline_mention(me)}\n"
+        f"**Assistant**  `{asst_handle}`\n"
+        f"{SEP}\n"
+        f"**Platform**   `{hosted} · {arch}`\n"
+        f"**Runtime**    `Python {py_ver} · Telethon {telever}`\n"
+        f"**Database**   `{db_icon} {udB.name}`"
+        f"{mem_line}\n"
+        f"{SEP}\n"
+        f"**Plugins**    `{official_count} official · {addon_count} addons · {plugin_count} commands`\n"
+        f"**Version**    `v{ult_ver}` · `pyUltroid {pyver}`\n"
+        f"**Boot**       `{boot_ts}`\n"
+        f"{SEP}"
+    )
+
+    # ── Inline Buttons ─────────────────────────────────────────
+    has_update = False
+    try:
+        has_update = await updater()
+    except Exception:
+        pass
+
+    BTTS = [
+        [
+            Button.inline("⚡ Ping",   data="pkng"),
+            Button.inline("⏱ Uptime", data="upp"),
+        ],
+        [
+            Button.inline("📋 Help",   data="open"),
+            Button.inline("🔔 Update", data="updtavail"),
+        ],
+    ]
+    if has_update:
+        BTTS.insert(0, [Button.inline("🔄 Update Available — Tap to Review", data="doupdate")])
+
+    # ── Delete previous startup card (avoid log spam) ─────────
+    prev_id = udB.get_key("LAST_UPDATE_LOG_SPAM")
+    if prev_id:
         try:
-            spam_sent = await ultroid_bot.send_message(chat_id, MSG)
+            await asst.delete_messages(chat_id, int(prev_id))
         except Exception:
             pass
-    if spam_sent and not spam_sent.media:
-        udB.set_key("LAST_UPDATE_LOG_SPAM", spam_sent.id)
+        try:
+            prev_user_id = udB.get_key("LAST_UPDATE_USERBOT_MSG")
+            if prev_user_id:
+                await ultroid_bot.delete_messages(chat_id, int(prev_user_id))
+        except Exception:
+            pass
+
+    # ── 1. Assistant sends the boot card with inline buttons ──
+    card_sent = None
+    try:
+        card_sent = await asst.send_message(
+            chat_id,
+            CARD,
+            buttons=BTTS,
+            link_preview=False,
+        )
+        LOGS.info("Startup card sent via assistant bot.")
+    except Exception as e:
+        LOGS.warning(f"Assistant failed to send startup card: {e}")
+        # Fallback: userbot sends the card without buttons
+        try:
+            card_sent = await ultroid_bot.send_message(
+                chat_id, CARD, link_preview=False
+            )
+        except Exception as e2:
+            LOGS.error(f"Both clients failed to send startup card: {e2}")
+
+    # ── 2. Userbot sends a short "session active" reply ───────
+    user_sent = None
+    try:
+        await asyncio.sleep(0.5)   # small delay so card appears first
+        reply_to = card_sent.id if card_sent else None
+        user_sent = await ultroid_bot.send_message(
+            chat_id,
+            f"`✓ {username}` **userbot session is active.**",
+            reply_to=reply_to,
+        )
+        LOGS.info("Userbot online confirmation sent.")
+    except Exception as e:
+        LOGS.warning(f"Userbot confirmation failed: {e}")
+
+    # ── Persist message IDs for cleanup on next restart ───────
+    if card_sent:
+        udB.set_key("LAST_UPDATE_LOG_SPAM", card_sent.id)
+    if user_sent:
+        udB.set_key("LAST_UPDATE_USERBOT_MSG", user_sent.id)
+
+    # ── Mark initial deploy ────────────────────────────────────
+    if not udB.get_key("INIT_DEPLOY"):
+        udB.set_key("INIT_DEPLOY", "Done")
 
     if not udB.get_key("NO_JOIN_CHANNEL"):
         try:
