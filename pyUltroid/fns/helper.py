@@ -620,5 +620,27 @@ async def shutdown(ult):
             return await ult.edit(
                 "`HEROKU_API` and `HEROKU_APP_NAME` is wrong! Kindly re-check in config vars."
             )
-    else:
-        sys.exit()
+async def aexec(code, event):
+    """
+    Optimized async execution for code blocks.
+    """
+    exec_globals = {
+        'asyncio': asyncio,
+        'os': os,
+        'sys': sys,
+        'time': time,
+        'event': event,
+        'client': event.client,
+        'reply': await event.get_reply_message(),
+        'chat': event.chat_id,
+        '__builtins__': __builtins__,
+    }
+
+    # Use a localized function definition for better performance
+    wrapped_code = f"async def __aexec(e, client):\n" + "".join(f"    {line}\n" for line in code.split("\n"))
+
+    try:
+        exec(wrapped_code, exec_globals)
+        return await exec_globals["__aexec"](event, event.client)
+    except Exception:
+        return format_exc()
