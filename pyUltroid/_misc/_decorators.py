@@ -37,6 +37,7 @@ from telethon.utils import get_display_name
 from pyUltroid.exceptions import DependencyMissingError
 from strings import get_string
 
+from ._wrappers import eod, eor
 from .. import *
 from .. import _ignore_eval
 from ..dB import DEVLIST

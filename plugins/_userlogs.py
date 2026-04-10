@@ -217,9 +217,11 @@ async def when_added_or_joined(event):
     if not (user and user.is_self):
         return
     if getattr(chat, "username", None):
-        chat = f"[{chat.title}](https://t.me/{chat.username}/{event.action_message.id})"
+        msg_id = getattr(event.action_message, "id", "")
+        chat = f"[{chat.title}](https://t.me/{chat.username}/{msg_id})"
     else:
-        chat = f"[{chat.title}](https://t.me/c/{chat.id}/{event.action_message.id})"
+        msg_id = getattr(event.action_message, "id", "")
+        chat = f"[{chat.title}](https://t.me/c/{chat.id}/{msg_id})"
     key = "bot" if event.client._bot else "user"
     buttons = Button.inline(
         get_string("userlogs_3"), data=f"leave_ch_{event.chat_id}|{key}"
