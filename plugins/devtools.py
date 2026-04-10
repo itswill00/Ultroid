@@ -291,11 +291,16 @@ async def _(event):
     tmt = tima * 1000
     timef = time_formatter(tmt)
     timeform = timef if not timef == "0s" else f"{tmt:.3f}ms"
-    final_output = "__►__ **EVAL** (__in {}__)\n```{}``` \n\n __►__ **OUTPUT**: \n```{}``` \n".format(
-        timeform,
-        cmd,
-        evaluation,
-    )
+    
+    # Sanitize evaluation for nested code blocks
+    sanitized_eval = evaluation.replace("```", "'''")
+    
+    # Double Box Technical Layout
+    final_output = f"**In:**\n```{cmd}```\n"
+    final_output += f"**Out:**\n```{sanitized_eval}```\n"
+    final_output += f"---\n"
+    final_output += f"**Time:** `{timeform}`"
+    
     if len(final_output) > 4096:
         final_output = evaluation
         with BytesIO(str.encode(final_output)) as out_file:
