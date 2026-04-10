@@ -22,7 +22,7 @@ async def unified_ai(e):
     
     image_b64 = None
     msg = None
-    model = "llama-3.3-70b-versatile" # Default text model
+    model = "llama-3.1-8b-instant" # Default text model (Fast & Stable)
     
     # Check if reply is image/document for Vision integration
     if reply and (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
@@ -35,7 +35,7 @@ async def unified_ai(e):
                 return os.remove(dl)
             
             image_b64 = encode_image_base64(dl)
-            model = "llama-3.2-90b-vision-preview" # Switch to Vision model
+            model = "meta-llama/llama-4-scout-17b-16e-instruct" # Switch to Llama 4 Scout Vision
         except Exception as er:
             LOGS.exception(er)
             await msg.edit(f"`Vision Error: {str(er)}`")
