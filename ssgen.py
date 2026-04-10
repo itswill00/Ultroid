@@ -58,10 +58,12 @@ def telethon_session():
         import telethon
         x = "\bFound an existing installation of Telethon...\nSuccessfully Imported.\n\n"
     except ImportError:
-        print("Installing Telethon...")
-        os.system("pip uninstall telethon -y && pip install -U telethon")
-
-        x = "\bDone. Installed and imported Telethon."
+        print("\n[ERROR] Telethon tidak terinstall!")
+        print("Jalankan perintah ini lalu coba lagi:")
+        print("  pip install telethon")
+        print("Atau jika menggunakan venv:")
+        print("  source venv/bin/activate && pip install telethon")
+        exit(1)
     clear_screen()
     print(ULTROID)
     print(x)
@@ -116,13 +118,12 @@ def pyro_session():
     try:
         spinner("pyro")
         from pyrogram import Client
-
         x = "\bFound an existing installation of Pyrogram...\nSuccessfully Imported.\n\n"
-    except BaseException:
-        print("Installing Pyrogram...")
-        os.system("pip install pyrogram tgcrypto")
-        x = "\bDone. Installed and imported Pyrogram."
-        from pyrogram import Client
+    except ImportError:
+        print("\n[ERROR] Pyrogram tidak terinstall!")
+        print("Jalankan perintah ini lalu coba lagi:")
+        print("  pip install pyrogram tgcrypto")
+        exit(1)
         
     clear_screen()
     print(ULTROID)

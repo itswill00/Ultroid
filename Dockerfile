@@ -1,20 +1,33 @@
-# Ultroid - UserBot
-# Copyright (C) 2021-2026 TeamUltroid
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
-# PLease read the GNU Affero General Public License in <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# Ultroid Optimized — Dockerfile
+# Supports: docker build -t ultroid . && docker run --env-file .env ultroid
 
-FROM theteamultroid/ultroid:main
+FROM python:3.11-slim
 
-# set timezone
-ENV TZ=Asia/Kolkata
+# Metadata
+LABEL maintainer="itswill00 <https://github.com/itswill00>"
+LABEL description="Ultroid Optimized — Secure & Lightweight Telegram Userbot"
+
+# Set timezone (ganti sesuai kebutuhan, contoh: Asia/Jakarta)
+ENV TZ=Asia/Jakarta
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-COPY installer.sh .
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    ffmpeg \
+    mediainfo \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN bash installer.sh
+# Set working directory
+WORKDIR /app
 
-# changing workdir
-WORKDIR "/root/TeamUltroid"
+# Copy requirements first (for Docker cache optimization)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# start the bot.
-CMD ["bash", "startup"]
+# Copy project files
+COPY . .
+
+# Run bot
+CMD ["python3", "-m", "pyUltroid"]
