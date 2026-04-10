@@ -204,19 +204,54 @@ heroku_api = Var.HEROKU_API
     fullsudo=True,
 )
 async def restartbt(ult):
-    # Optimization: Default restart is now fast. Use '.restart -u' for update+restart.
+    # Atomic Restart Sequence
     match = ult.pattern_match.group(1).strip()
-    ok = await ult.eor(get_string("bot_5"))
-    call_back()
+    msg = await ult.eor("`[SEQUENCE] Initiating restart sequence...`")
+    
     who = "bot" if ult.client._bot else "user"
-    udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{ok.id}")
+    udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{msg.id}")
+    
     if heroku_api:
-        return await restart(ok)
+        return await restart(msg)
+
+    # Conceptual Update Logic
+    if match in ["-u", "--update", "-pull"]:
+        try:
+            await msg.edit("`[SEQUENCE] Fetching updates from remote...`")
+            # Fetch silently to compare
+            await bash("git fetch --quiet")
+            
+            # Check if we are behind
+            stdout, stderr = await bash("git rev-list --count HEAD..@{u}")
+            commits_behind = stdout.strip() if stdout else "0"
+            
+            if commits_behind != "0" or "-pull" in match:
+                await msg.edit(f"`[SEQUENCE] Applying {commits_behind} new commits...`")
+                # Backup requirements hash to check for dependency changes
+                old_req = ""
+                if os.path.exists("requirements.txt"):
+                    with open("requirements.txt", "r") as f:
+                        old_req = f.read()
+                
+                await bash("git pull --rebase --quiet")
+                
+                # Check for dependency changes
+                new_req = ""
+                if os.path.exists("requirements.txt"):
+                    with open("requirements.txt", "r") as f:
+                        new_req = f.read()
+                
+                if old_req != new_req:
+                    await msg.edit("`[SEQUENCE] Dependencies changed. Installing updates...`")
+                    await bash("pip install -r requirements.txt --break-system-packages")
+            else:
+                await msg.edit("`[SEQUENCE] Local repository is already up-to-date.`")
+        except Exception as e:
+            await msg.edit(f"`[ERROR] Update failed: {str(e)}`")
+            LOGS.exception(e)
+            # Continue to restart anyway if requested
     
-    if match in ["-u", "--update"]:
-        await ok.edit("`Updating and Restarting... (this may take a while)`")
-        await bash("git pull && pip install -r requirements.txt --break-system-packages")
-    
+    await msg.edit("`[SEQUENCE] Re-indexing system and rebooting...`")
     if len(sys.argv) > 1:
         os.execl(sys.executable, sys.executable, "main.py")
     else:
