@@ -20,6 +20,7 @@ Only high-utility, professional tools are included. All gimmick/filler plugins h
 - **PM Permit**: Direct DM gatekeeper.
 - **AFK**: Automated status manager.
 - **DevTools**: System and code inspectors.
+- **OCR**: Extract text from images efficiently.
 - **SysManager**: Server metric tracking and auto-cleanup.
 - **AdminTools**: Standardized group management.
 
