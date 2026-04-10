@@ -123,16 +123,19 @@ async def unified_ai(e):
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
             
-            # Formatting as per reference image - Optimized for Markdown
+            # Optimized Technical Layout
             input_text = query or (image_text[:50] + "..." if image_text else "Visual Analysis")
             
-            # Using clean separators and ensuring AI markdown is preserved
+            # Using Blockquote for the output to create a clean 'boxed' look 
+            # while allowing nested markdown to render correctly.
             out = f"**In:**\n```text\n{input_text}\n```\n"
-            out += f"**Out:**\n{ans}\n\n"
+            out += f"**Out:**\n"
+            # Prefixing every line of 'ans' with '>' for a continuous blockquote look
+            quoted_ans = "\n".join([f"> {line}" for line in ans.split("\n")])
+            out += f"{quoted_ans}\n\n"
             out += f"---\n"
             out += f"**Model:** `{model.split('/')[-1]}` | **Time:** `{duration}ms`"
             
-            # eor/edit in Ultroid supports Markdown by default
             await msg.edit(out, link_preview=False)
             
             # Update history (keep last 5 interactions, text-only)
