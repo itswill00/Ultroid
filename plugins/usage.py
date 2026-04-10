@@ -174,6 +174,15 @@ def db_usage():
         total = 30
     elif udB.name == "SQL":
         total = 20
+    elif udB.name == "LocalDB":
+        # LocalDB is limited by local disk; report disk space instead
+        import shutil
+        disk_total, disk_used, disk_free = shutil.disk_usage(".")
+        a = f"{humanbytes(disk_used)}/{humanbytes(disk_total)}"
+        b = f"{str(round((disk_used / disk_total) * 100, 2))}%"
+        return f"**{udB.name}**\n\n**Disk Used**: `{a}`\n**Usage percentage**: **{b}**"
+    else:
+        return f"**{udB.name}**\n\n`Storage usage reporting not supported for this database type.`"
     total = total * (2**20)
     used = udB.usage
     a = f"{humanbytes(used)}/{humanbytes(total)}"
