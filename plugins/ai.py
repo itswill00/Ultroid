@@ -130,13 +130,18 @@ async def unified_ai(e):
             # We replace triple backticks inside the answer to avoid breaking the outer block
             sanitized_ans = ans.replace("```", "'''")
             
-            input_text = query or (image_text[:50] + "..." if image_text else "Visual Analysis")
+            # Simplify model name for better UI comfort
+            model_map = {
+                "meta-llama/llama-4-scout": "Llama 4 Scout",
+                "llama-3.1-8b-instant": "Llama 3.1 8B",
+            }
+            short_model = model_map.get(model.split('-17b')[0], model.split('/')[-1])
             
             # Double Box Technical Layout
             out = f"**In:**\n```{input_text}```\n"
             out += f"**Out:**\n```{sanitized_ans}```\n"
             out += f"---\n"
-            out += f"**Model:** `{model.split('/')[-1]}` | **Time:** `{duration}ms`"
+            out += f"**Model:** `{short_model}` | **Time:** `{duration}ms`"
             
             await msg.edit(out, link_preview=False)
             
