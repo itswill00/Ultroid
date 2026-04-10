@@ -442,7 +442,8 @@ async def abs_rmbg(event):
             event, f"Use `{HNDLR}rmbg` as reply to a pic to remove its background."
         )
     if not (dl and dl.endswith(("webp", "jpg", "png", "jpeg"))):
-        os.remove(dl)
+        if dl and os.path.exists(dl):
+            os.remove(dl)
         return await event.eor(get_string("com_4"))
     if dl.endswith("webp"):
         file = f"{dl}.png"
@@ -719,18 +720,21 @@ async def get_video_duration(file_path):
         return None
 
 async def get_thumbnail(file_path, thumbnail_path):
+    """Extract thumbnail from video using ffmpeg."""
     try:
-        await asyncio.create_subprocess_exec(
+        proc = await asyncio.create_subprocess_exec(
             "ffmpeg",
             "-i", file_path,
             "-ss", "00:00:04",
-            "-vframes", "1",  # Extract a single frame as the thumbnail
+            "-vframes", "1",
             thumbnail_path,
+            "-y",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
+        await proc.communicate()
     except Exception as e:
-        print(f"Error extracting thumbnail: {e}")
+        LOGS.warning(f"Error extracting thumbnail: {e}")
 
 @ultroid_cmd(pattern="getmsg( ?(.*)|$)")
 async def get_restricted_msg(event):
