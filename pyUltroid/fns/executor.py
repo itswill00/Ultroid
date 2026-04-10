@@ -40,12 +40,11 @@ class Terminal:
         return pid
 
     def terminate(self, pid: int) -> bool:
-        try:
-            self._processes.pop(pid)
-            self._processes[pid].kill()
+        proc = self._processes.pop(pid, None)
+        if proc:
+            proc.kill()
             return True
-        except KeyError:
-            return False
+        return False
 
     async def output(self, pid: int) -> str:
         output = []
@@ -65,12 +64,11 @@ class Terminal:
             error.append(err)
         return "\n".join(error)
 
-    @property
-    def _auto_remove_processes(self) -> None:
-        while self._processes:
-            for proc in self._processes.keys():
-                if proc.returncode is not None:  # process is still running
-                    try:
-                        self._processes.pop(proc)
-                    except KeyError:
-                        pass
+    def cleanup_finished(self) -> None:
+        """Remove finished processes from the tracker."""
+        finished = [
+            pid for pid, proc in self._processes.items()
+            if proc.returncode is not None
+        ]
+        for pid in finished:
+            self._processes.pop(pid, None)

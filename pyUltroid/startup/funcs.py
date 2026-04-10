@@ -8,6 +8,7 @@
 import asyncio
 import os
 import random
+import re
 import shutil
 import time
 from datetime import datetime, timezone as dt_timezone
@@ -451,6 +452,24 @@ async def plug(plugin_channels):
                     if x.text == "#IGNORE":
                         continue
                     plugin = await x.download_media(plugin)
+                    # Safety check: scan for malicious patterns
+                    try:
+                        with open(plugin, "r") as f:
+                            content = f.read()
+                        for pattern in KEEP_SAFE().All:
+                            if re.search(pattern, content):
+                                LOGS.warning(
+                                    f"PLUGIN_CHANNEL - BLOCKED - {plugin}: matched safety pattern '{pattern}'"
+                                )
+                                os.remove(plugin)
+                                plugin = None
+                                break
+                    except Exception as scan_err:
+                        LOGS.warning(f"Failed to scan plugin {plugin}: {scan_err}")
+                        os.remove(plugin)
+                        plugin = None
+                    if not plugin:
+                        continue
                     try:
                         load_addons(plugin)
                     except Exception as e:

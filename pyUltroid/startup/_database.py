@@ -7,6 +7,7 @@
 
 import ast
 import os
+import re
 import sys
 
 from .. import run_as_module
@@ -21,30 +22,34 @@ if Var.REDIS_URI or Var.REDISHOST:
     try:
         from redis import Redis
     except ImportError:
-        LOGS.info("Installing 'redis' for database.")
-        os.system(f"{sys.executable} -m pip install -q redis hiredis")
-        from redis import Redis
+        LOGS.error(
+            "'redis' package is required. Install it: pip install redis hiredis"
+        )
+        Redis = None
 elif Var.MONGO_URI:
     try:
         from pymongo import MongoClient
     except ImportError:
-        LOGS.info("Installing 'pymongo' for database.")
-        os.system(f"{sys.executable} -m pip install -q pymongo[srv]")
-        from pymongo import MongoClient
-elif False:
+        LOGS.error(
+            "'pymongo' package is required. Install it: pip install pymongo[srv]"
+        )
+        MongoClient = None
+elif Var.DATABASE_URL:
     try:
         import psycopg2
     except ImportError:
-        LOGS.info("Installing 'pyscopg2' for database.")
-        os.system(f"{sys.executable} -m pip install -q psycopg2-binary")
-        import psycopg2
+        LOGS.error(
+            "'psycopg2-binary' is required for SQL database. Install it: pip install psycopg2-binary"
+        )
+        psycopg2 = None
 else:
     try:
         from localdb import Database
     except ImportError:
-        LOGS.info("Using local file as database.")
-        os.system(f"{sys.executable} -m pip install -q localdb.json")
-        from localdb import Database
+        LOGS.error(
+            "'localdb.json' package is required. Install it: pip install localdb.json"
+        )
+        Database = None
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -160,6 +165,8 @@ class MongoDB(_BaseDatabase):
 
 
 class SqlDB(_BaseDatabase):
+    _VALID_KEY = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]{0,62}$')
+
     def __init__(self, url):
         self._url = url
         self._connection = None
@@ -173,11 +180,16 @@ class SqlDB(_BaseDatabase):
             )
         except Exception as error:
             LOGS.exception(error)
-            LOGS.info("Invaid SQL Database")
+            LOGS.info("Invalid SQL Database")
             if self._connection:
                 self._connection.close()
             sys.exit()
         super().__init__()
+
+    def _validate_key(self, key):
+        if not self._VALID_KEY.match(str(key)):
+            raise ValueError(f"Invalid database key name: {key!r}")
+        return str(key)
 
     @property
     def name(self):
@@ -199,6 +211,7 @@ class SqlDB(_BaseDatabase):
         return [_[0] for _ in data]
 
     def get(self, variable):
+        variable = self._validate_key(variable)
         try:
             self._cursor.execute(f"SELECT {variable} FROM Ultroid")
         except psycopg2.errors.UndefinedColumn:
@@ -212,6 +225,7 @@ class SqlDB(_BaseDatabase):
                     return i[0]
 
     def set(self, key, value):
+        key = self._validate_key(key)
         try:
             self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN IF EXISTS {key}")
         except (psycopg2.errors.UndefinedColumn, psycopg2.errors.SyntaxError):
@@ -224,6 +238,7 @@ class SqlDB(_BaseDatabase):
         return True
 
     def delete(self, key):
+        key = self._validate_key(key)
         try:
             self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN {key}")
         except psycopg2.errors.UndefinedColumn:

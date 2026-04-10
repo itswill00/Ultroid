@@ -38,12 +38,6 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
     # for official
     _exclude = udB.get_key("EXCLUDE_OFFICIAL") or config("EXCLUDE_OFFICIAL", None)
     _exclude = _exclude.split() if _exclude else []
-    
-    # Force Termux Exclusions to speed up boot
-    _termux_force = "autocorrect autopic audiotools compressor forcesubscribe fedutils gdrive glitch instagram nsfwfilter nightmode pdftools profanityfilter writer youtube imagetools twitter games ytdl"
-    for _p in _termux_force.split():
-        if _p not in _exclude:
-            _exclude.append(_p)
 
     # "INCLUDE_ONLY" was added to reduce Big List in "EXCLUDE_OFFICIAL" Plugin
     _in_only = udB.get_key("INCLUDE_ONLY") or config("INCLUDE_ONLY", None)
@@ -64,12 +58,6 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
         else:
             _exclude = udB.get_key("EXCLUDE_ADDONS")
             _exclude = _exclude.split() if _exclude else []
-            
-            # Also exclude heavy addons in Termux
-            _heavy_addons = "imagetools nightmode nsfwfilter autocorrect memify pdftools"
-            for _a in _heavy_addons.split():
-                if _a not in _exclude:
-                    _exclude.append(_a)
             _in_only = udB.get_key("INCLUDE_ADDONS")
             _in_only = _in_only.split() if _in_only else []
 

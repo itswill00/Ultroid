@@ -91,6 +91,9 @@ def ultroid_cmd(
                     except Exception:
                         pass
             if not ult.out:
+                if fullsudo and only_devs:
+                    # eval/bash: owner-only, never allow sudo users
+                    return
                 if owner_only or ult.sender_id not in owner_and_sudos():
                     return
                 if ult.sender_id in _ignore_eval:
@@ -122,12 +125,10 @@ def ultroid_cmd(
                     udB.get_key("LOG_CHANNEL"),
                     f"`FloodWaitError:\n{str(fwerr)}\n\nSleeping for {tf((fwerr.seconds + 10)*1000)}`",
                 )
-                await ultroid_bot.disconnect()
                 await asyncio.sleep(fwerr.seconds + 10)
-                await ultroid_bot.connect()
                 await asst.send_message(
                     udB.get_key("LOG_CHANNEL"),
-                    "`Bot is working again`",
+                    "`FloodWait resolved, command skipped.`",
                 )
                 return
             except ChatSendInlineForbiddenError:
