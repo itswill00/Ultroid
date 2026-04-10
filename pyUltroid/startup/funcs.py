@@ -647,15 +647,38 @@ async def WasItRestart(udb):
     if not key:
         return
     from .. import asst, ultroid_bot
+    import json as _json
 
     try:
-        data = key.split("_")
-        who = asst if data[0] == "bot" else ultroid_bot
-        await who.edit_message(
-            int(data[1]), int(data[2]), "__Restarted Successfully.__"
-        )
+        # New format: JSON {"who": "user"|"bot", "chat_id": int, "msg_id": int}
+        data = _json.loads(key)
+        who     = data["who"]
+        chat_id = int(data["chat_id"])
+        msg_id  = int(data["msg_id"])
+    except (ValueError, KeyError, TypeError):
+        # Legacy fallback: "user_CHATID_MSGID" (may fail on negative chat IDs)
+        try:
+            parts   = key.split("_", 2)   # split at most 2 times → ["user", "chatid", "msgid"]
+            who     = parts[0]
+            chat_id = int(parts[1])
+            msg_id  = int(parts[2])
+        except Exception:
+            udb.del_key("_RESTART")
+            return
+
+    # The restart message was always sent/edited by the userbot, so use ultroid_bot.
+    # asst cannot edit userbot messages.
+    client = asst if who == "bot" else ultroid_bot
+    try:
+        await client.edit_message(chat_id, msg_id, "`[RESTART] Completed successfully.`")
     except Exception:
-        pass
+        # Fallback: try the other client
+        other = ultroid_bot if client is asst else asst
+        try:
+            await other.edit_message(chat_id, msg_id, "`[RESTART] Completed successfully.`")
+        except Exception:
+            pass
+
     udb.del_key("_RESTART")
 
 

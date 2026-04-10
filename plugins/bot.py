@@ -204,58 +204,60 @@ heroku_api = Var.HEROKU_API
     fullsudo=True,
 )
 async def restartbt(ult):
-    # Atomic Restart Sequence
     match = ult.pattern_match.group(1).strip()
-    msg = await ult.eor("`[SEQUENCE] Initiating restart sequence...`")
-    
+    msg = await ult.eor("`[RESTART] Initiating restart sequence...`")
+
+    # Store restart context as JSON to safely handle negative chat IDs
+    import json as _json
     who = "bot" if ult.client._bot else "user"
-    udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{msg.id}")
-    
+    udB.set_key("_RESTART", _json.dumps({
+        "who": who,
+        "chat_id": ult.chat_id,
+        "msg_id": msg.id,
+    }))
+
+    # Heroku restart: delegate to restart() helper
     if heroku_api:
         return await restart(msg)
 
-    # Conceptual Update Logic
+    # Optional: pull latest code before restarting
     if match in ["-u", "--update", "-pull"]:
         try:
-            await msg.edit("`[SEQUENCE] Fetching updates from remote...`")
-            # Fetch silently to compare
+            await msg.edit("`[RESTART] Fetching updates from remote...`")
             await bash("git fetch --quiet")
-            
-            # Check if we are behind
-            stdout, stderr = await bash("git rev-list --count HEAD..@{u}")
-            commits_behind = stdout.strip() if stdout else "0"
-            
+
+            stdout, _ = await bash("git rev-list --count HEAD..@{u}")
+            commits_behind = (stdout or "0").strip()
+
             if commits_behind != "0" or "-pull" in match:
-                await msg.edit(f"`[SEQUENCE] Applying {commits_behind} new commits...`")
-                # Backup requirements hash to check for dependency changes
+                await msg.edit(f"`[RESTART] Applying {commits_behind} new commit(s)...`")
+
                 old_req = ""
                 if os.path.exists("requirements.txt"):
                     with open("requirements.txt", "r") as f:
                         old_req = f.read()
-                
+
                 await bash("git pull --rebase --quiet")
-                
-                # Check for dependency changes
+
                 new_req = ""
                 if os.path.exists("requirements.txt"):
                     with open("requirements.txt", "r") as f:
                         new_req = f.read()
-                
+
                 if old_req != new_req:
-                    await msg.edit("`[SEQUENCE] Dependencies changed. Installing updates...`")
-                    await bash("pip install -r requirements.txt --break-system-packages")
+                    await msg.edit("`[RESTART] Dependencies changed — installing...`")
+                    await bash("pip install -r requirements.txt --break-system-packages -q")
             else:
-                await msg.edit("`[SEQUENCE] Local repository is already up-to-date.`")
+                await msg.edit("`[RESTART] Already up-to-date. Restarting...`")
         except Exception as e:
-            await msg.edit(f"`[ERROR] Update failed: {str(e)}`")
+            await msg.edit(f"`[RESTART] Update failed: {e} — restarting anyway...`")
             LOGS.exception(e)
-            # Continue to restart anyway if requested
-    
-    await msg.edit("`[SEQUENCE] Re-indexing system and rebooting...`")
-    if len(sys.argv) > 1:
-        os.execl(sys.executable, sys.executable, "main.py")
-    else:
-        os.execl(sys.executable, sys.executable, "-m", "pyUltroid")
+
+    await msg.edit("`[RESTART] Rebooting...`")
+
+    # Always restart with -m pyUltroid, passing any existing argv after index 0
+    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
+    os.execl(sys.executable, *args)
 
 
 @ultroid_cmd(
