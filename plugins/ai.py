@@ -7,6 +7,9 @@ from pyUltroid.fns.helper import async_searcher
 GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
 OCR_API_KEY = udB.get_key("OCR_API_KEY") or "helloworld"
 
+# Simple in-memory chat history (sliding window of 5 messages)
+CHAT_HISTORY = {}
+
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
 async def groq_ai(e):
     if not GROQ_API_KEY:
@@ -14,6 +17,7 @@ async def groq_ai(e):
     
     query = e.pattern_match.group(2).strip()
     reply = await e.get_reply_message()
+    chat_id = e.chat_id
     
     image_text = ""
     msg = None
@@ -35,9 +39,10 @@ async def groq_ai(e):
     if not query and reply and reply.text:
         query = reply.text
     
+    # Build Prompt
     full_prompt = query
     if image_text:
-        full_prompt = f"IMAGE TEXT EXTRACTED:\n{image_text}\n\nUSER QUERY:\n{query}" if query else f"Analyze this text extracted from an image:\n{image_text}"
+        full_prompt = f"IMAGE TEXT:\n{image_text}\n\nUSER QUERY:\n{query}" if query else f"Analyze this image text:\n{image_text}"
         
     if not full_prompt:
         return await eor(e, "`Provide a query or reply to a message/image.`")
@@ -45,7 +50,26 @@ async def groq_ai(e):
     if not msg:
         msg = await eor(e, "`Inference in progress...`")
     else:
-        await msg.edit("`Thinking...`")
+        await msg.edit("`Thinking with context...`")
+    
+    # Initialize history for this chat
+    if chat_id not in CHAT_HISTORY:
+        CHAT_HISTORY[chat_id] = []
+        
+    # Enhanced Expert System Prompt
+    system_prompt = (
+        "You are KODA, a high-end technical system architect and professional assistant. "
+        "Your responses are direct, highly logical, and technically precise. "
+        "Follow a markdown-optimized format. Use cold and efficient language. "
+        "Do not apologize. Do not use conversational filler. "
+        "Prioritize accuracy and deep technical insight above all else."
+    )
+    
+    # Prepare messages with history
+    messages = [{"role": "system", "content": system_prompt}]
+    for hist in CHAT_HISTORY[chat_id]:
+        messages.append(hist)
+    messages.append({"role": "user", "content": full_prompt})
     
     # Minimalist technical headers
     headers = {
@@ -55,14 +79,8 @@ async def groq_ai(e):
     
     payload = {
         "model": "llama-3.1-70b-versatile",
-        "messages": [
-            {
-                "role": "system", 
-                "content": "You are a professional technical assistant. Provide direct, cold, and minimalist answers. Use Markdown. Avoid conversational filler."
-            },
-            {"role": "user", "content": full_prompt}
-        ],
-        "temperature": 0.2
+        "messages": messages,
+        "temperature": 0.3
     }
     
     try:
@@ -77,6 +95,12 @@ async def groq_ai(e):
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
             await msg.edit(ans)
+            
+            # Update history (keep last 5 interactions)
+            CHAT_HISTORY[chat_id].append({"role": "user", "content": full_prompt})
+            CHAT_HISTORY[chat_id].append({"role": "assistant", "content": ans})
+            if len(CHAT_HISTORY[chat_id]) > 10:  # 5 pairs
+                CHAT_HISTORY[chat_id] = CHAT_HISTORY[chat_id][-10:]
         else:
             err = response.get("error", {}).get("message") or "Unknown API error"
             await msg.edit(f"**Groq Error:** `{err}`")
