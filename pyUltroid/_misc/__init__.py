@@ -79,10 +79,33 @@ class _SudoManager:
         self._owner = None
 
 
+class _ConfigCache:
+    def __init__(self):
+        self._cache = {}
+
+    def get(self, key, default=None):
+        if key in self._cache:
+            return self._cache[key]
+        from .. import udB
+        val = udB.get_key(key)
+        if val is not None:
+            self._cache[key] = val
+        return val if val is not None else default
+
+    def refresh(self):
+        self._cache.clear()
+
+
 SUDO_M = _SudoManager()
+ULT_CONFIG = _ConfigCache()
 owner_and_sudos = SUDO_M.owner_and_sudos
 sudoers = SUDO_M.get_sudos
 is_sudo = SUDO_M.is_sudo
+
+
+def refresh_all():
+    SUDO_M.refresh()
+    ULT_CONFIG.refresh()
 
 # ------------------------------------------------ #
 
