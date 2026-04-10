@@ -67,14 +67,22 @@ async def setwel(event):
         wut = mediainfo(r.media)
         if wut.startswith(("pic", "gif")):
             dl = await r.download_media()
-            m = uf(dl)
-            os.remove(dl)
+            try:
+                m = uf(dl)
+            except Exception:
+                return await eor(x, "`Failed to upload media. Try again.`", time=5)
+            finally:
+                os.remove(dl)
         elif wut == "video":
             if r.media.document.size > 8 * 1000 * 1000:
                 return await eor(x, get_string("com_4"), time=5)
             dl = await r.download_media()
-            m = uf(dl)
-            os.remove(dl)
+            try:
+                m = uf(dl)
+            except Exception:
+                return await eor(x, "`Failed to upload video. Try again.`", time=5)
+            finally:
+                os.remove(dl)
         elif wut == "web":
             m = None
         else:
@@ -130,14 +138,22 @@ async def setgb(event):
         wut = mediainfo(r.media)
         if wut.startswith(("pic", "gif")):
             dl = await r.download_media()
-            m = uf(dl)
-            os.remove(dl)
+            try:
+                m = uf(dl)
+            except Exception:
+                return await eor(x, "`Failed to upload media. Try again.`", time=5)
+            finally:
+                os.remove(dl)
         elif wut == "video":
             if r.media.document.size > 8 * 1000 * 1000:
                 return await eor(x, get_string("com_4"), time=5)
             dl = await r.download_media()
-            m = uf(dl)
-            os.remove(dl)
+            try:
+                m = uf(dl)
+            except Exception:
+                return await eor(x, "`Failed to upload video. Try again.`", time=5)
+            finally:
+                os.remove(dl)
         elif wut == "web":
             m = None
         else:

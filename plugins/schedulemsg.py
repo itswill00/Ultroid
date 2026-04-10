@@ -23,12 +23,19 @@ from . import get_string, ultroid_cmd
 async def _(e):
     x = e.pattern_match.group(1).strip()
     xx = await e.get_reply_message()
+    MAX_SCHEDULE_SECS = 30 * 24 * 3600  # 30 days (Telegram max)
+    MIN_SCHEDULE_SECS = 5               # Minimum 5 seconds
     if x and not xx:
         y = x.split(" ")[-1]
         k = x.replace(y, "")
         if y.isdigit():
+            secs = int(y)
+            if secs < MIN_SCHEDULE_SECS:
+                return await e.eor(f"`Minimum schedule time is {MIN_SCHEDULE_SECS} seconds.`", time=5)
+            if secs > MAX_SCHEDULE_SECS:
+                return await e.eor("`Maximum schedule time is 30 days.`", time=5)
             await e.client.send_message(
-                e.chat_id, k, schedule=timedelta(seconds=int(y))
+                e.chat_id, k, schedule=timedelta(seconds=secs)
             )
             await e.eor(get_string("schdl_1"), time=5)
         else:
@@ -40,7 +47,12 @@ async def _(e):
                 await e.eor(get_string("schdl_2"), time=5)
     elif xx and x:
         if x.isdigit():
-            await e.respond(xx, schedule=timedelta(seconds=int(x)))
+            secs = int(x)
+            if secs < MIN_SCHEDULE_SECS:
+                return await e.eor(f"`Minimum schedule time is {MIN_SCHEDULE_SECS} seconds.`", time=5)
+            if secs > MAX_SCHEDULE_SECS:
+                return await e.eor("`Maximum schedule time is 30 days.`", time=5)
+            await e.respond(xx, schedule=timedelta(seconds=secs))
             await e.eor(get_string("schdl_1"), time=5)
         else:
             try:

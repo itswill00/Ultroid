@@ -11,6 +11,7 @@ from . import get_help
 __doc__ = get_help("help_broadcast")
 
 import asyncio
+from telethon.errors import FloodWaitError
 import io
 
 from telethon.utils import get_display_name
@@ -146,7 +147,6 @@ async def forw(event):
     error_count = 0
     sent_count = 0
     previous_message = await event.get_reply_message()
-    error_count = 0
     for channel in channels:
         try:
             await ultroid_bot.forward_messages(channel, previous_message)
@@ -154,6 +154,12 @@ async def forw(event):
             await x.edit(
                 f"Sent : {sent_count}\nError : {error_count}\nTotal : {len(channels)}",
             )
+            # Proactive rate limit: 1.5s per channel, 5s every 20 batches
+            await asyncio.sleep(1.5)
+            if sent_count % 20 == 0:
+                await asyncio.sleep(5.0)
+        except FloodWaitError as fw:
+            await asyncio.sleep(fw.seconds + 5)
         except Exception:
             try:
                 await ultroid_bot.send_message(
@@ -199,6 +205,12 @@ async def sending(event):
                     await x.edit(
                         f"Sent : {sent_count}\nError : {error_count}\nTotal : {len(channels)}",
                     )
+                    # Proactive rate limit: 1.5s per channel, 5s every 20 batches
+                    await asyncio.sleep(1.5)
+                    if sent_count % 20 == 0:
+                        await asyncio.sleep(5.0)
+                except FloodWaitError as fw:
+                    await asyncio.sleep(fw.seconds + 5)
                 except Exception as error:
                     await ultroid_bot.send_message(
                         udB.get_key("LOG_CHANNEL"),

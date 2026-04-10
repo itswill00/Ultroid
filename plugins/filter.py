@@ -21,6 +21,9 @@ from pyUltroid.fns.tools import create_tl_btn, format_btn, get_msg_button
 from . import events, get_string, mediainfo, udB, ultroid_bot, ultroid_cmd, upload_file
 from ._inline import something
 
+# Guard flag to prevent duplicate handler registration
+_filter_handler_added = False
+
 
 @ultroid_cmd(pattern="addfilter( (.*)|$)")
 async def af(e):
@@ -57,7 +60,10 @@ async def af(e):
             txt, btn = get_msg_button(wt.text)
         add_filter(chat, wrd, txt, None, btn)
     await e.eor(get_string("flr_4").format(wrd))
-    ultroid_bot.add_handler(filter_func, events.NewMessage())
+    global _filter_handler_added
+    if not _filter_handler_added:
+        ultroid_bot.add_handler(filter_func, events.NewMessage())
+        _filter_handler_added = True
 
 
 @ultroid_cmd(pattern="remfilter( (.*)|$)")
@@ -98,3 +104,4 @@ async def filter_func(e):
 
 if udB.get_key("FILTERS"):
     ultroid_bot.add_handler(filter_func, events.NewMessage())
+    _filter_handler_added = True

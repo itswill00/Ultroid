@@ -15,12 +15,16 @@ async def auto_cleaner():
     """Background task to clean temporary files every hour."""
     while True:
         try:
+            min_age_seconds = 1800  # Only delete files older than 30 minutes
+            now = time.time()
             for folder in CLEAN_DIRECTORIES:
                 if os.path.exists(folder):
-                    # Remove content but keep the directory
                     for filename in os.listdir(folder):
                         file_path = os.path.join(folder, filename)
                         try:
+                            # Skip files that are too new (might be in use)
+                            if now - os.path.getmtime(file_path) < min_age_seconds:
+                                continue
                             if os.path.isfile(file_path) or os.path.islink(file_path):
                                 os.unlink(file_path)
                             elif os.path.isdir(file_path):
@@ -30,7 +34,7 @@ async def auto_cleaner():
             LOGS.info("System Auto-Cleanup: Temporary files cleared.")
         except Exception as e:
             LOGS.error(f"Auto-Cleanup Error: {e}")
-        
+
         await asyncio.sleep(3600) # Clean every 1 hour
 
 @ultroid_cmd(pattern="cleanup$", fullsudo=True)
@@ -83,5 +87,5 @@ async def system_stats(e):
 
 # Start background cleaner if not already running
 if not hasattr(udB, "_cleaner_started"):
-    asyncio.get_event_loop().create_task(auto_cleaner())
+    asyncio.ensure_future(auto_cleaner())  # safe alternative to deprecated get_event_loop().create_task()
     udB._cleaner_started = True

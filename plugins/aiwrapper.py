@@ -60,28 +60,27 @@ def get_model(provider):
 
 
 async def stream_response(msg, text):
-    """Stream response by editing message"""
+    """Stream response by editing message — respects Telegram userbot edit rate limits."""
     current = ""
-    # Split into chunks of ~100 characters at word boundaries
     words = text.split()
     chunks = []
     current_chunk = []
-    
+
     for word in words:
         current_chunk.append(word)
-        if len(" ".join(current_chunk)) > 100:
+        if len(" ".join(current_chunk)) > 200:  # Larger chunks = fewer edits = safer
             chunks.append(" ".join(current_chunk[:-1]))
             current_chunk = [word]
     if current_chunk:
         chunks.append(" ".join(current_chunk))
-    
+
     for chunk in chunks:
         current += chunk + " "
         try:
             await msg.edit(current)
         except Exception:
             pass
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(3.5)  # Telegram userbot limit: ~1 edit per 3s
     return current
 
 
@@ -288,6 +287,8 @@ async def gemini_ai(event):
     prompt = event.pattern_match.group(1).strip()
     if not prompt:
         return await event.eor("❌ Please provide a prompt!")
+    if len(prompt) > 4000:
+        return await event.eor("❌ Prompt terlalu panjang (maks 4000 karakter).")
 
     api_key = udB.get_key("GEMINI_API_KEY")
     if not api_key:
@@ -328,6 +329,8 @@ async def anthropic_ai(event):
     prompt = event.pattern_match.group(1).strip()
     if not prompt:
         return await event.eor("❌ Please provide a prompt!")
+    if len(prompt) > 4000:
+        return await event.eor("❌ Prompt terlalu panjang (maks 4000 karakter).")
 
     api_key = udB.get_key("ANTHROPIC_KEY")
     if not api_key:
@@ -368,6 +371,8 @@ async def openai_ai(event):
     prompt = event.pattern_match.group(1).strip()
     if not prompt:
         return await event.eor("❌ Please provide a prompt!")
+    if len(prompt) > 4000:
+        return await event.eor("❌ Prompt terlalu panjang (maks 4000 karakter).")
 
     api_key = udB.get_key("OPENAI_API_KEY")
     if not api_key:
@@ -408,6 +413,8 @@ async def deepseek_ai(event):
     prompt = event.pattern_match.group(1).strip()
     if not prompt:
         return await event.eor("❌ Please provide a prompt!")
+    if len(prompt) > 4000:
+        return await event.eor("❌ Prompt terlalu panjang (maks 4000 karakter).")
 
     api_key = udB.get_key("DEEPSEEK_API_KEY")
     if not api_key:

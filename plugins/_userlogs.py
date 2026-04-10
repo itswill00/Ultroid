@@ -37,6 +37,7 @@ from . import (
 
 CACHE_SPAM = {}
 TAG_EDITS = {}
+_MAX_TAG_EDITS_PER_CHAT = 300  # Limit stored msg refs to prevent RAM growth
 
 
 @ultroid_bot.on(
@@ -60,7 +61,11 @@ async def all_messages_catcher(e):
         if TAG_EDITS.get(e.chat_id):
             TAG_EDITS[e.chat_id].update({e.id: {"id": sent.id, "msg": e}})
         else:
-            TAG_EDITS.update({e.chat_id: {e.id: {"id": sent.id, "msg": e}}})
+            TAG_EDITS[e.chat_id] = {e.id: {"id": sent.id, "msg": e}}
+        # Evict oldest entry if cache is full
+        if len(TAG_EDITS[e.chat_id]) > _MAX_TAG_EDITS_PER_CHAT:
+            oldest = next(iter(TAG_EDITS[e.chat_id]))
+            del TAG_EDITS[e.chat_id][oldest]
         tag_add(sent.id, e.chat_id, e.id)
     except MediaEmptyError as er:
         LOGS.debug(f"handling {er}.")
