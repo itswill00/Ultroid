@@ -117,6 +117,17 @@ class MongoDB(_BaseDatabase):
         self.dB = MongoClient(key, serverSelectionTimeoutMS=5000)
         self.db = self.dB[dbname]
         self.coll = self.db["UltroidData"]
+        # Migration logic
+        collections = self.db.list_collection_names()
+        if "UltroidData" in collections:
+            collections.remove("UltroidData")
+        if collections:
+            LOGS.info("Migrating old MongoDB collections to new schema...")
+            for coll_name in collections:
+                if x := self.db[coll_name].find_one({"_id": coll_name}):
+                    self.coll.replace_one({"_id": coll_name}, {"_id": coll_name, "value": x["value"]}, upsert=True)
+                self.db.drop_collection(coll_name)
+            LOGS.info("MongoDB Migration completed.")
         super().__init__()
 
     def __repr__(self):
@@ -175,6 +186,22 @@ class SqlDB(_BaseDatabase):
             self._cursor.execute(
                 "CREATE TABLE IF NOT EXISTS UltroidData (key_name TEXT PRIMARY KEY, value_data TEXT)"
             )
+            # Check for old table and migrate
+            self._cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'ultroid')")
+            if self._cursor.fetchone()[0]:
+                LOGS.info("Migrating old SQL database to new schema...")
+                self._cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'ultroid'")
+                columns = [_[0] for _ in self._cursor.fetchall() if _[0] != 'ultroidcli']
+                for col in columns:
+                    self._cursor.execute(f"SELECT {col} FROM Ultroid WHERE {col} IS NOT NULL LIMIT 1")
+                    val = self._cursor.fetchone()
+                    if val:
+                        self._cursor.execute(
+                            "INSERT INTO UltroidData (key_name, value_data) VALUES (%s, %s) ON CONFLICT (key_name) DO NOTHING",
+                            (col, str(val[0]))
+                        )
+                self._cursor.execute("DROP TABLE Ultroid")
+                LOGS.info("SQL Migration completed.")
         except Exception as error:
             LOGS.exception(error)
             LOGS.info("Invalid SQL Database")
