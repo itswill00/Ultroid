@@ -1105,4 +1105,12 @@ async def ocr_space(file_path, api_key="helloworld", language="eng"):
         pass
     return None
 
+def encode_image_base64(file_path):
+    """
+    Encode image file to base64 string
+    """
+    import base64
+    with open(file_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
+
 # --------- END --------- #

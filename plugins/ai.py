@@ -1,17 +1,18 @@
-# Ultroid - Groq AI Plugin
-# High-Performance Inference Engine
+# Ultroid - Unified AI Plugin (Text + Vision)
+# Powered by Groq LPU™ Inference Engine
 
+import os
 from . import ultroid_cmd, eor, udB, LOGS
 from pyUltroid.fns.helper import async_searcher
+from pyUltroid.fns.tools import encode_image_base64
 
 GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
-OCR_API_KEY = udB.get_key("OCR_API_KEY") or "helloworld"
 
 # Simple in-memory chat history (sliding window of 5 messages)
 CHAT_HISTORY = {}
 
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
-async def groq_ai(e):
+async def unified_ai(e):
     if not GROQ_API_KEY:
         return await eor(e, "`GROQ_API_KEY` is not set in environment.")
     
@@ -19,19 +20,25 @@ async def groq_ai(e):
     reply = await e.get_reply_message()
     chat_id = e.chat_id
     
-    image_text = ""
+    image_b64 = None
     msg = None
+    model = "llama-3.3-70b-versatile" # Default text model
     
-    # Check if reply is image/document for OCR integration
+    # Check if reply is image/document for Vision integration
     if reply and (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
-        from pyUltroid.fns.tools import ocr_space
-        import os
-        msg = await eor(e, "`Extracting text from image...`")
+        msg = await eor(e, "`Analyzing image...`")
         dl = await reply.download_media("temp/")
         try:
-            image_text = await ocr_space(dl, api_key=OCR_API_KEY)
-            if not image_text:
-                await msg.edit("`Failed to extract text from image. Proceeding with query only.`")
+            # Check file size (Groq limit is 4MB)
+            if os.path.getsize(dl) > 4 * 1024 * 1024:
+                await msg.edit("`Image too large (>4MB). Please compress it.`")
+                return os.remove(dl)
+            
+            image_b64 = encode_image_base64(dl)
+            model = "llama-3.2-90b-vision-preview" # Switch to Vision model
+        except Exception as er:
+            LOGS.exception(er)
+            await msg.edit(f"`Vision Error: {str(er)}`")
         finally:
             if os.path.exists(dl):
                 os.remove(dl)
@@ -39,24 +46,19 @@ async def groq_ai(e):
     if not query and reply and reply.text:
         query = reply.text
     
-    # Build Prompt
-    full_prompt = query
-    if image_text:
-        full_prompt = f"IMAGE TEXT:\n{image_text}\n\nUSER QUERY:\n{query}" if query else f"Analyze this image text:\n{image_text}"
-        
-    if not full_prompt:
+    if not query and not image_b64:
         return await eor(e, "`Provide a query or reply to a message/image.`")
     
     if not msg:
-        msg = await eor(e, "`Inference in progress...`")
+        msg = await eor(e, "`Processing request...`")
     else:
-        await msg.edit("`Thinking with context...`")
+        await msg.edit("`Thinking...`")
     
     # Initialize history for this chat
     if chat_id not in CHAT_HISTORY:
         CHAT_HISTORY[chat_id] = []
         
-    # Enhanced Expert System Prompt
+    # Expert System Prompt
     system_prompt = (
         "You are Ultroid Optimized, a high-end technical system architect and professional assistant. "
         "Respond in the same language as the user. "
@@ -66,22 +68,41 @@ async def groq_ai(e):
         "Prioritize accuracy and deep technical insight above all else."
     )
     
+    # Construct Content
+    content = []
+    if query:
+        content.append({"type": "text", "text": query})
+    elif image_b64:
+        content.append({"type": "text", "text": "Describe this image technically and answer any implied questions."})
+    
+    if image_b64:
+        content.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/jpeg;base64,{image_b64}"
+            }
+        })
+
     # Prepare messages with history
     messages = [{"role": "system", "content": system_prompt}]
     for hist in CHAT_HISTORY[chat_id]:
-        messages.append(hist)
-    messages.append({"role": "user", "content": full_prompt})
+        # Vision models sometimes have trouble with mixed history types, 
+        # so we keep history as text-only for stability in this minimalist version.
+        if isinstance(hist["content"], str):
+            messages.append(hist)
+            
+    messages.append({"role": "user", "content": content})
     
-    # Minimalist technical headers
+    # Headers
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
     
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": model,
         "messages": messages,
-        "temperature": 0.3
+        "temperature": 0.2
     }
     
     try:
@@ -96,23 +117,23 @@ async def groq_ai(e):
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
             
-            # Refined technical formatting
+            # Formatting for clean output
             input_display = ""
-            if image_text:
-                input_display += f"**IMAGE:**\n> `{image_text[:150]}{'...' if len(image_text) > 150 else ''}`\n"
+            if image_b64:
+                input_display += "**VISUAL CONTEXT DETECTED**\n"
             if query:
                 input_display += f"**QUERY:**\n> {query}\n"
+            elif not input_display and reply and reply.text:
+                input_display = f"**REPLY:**\n> {reply.text[:100]}...\n"
             
-            if not input_display and reply and reply.text:
-                 input_display = f"**REPLY:**\n> {reply.text[:150]}...\n"
-                 
-            formatted_res = f"{input_display}\n---\n**RESULT:**\n\n{ans}"
+            divider = "\n---\n" if input_display else ""
+            formatted_res = f"{input_display}{divider}**RESULT:**\n\n{ans}"
             await msg.edit(formatted_res)
             
-            # Update history (keep last 5 interactions)
-            CHAT_HISTORY[chat_id].append({"role": "user", "content": full_prompt})
+            # Update history (keep last 5 interactions, text-only)
+            CHAT_HISTORY[chat_id].append({"role": "user", "content": query or "[Visual Inquiry]"})
             CHAT_HISTORY[chat_id].append({"role": "assistant", "content": ans})
-            if len(CHAT_HISTORY[chat_id]) > 10:  # 5 pairs
+            if len(CHAT_HISTORY[chat_id]) > 10:
                 CHAT_HISTORY[chat_id] = CHAT_HISTORY[chat_id][-10:]
         else:
             err = response.get("error", {}).get("message") or "Unknown API error"
@@ -123,9 +144,10 @@ async def groq_ai(e):
         await msg.edit(f"`Error: {str(er)}`")
 
 __doc__ = """
-**AI Assistant (Groq)**
+**Unified AI Assistant (Groq)**
 
-- `.ai <query>`: Get a fast AI response.
-- `.chat <query>`: Same as .ai.
-- Works as a reply to text messages.
+- `.ai <query>`: Fast AI response.
+- `.ai` (reply to image): Native Computer Vision analysis.
+- `.ai` (reply to text): Context-aware chat.
+- Uses Llama 3.3 70B for text and Llama 3.2 90B for Vision.
 """
