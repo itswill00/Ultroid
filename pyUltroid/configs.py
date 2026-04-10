@@ -17,39 +17,59 @@ except ImportError:
     pass
 
 
+def _env(key, default=None, cast=None):
+    """
+    Safe wrapper around decouple.config().
+    Treats empty string values as if the key was not set (falls back to default).
+    Catches cast errors (e.g. int('')) gracefully — prevents crash when
+    .env has keys set to empty string (e.g. API_ID=).
+    """
+    try:
+        raw = config(key, default=None)
+        if raw is None or (isinstance(raw, str) and not raw.strip()):
+            return default
+        if cast:
+            return cast(raw.strip())
+        return raw.strip() if isinstance(raw, str) else raw
+    except (ValueError, TypeError):
+        return default
+
+
 class Var:
     # mandatory
     API_ID = (
-        int(sys.argv[1]) if len(sys.argv) > 1 else config("API_ID", default=6, cast=int)
+        int(sys.argv[1]) if len(sys.argv) > 1 else _env("API_ID", default=6, cast=int)
     )
     API_HASH = (
         sys.argv[2]
         if len(sys.argv) > 2
-        else config("API_HASH", default="eb06d4abfb49dc3eeb1aeb98ae0f581e")
+        else _env("API_HASH", default="eb06d4abfb49dc3eeb1aeb98ae0f581e")
     )
-    SESSION = sys.argv[3] if len(sys.argv) > 3 else config("SESSION", default=None)
+    SESSION = sys.argv[3] if len(sys.argv) > 3 else _env("SESSION", default=None)
     REDIS_URI = (
         sys.argv[4]
         if len(sys.argv) > 4
-        else (config("REDIS_URI", default=None) or config("REDIS_URL", default=None))
+        else (_env("REDIS_URI", default=None) or _env("REDIS_URL", default=None))
     )
     REDIS_PASSWORD = (
-        sys.argv[5] if len(sys.argv) > 5 else config("REDIS_PASSWORD", default=None)
+        sys.argv[5] if len(sys.argv) > 5 else _env("REDIS_PASSWORD", default=None)
     )
     # extras
-    BOT_TOKEN = config("BOT_TOKEN", default=None)
-    LOG_CHANNEL = config("LOG_CHANNEL", default=0, cast=int)
-    HEROKU_APP_NAME = config("HEROKU_APP_NAME", default=None)
-    HEROKU_API = config("HEROKU_API", default=None)
-    VC_SESSION = config("VC_SESSION", default=None)
-    ADDONS = config("ADDONS", default=False, cast=bool)
-    VCBOT = config("VCBOT", default=False, cast=bool)
+    BOT_TOKEN = _env("BOT_TOKEN", default=None)
+    LOG_CHANNEL = _env("LOG_CHANNEL", default=0, cast=int)
+    HEROKU_APP_NAME = _env("HEROKU_APP_NAME", default=None)
+    HEROKU_API = _env("HEROKU_API", default=None)
+    VC_SESSION = _env("VC_SESSION", default=None)
+    ADDONS = _env("ADDONS", default=False, cast=lambda v: v.lower() in ("true", "1", "yes"))
+    VCBOT = _env("VCBOT", default=False, cast=lambda v: v.lower() in ("true", "1", "yes"))
     # for railway
-    REDISPASSWORD = config("REDISPASSWORD", default=None)
-    REDISHOST = config("REDISHOST", default=None)
-    REDISPORT = config("REDISPORT", default=None)
-    REDISUSER = config("REDISUSER", default=None)
+    REDISPASSWORD = _env("REDISPASSWORD", default=None)
+    REDISHOST = _env("REDISHOST", default=None)
+    REDISPORT = _env("REDISPORT", default=None)
+    REDISUSER = _env("REDISUSER", default=None)
     # for sql
-    DATABASE_URL = config("DATABASE_URL", default=None)
+    DATABASE_URL = _env("DATABASE_URL", default=None)
     # for MONGODB users
-    MONGO_URI = config("MONGO_URI", default=None)
+    MONGO_URI = _env("MONGO_URI", default=None)
+    # extra
+    TGDB_URL = _env("TGDB_URL", default=None)
