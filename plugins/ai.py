@@ -136,6 +136,8 @@ async def unified_ai(e):
                 "llama-3.1-8b-instant": "Llama 3.1 8B",
             }
             short_model = model_map.get(model.split('-17b')[0], model.split('/')[-1])
+            # Generate display text for the input
+            input_text = query or ("[Image Analysis]" if image_b64 else "[Reply Context]")
             
             # Double Box Technical Layout
             out = f"**In:**\n```{input_text}```\n"
