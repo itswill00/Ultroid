@@ -123,16 +123,18 @@ async def unified_ai(e):
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
             
-            # Optimized Technical Layout
+            # Measurement for duration already handled
+            duration = round(time.time() * 1000 - start_time)
+            
+            # Sanitize answer for nested code blocks (Telegram limitation)
+            # We replace triple backticks inside the answer to avoid breaking the outer block
+            sanitized_ans = ans.replace("```", "'''")
+            
             input_text = query or (image_text[:50] + "..." if image_text else "Visual Analysis")
             
-            # Using Blockquote for the output to create a clean 'boxed' look 
-            # while allowing nested markdown to render correctly.
-            out = f"**In:**\n```text\n{input_text}\n```\n"
-            out += f"**Out:**\n"
-            # Prefixing every line of 'ans' with '>' for a continuous blockquote look
-            quoted_ans = "\n".join([f"> {line}" for line in ans.split("\n")])
-            out += f"{quoted_ans}\n\n"
+            # Double Box Technical Layout
+            out = f"**In:**\n```{input_text}```\n"
+            out += f"**Out:**\n```{sanitized_ans}```\n"
             out += f"---\n"
             out += f"**Model:** `{model.split('/')[-1]}` | **Time:** `{duration}ms`"
             
