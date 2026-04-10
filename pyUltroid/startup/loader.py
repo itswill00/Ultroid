@@ -24,13 +24,16 @@ def _after_load(loader, module, plugin_name=""):
     if not module or plugin_name.startswith("_"):
         return
     
+    # Clean plugin name: remove path and .py extension
+    p_name = plugin_name.split("/")[-1].split("\\")[-1].replace(".py", "")
+    
     # Ensure key exists in global HELP
     key = loader.key
     if key not in HELP:
         HELP[key] = {}
     
     # Store plugin in HELP for counting and reference
-    HELP[key][plugin_name] = module.__doc__ or "No description available."
+    HELP[key][p_name] = module.__doc__ or "No description available."
 
 
 def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
