@@ -116,6 +116,7 @@ class MongoDB(_BaseDatabase):
     def __init__(self, key, dbname="UltroidDB"):
         self.dB = MongoClient(key, serverSelectionTimeoutMS=5000)
         self.db = self.dB[dbname]
+        self.coll = self.db["UltroidData"]
         super().__init__()
 
     def __repr__(self):
@@ -134,20 +135,17 @@ class MongoDB(_BaseDatabase):
             return True
 
     def keys(self):
-        return self.db.list_collection_names()
+        return [x["_id"] for x in self.coll.find({}, {"_id": 1})]
 
     def set(self, key, value):
-        if key in self.keys():
-            self.db[key].replace_one({"_id": key}, {"value": str(value)})
-        else:
-            self.db[key].insert_one({"_id": key, "value": str(value)})
+        self.coll.replace_one({"_id": key}, {"_id": key, "value": str(value)}, upsert=True)
         return True
 
     def delete(self, key):
-        self.db.drop_collection(key)
+        self.coll.delete_one({"_id": key})
 
     def get(self, key):
-        if x := self.db[key].find_one({"_id": key}):
+        if x := self.coll.find_one({"_id": key}):
             return x["value"]
 
     def flushall(self):
@@ -165,8 +163,6 @@ class MongoDB(_BaseDatabase):
 
 
 class SqlDB(_BaseDatabase):
-    _VALID_KEY = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]{0,62}$')
-
     def __init__(self, url):
         self._url = url
         self._connection = None
@@ -175,8 +171,9 @@ class SqlDB(_BaseDatabase):
             self._connection = psycopg2.connect(dsn=url)
             self._connection.autocommit = True
             self._cursor = self._connection.cursor()
+            # Migration logic/Initial Table
             self._cursor.execute(
-                "CREATE TABLE IF NOT EXISTS Ultroid (ultroidCli varchar(70))"
+                "CREATE TABLE IF NOT EXISTS UltroidData (key_name TEXT PRIMARY KEY, value_data TEXT)"
             )
         except Exception as error:
             LOGS.exception(error)
@@ -186,11 +183,6 @@ class SqlDB(_BaseDatabase):
             sys.exit()
         super().__init__()
 
-    def _validate_key(self, key):
-        if not self._VALID_KEY.match(str(key)):
-            raise ValueError(f"Invalid database key name: {key!r}")
-        return str(key)
-
     @property
     def name(self):
         return "SQL"
@@ -198,58 +190,38 @@ class SqlDB(_BaseDatabase):
     @property
     def usage(self):
         self._cursor.execute(
-            "SELECT pg_size_pretty(pg_relation_size('Ultroid')) AS size"
+            "SELECT pg_size_pretty(pg_total_relation_size('UltroidData')) AS size"
         )
         data = self._cursor.fetchall()
-        return int(data[0][0].split()[0])
+        return data[0][0]
 
     def keys(self):
-        self._cursor.execute(
-            "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name  = 'ultroid'"
-        )  # case sensitive
+        self._cursor.execute("SELECT key_name FROM UltroidData")
         data = self._cursor.fetchall()
         return [_[0] for _ in data]
 
     def get(self, variable):
-        variable = self._validate_key(variable)
-        try:
-            self._cursor.execute(f"SELECT {variable} FROM Ultroid")
-        except psycopg2.errors.UndefinedColumn:
-            return None
-        data = self._cursor.fetchall()
-        if not data:
-            return None
-        if len(data) >= 1:
-            for i in data:
-                if i[0]:
-                    return i[0]
+        self._cursor.execute("SELECT value_data FROM UltroidData WHERE key_name = %s", (str(variable),))
+        data = self._cursor.fetchone()
+        return data[0] if data else None
 
     def set(self, key, value):
-        key = self._validate_key(key)
-        try:
-            self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN IF EXISTS {key}")
-        except (psycopg2.errors.UndefinedColumn, psycopg2.errors.SyntaxError):
-            pass
-        except BaseException as er:
-            LOGS.exception(er)
         self._cache.update({key: value})
-        self._cursor.execute(f"ALTER TABLE Ultroid ADD {key} TEXT")
-        self._cursor.execute(f"INSERT INTO Ultroid ({key}) values (%s)", (str(value),))
+        self._cursor.execute(
+            "INSERT INTO UltroidData (key_name, value_data) VALUES (%s, %s) ON CONFLICT (key_name) DO UPDATE SET value_data = EXCLUDED.value_data",
+            (str(key), str(value)),
+        )
         return True
 
     def delete(self, key):
-        key = self._validate_key(key)
-        try:
-            self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN {key}")
-        except psycopg2.errors.UndefinedColumn:
-            return False
+        self._cursor.execute("DELETE FROM UltroidData WHERE key_name = %s", (str(key),))
         return True
 
     def flushall(self):
         self._cache.clear()
-        self._cursor.execute("DROP TABLE Ultroid")
+        self._cursor.execute("DROP TABLE UltroidData")
         self._cursor.execute(
-            "CREATE TABLE IF NOT EXISTS Ultroid (ultroidCli varchar(70))"
+            "CREATE TABLE IF NOT EXISTS UltroidData (key_name TEXT PRIMARY KEY, value_data TEXT)"
         )
         return True
 
