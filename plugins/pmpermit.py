@@ -114,11 +114,20 @@ def update_pm(userid, message, warns_given):
         pass
 
 
+def do_cleanup(uid):
+    """Thoroughly remove user data from RAM after final state is reached."""
+    # We don't remove from _to_delete here because it's handled by delete_pm_warn_msgs
+    # or should be cleaned separately if we want to preserve 'edit' capability
+    for d in [COUNT_PM, LASTMSG, WARN_MSGS, U_WARNS, _not_approved, _to_delete]:
+        d.pop(uid, None)
+
+
 async def delete_pm_warn_msgs(chat: int):
     try:
         await _to_delete[chat].delete()
-    except KeyError:
+    except Exception:
         pass
+    _to_delete.pop(chat, None)
 
 
 # =================================================================
@@ -226,6 +235,7 @@ if udB.get_key("PMSETTING"):
                 )
             except MessageNotModifiedError:
                 pass
+            do_cleanup(miss.id)
 
     @ultroid_bot.on(
         events.NewMessage(
@@ -403,22 +413,15 @@ if udB.get_key("PMSETTING"):
             if COUNT_PM[user.id] >= WARNS:
                 await delete_pm_warn_msgs(user.id)
                 _to_delete[user.id] = await event.respond(UNS)
-                try:
-                    del COUNT_PM[user.id]
-                    del LASTMSG[user.id]
-                except KeyError:
-                    await asst.send_message(
-                        udB.get_key("LOG_CHANNEL"),
-                        "PMPermit is messed! Pls restart the bot!!",
-                    )
-                    return LOGS.info("COUNT_PM is messed.")
+                do_cleanup(user.id)
                 await ultroid_bot(BlockRequest(user.id))
                 await ultroid_bot(ReportSpamRequest(peer=user.id))
                 await asst.edit_message(
                     udB.get_key("LOG_CHANNEL"),
-                    _not_approved[user.id],
+                    _not_approved.get(user.id, 0), # use get to avoid issues if already cleaned
                     f"**{mention}** [`{user.id}`] was Blocked for spamming.",
                 )
+                do_cleanup(user.id) # Final cleanup after logging
 
     @ultroid_cmd(pattern="(start|stop|clear)archive$", fullsudo=True)
     async def _(e):
@@ -491,6 +494,7 @@ if udB.get_key("PMSETTING"):
                 )
             except MessageNotModifiedError:
                 pass
+            do_cleanup(user.id)
         else:
             await apprvpm.eor("`User may already be approved.`", time=5)
 
@@ -586,6 +590,7 @@ async def blockpm(block):
         )
     except MessageNotModifiedError:
         pass
+    do_cleanup(user)
 
 
 @ultroid_cmd(pattern="unblock( (.*)|$)", fullsudo=True)
@@ -711,6 +716,7 @@ async def apr_in(event):
             parse_mode="html",
         )
         await delete_pm_warn_msgs(uid)
+        do_cleanup(uid)
         await event.answer("Approved.", alert=True)
     else:
         await event.edit(
@@ -782,6 +788,7 @@ async def blck_in(event):
         buttons=Button.inline("UnBlock", data=f"unblock_{uid}"),
         parse_mode="html",
     )
+    do_cleanup(uid)
     await event.answer("Blocked.", alert=True)
 
 
