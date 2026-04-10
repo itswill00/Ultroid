@@ -61,7 +61,7 @@ SUP_BUTTONS = [
 @in_pattern(owner=True, func=lambda x: not x.text)
 async def inline_alive(o):
     TLINK = inline_pic() or "https://graph.org/file/74d6259983e0642923fdb.jpg"
-    MSG = "• **KODA Technical Interface •**"
+    MSG = "• **Ultroid Optimized Interface •**"
     WEB0 = InputWebDocument(
         "https://graph.org/file/acd4f5d61369f74c5e7a7.jpg", 0, "image/jpg", []
     )
@@ -71,7 +71,7 @@ async def inline_alive(o):
             text=MSG,
             include_media=True,
             buttons=SUP_BUTTONS,
-            title="KODA Userbot",
+            title="Ultroid Optimized",
             description="Technical System | High Performance",
             url=TLINK,
             thumb=WEB0,
@@ -82,7 +82,7 @@ async def inline_alive(o):
         RES,
         private=True,
         cache_time=300,
-        switch_pm="💠 KODA SYSTEM PORTAL",
+        switch_pm="💠 ULTROID SYSTEM PORTAL",
         switch_pm_param="start",
     )
 
