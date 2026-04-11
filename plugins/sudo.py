@@ -23,9 +23,8 @@
 
 from telethon.tl.types import User
 
-from pyUltroid._misc import sudoers
-
-from . import get_string, inline_mention, udB, ultroid_bot, ultroid_cmd
+from pyUltroid._misc import SUDO_M, refresh_all, sudoers
+from . import OWNER_NAME, get_string, inline_mention, udB, ultroid_bot, ultroid_cmd
 
 
 @ultroid_cmd(pattern="addsudo( (.*)|$)", fullsudo=True)
@@ -64,7 +63,55 @@ async def _(ult):
         key = sudoers()
         key.append(id)
         udB.set_key("SUDOS", key)
+        refresh_all()
         mmm = f"**Added** {name} **as SUDO User**"
+    await ult.eor(mmm, time=5)
+
+
+@ultroid_cmd(pattern="addfullsudo( (.*)|$)", fullsudo=True)
+async def _(ult):
+    # Only the real owner can add fullsudos
+    if ult.sender_id != ultroid_bot.uid:
+        return await ult.eor("`Only the Account Owner can manage Full Sudoers.`", time=5)
+
+    inputs = ult.pattern_match.group(1).strip()
+    if ult.reply_to_msg_id:
+        replied_to = await ult.get_reply_message()
+        id = replied_to.sender_id
+        name = await replied_to.get_sender()
+    elif inputs:
+        try:
+            id = await ult.client.parse_id(inputs)
+        except ValueError:
+            try:
+                id = int(inputs)
+            except ValueError:
+                id = inputs
+        try:
+            name = await ult.client.get_entity(int(id))
+        except BaseException:
+            name = None
+    else:
+        return await ult.eor("`Reply to a user or provide ID to add as Full Sudo.`", time=5)
+
+    if name and isinstance(name, User) and (name.bot or name.verified):
+        return await ult.eor(get_string("sudo_4"))
+    
+    name = inline_mention(name) if name else f"`{id}`"
+    full_sudos = SUDO_M.fullsudos
+    
+    if id == ultroid_bot.uid:
+        mmm = "`You are the owner, you already have full access.`"
+    elif id in full_sudos:
+        mmm = f"{name} `is already a Full Sudo User.`"
+    else:
+        key = udB.get_key("FULLSUDO") or []
+        if isinstance(key, str):
+            key = [int(x) for x in key.split()]
+        key.append(id)
+        udB.set_key("FULLSUDO", key)
+        refresh_all()
+        mmm = f"**Elevated** {name} **to Full SUDO Access.**"
     await ult.eor(mmm, time=5)
 
 
@@ -99,7 +146,51 @@ async def _(ult):
         key = sudoers()
         key.remove(id)
         udB.set_key("SUDOS", key)
+        refresh_all()
         mmm = f"**Removed** {name} **from SUDO User(s)**"
+    await ult.eor(mmm, time=5)
+
+
+@ultroid_cmd(pattern="delfullsudo( (.*)|$)", fullsudo=True)
+async def _(ult):
+    if ult.sender_id != ultroid_bot.uid:
+        return await ult.eor("`Only the Account Owner can manage Full Sudoers.`", time=5)
+
+    inputs = ult.pattern_match.group(1).strip()
+    if ult.reply_to_msg_id:
+        replied_to = await ult.get_reply_message()
+        id = replied_to.sender_id
+        name = await replied_to.get_sender()
+    elif inputs:
+        try:
+            id = await ult.client.parse_id(inputs)
+        except ValueError:
+            try:
+                id = int(inputs)
+            except ValueError:
+                id = inputs
+        try:
+            name = await ult.client.get_entity(int(id))
+        except BaseException:
+            name = None
+    else:
+        return await ult.eor("`Reply to a user or provide ID to remove from Full Sudo.`", time=5)
+
+    name = inline_mention(name) if name else f"`{id}`"
+    full_sudos = SUDO_M.fullsudos
+    if id not in full_sudos:
+        mmm = f"{name} `is not a Full Sudo User.`"
+    elif id == ultroid_bot.uid:
+        mmm = "`You cannot remove yourself from Full Sudo.`"
+    else:
+        key = udB.get_key("FULLSUDO") or []
+        if isinstance(key, str):
+            key = [int(x) for x in key.split()]
+        if id in key:
+            key.remove(id)
+        udB.set_key("FULLSUDO", key)
+        refresh_all()
+        mmm = f"**Demoted** {name} **from Full SUDO Access.**"
     await ult.eor(mmm, time=5)
 
 
@@ -109,23 +200,37 @@ async def _(ult):
 )
 async def _(ult):
     sudos = sudoers()
-    if not sudos:
+    fullsudos = SUDO_M.fullsudos
+    if not sudos and len(fullsudos) <= 1:
         return await ult.eor(get_string("sudo_3"), time=5)
-    msg = ""
-    for i in sudos:
+    
+    msg = f"• {inline_mention(ultroid_bot.me)} ( `{ultroid_bot.uid}` ) [ **OWNER** ]\n"
+    
+    # Process Full Sudoers first
+    for i in fullsudos:
+        if i == ultroid_bot.uid:
+            continue
         try:
             name = await ult.client.get_entity(int(i))
         except BaseException:
             name = None
-        if name:
-            msg += f"• {inline_mention(name)} ( `{i}` )\n"
-        else:
-            msg += f"• `{i}` -> Invalid User\n"
+        n = inline_mention(name) if name else f"`{i}`"
+        msg += f"• {n} ( `{i}` ) [ **FULL SUDO** ]\n"
+
+    # Process Normal Sudoers
+    for i in sudos:
+        if i in fullsudos:
+            continue
+        try:
+            name = await ult.client.get_entity(int(i))
+        except BaseException:
+            name = None
+        n = inline_mention(name) if name else f"`{i}`"
+        msg += f"• {n} ( `{i}` ) [ **SUDO** ]\n"
+
     m = udB.get_key("SUDO") or True
-    if not m:
-        m = "[False](https://graph.org/Ultroid-04-06)"
     return await ult.eor(
-        f"**SUDO MODE : {m}\n\nList of SUDO Users :**\n{msg}", link_preview=False
+        f"**SUDO MODE : {m}\n\nList of Authorized Users :**\n{msg}", link_preview=False
     )
 
 
