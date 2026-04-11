@@ -5,11 +5,12 @@ import os
 import re
 import time
 import asyncio
+from pyUltroid import asst, udB, LOGS, owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE
 from pyUltroid.fns.helper import humanbytes, time_formatter
 from pyUltroid.fns.admins import admin_check
-from . import asst, asst_cmd, udB, owner_and_sudos, LOGS
+from pyUltroid._misc._assistant import asst_cmd
 
 # Database Manager for Disabled Chats
 # We store 'disabled' chats so the default is 'enabled'
