@@ -122,31 +122,75 @@ async def YtDataScraper(url: str):
 
 
 async def google_search(query):
-    query = query.replace(" ", "+")
-    _base = "https://google.com"
+    """Perform a web search using Google (with DuckDuckGo fallback)."""
+    from urllib.parse import unquote
+    
+    clean_query = query.replace(" ", "+")
     headers = {
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
         "User-Agent": choice(some_random_headers),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
-    con = await async_searcher(_base + "/search?q=" + query, headers=headers)
-    soup = BeautifulSoup(con, "html.parser")
-    result = []
-    pdata = soup.find_all("a", href=re.compile("url="))
-    for data in pdata:
-        if not data.find("div"):
-            continue
-        try:
-            result.append(
-                {
-                    "title": data.find("div").text,
-                    "link": data["href"].split("&url=")[1].split("&ved=")[0],
-                    "description": data.find_all("div")[-1].text,
-                }
-            )
-        except BaseException as er:
-            LOGS.exception(er)
-    return result
+    
+    # Try Google First
+    try:
+        con = await async_searcher(f"https://www.google.com/search?q={clean_query}&hl=en", headers=headers)
+        soup = BeautifulSoup(con, "html.parser")
+        result = []
+        # Modern Google parsing (h3 for titles, nested divs for description)
+        for g in soup.find_all('div', class_='g'):
+            anchors = g.find_all('a')
+            if anchors:
+                link = anchors[0]['href']
+                title = g.find('h3')
+                # Skip internal google links
+                if link.startswith('/search?') or not title:
+                    continue
+                # Description usually in VwiC3b or similar, but we check last div with text
+                desc_div = g.find('div', class_='VwiC3b') or g.find_all('div')[-1]
+                result.append({
+                    "title": title.text,
+                    "link": link,
+                    "description": desc_div.text if desc_div else "No description."
+                })
+        
+        # Original fallback parsing if class-based fails
+        if not result:
+            pdata = soup.find_all("a", href=re.compile("url="))
+            for data in pdata:
+                if not data.find("div"): continue
+                try:
+                    link = data["href"].split("&url=")[1].split("&ved=")[0]
+                    result.append({
+                        "title": data.find("h3").text if data.find("h3") else data.find("div").text,
+                        "link": unquote(link),
+                        "description": data.find_all("div")[-1].text,
+                    })
+                except Exception: continue
+                
+        if result:
+             return result[:8]
+    except Exception as e:
+        LOGS.warning(f"Google search failed: {e}")
+
+    # Fallback to DuckDuckGo (HTML version)
+    try:
+        ddg_url = f"https://html.duckduckgo.com/html/?q={clean_query}"
+        con = await async_searcher(ddg_url, headers=headers)
+        soup = BeautifulSoup(con, "html.parser")
+        result = []
+        for r in soup.find_all('div', class_='result'):
+            title_a = r.find('a', class_='result__a')
+            desc = r.find('a', class_='result__snippet')
+            if title_a and desc:
+                result.append({
+                    "title": title_a.text.strip(),
+                    "link": unquote(title_a['href']),
+                    "description": desc.text.strip()
+                })
+        return result[:8]
+    except Exception as e:
+        LOGS.exception(e)
+        return []
 
 
 # ----------------------------------------------------

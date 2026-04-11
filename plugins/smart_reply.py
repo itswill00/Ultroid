@@ -9,6 +9,11 @@
 
 • `{i}ask <question>`
     Ask anything to the AI (via Groq API). Requires GROQ_API_KEY in .env.
+    Use `--search` or `-s` to enable real-time web research.
+    Example: `.ask --search Who is the current CEO of Tesla?`
+
+• `{i}search <query>`
+    Perform a direct web search and view the top results.
 
 • `{i}summarize`
     Reply to a message to get a concise AI-generated summary.
@@ -25,7 +30,8 @@
 import os
 from datetime import datetime
 
-from . import udB, ultroid_cmd, LOGS
+from . import udB, ultroid_cmd, LOGS, HNDLR
+from pyUltroid.fns.misc import google_search
 
 help_smart_reply = __doc__
 
@@ -87,6 +93,14 @@ async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
 @ultroid_cmd(pattern="ask( (.*)|$)")
 async def ask_ai(e):
     question = e.pattern_match.group(1).strip()
+    use_search = False
+    
+    if question.startswith("--search "):
+        use_search = True
+        question = question.replace("--search ", "", 1).strip()
+    elif question.startswith("-s "):
+        use_search = True
+        question = question.replace("-s ", "", 1).strip()
 
     # Accept question from replied message if not provided inline
     if not question:
@@ -104,17 +118,46 @@ async def ask_ai(e):
         )
 
     xx = await e.eor("`[AI] Processing...`")
-    result = await _call_groq(question)
+    
+    context = ""
+    sources = []
+    if use_search:
+        await xx.edit("`[AI] Searching web for context...`")
+        results = await google_search(question)
+        if results:
+            context = "Here is some real-time context from the web:\n"
+            for r in results[:4]:
+                context += f"- {r['title']}: {r['description']}\n"
+                sources.append(r['link'])
+            
+            system_prompt = (
+                "You are a precise, technical assistant with access to real-time web search results. "
+                "Use the provided context to answer the user's question accurately. "
+                "If the context is irrelevant, rely on your core knowledge but prioritize real-time data for current events."
+            )
+            prompt = f"CONTEXT:\n{context}\n\nUSER QUESTION: {question}"
+            result = await _call_groq(prompt, system=system_prompt)
+        else:
+             await xx.edit("`[AI] Search returned no results. Falling back to core knowledge...`")
+             result = await _call_groq(question)
+    else:
+        result = await _call_groq(question)
 
     if not result:
         return await xx.edit("`[AI] No response from AI. Check your API key.`")
 
     model = _get_model()
-    await xx.edit(
-        f"**Question:** {question[:200]}\n\n"
-        f"**Answer:**\n{result}\n\n"
-        f"`Model: {model}`"
-    )
+    output = f"**Question:** {question[:200]}\n\n"
+    output += f"**Answer:**\n{result}\n\n"
+    
+    if sources:
+        output += "**Sources:**\n"
+        for s in sources[:3]:
+            output += f"• {s}\n"
+        output += "\n"
+        
+    output += f"`Model: {model}`"
+    await xx.edit(output, link_preview=False)
 
 
 @ultroid_cmd(pattern="summarize$")
@@ -193,3 +236,23 @@ async def set_ai_model(e):
 
     udB.set_key(_MODEL_KEY, model)
     await e.eor(f"`[AI] Model switched to: {model}`")
+
+
+@ultroid_cmd(pattern="search( (.*)|$)")
+async def web_search(e):
+    query = e.pattern_match.group(1).strip()
+    if not query:
+        return await e.eor("`[SEARCH] Provide a query. Example: .search Space X Launch`")
+
+    xx = await e.eor("`[SEARCH] Researching...`")
+    results = await google_search(query)
+    
+    if not results:
+        return await xx.edit("`[SEARCH] No results found for your query.`")
+    
+    output = f"🖥 **Web Search Results**\n`Query: {query}`\n\n"
+    for i, r in enumerate(results[:5], 1):
+        output += f"{i}. **[{r['title']}]({r['link']})**\n"
+        output += f"   `{r['description'][:150]}...`\n\n"
+    
+    await xx.edit(output, link_preview=False)
