@@ -4,20 +4,24 @@
 import os
 import re
 import time
+import uuid
 import asyncio
 from telethon import Button
-from pyUltroid import asst, udB, LOGS
-from pyUltroid._misc import owner_and_sudos
+from pyUltroid import asst, udB, LOGS, owner_and_sudos, _ult_cache
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE
 from pyUltroid.fns.helper import humanbytes, time_formatter
 from pyUltroid.fns.admins import admin_check
-from pyUltroid._misc._assistant import asst_cmd
+from pyUltroid._misc._assistant import asst_cmd, callback
 
 # Database Manager for Disabled Chats
 DisabledDL = KeyManager("DISABLED_DL_CHATS", cast=list)
 
-LOGS.info("Loading Universal Media Downloader Service...")
+# Initialize Cache for Media Downloads
+if "media_dl" not in _ult_cache:
+    _ult_cache["media_dl"] = {}
+
+LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
 # --------------------------------------------------------------------------
 # DEBUG COMMAND
@@ -60,8 +64,7 @@ async def toggle_dl_service(event):
 
 @asst_cmd(incoming=True, func=lambda e: e.is_group)
 async def auto_media_downloader(event):
-    """Listens for media links and downloads them automatically."""
-    # Ignore if service is disabled or it's a command
+    """Listens for media links and sends format selection choice."""
     if not event.text or event.text.startswith("/") or DisabledDL.contains(event.chat_id):
         return
     
@@ -72,76 +75,101 @@ async def auto_media_downloader(event):
         return
     
     url = match.group(0)
-    msg = await event.reply("`[DL] Processing media...`")
+    msg_id = str(uuid.uuid4())[:8] # Unique ID for this specific interaction
+    
+    # Cache the URL
+    _ult_cache["media_dl"][msg_id] = {
+        "url": url,
+        "sender": event.sender_id,
+        "time": time.time()
+    }
+    
+    # Determine Source
+    source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X"
+    
+    # Selection Card
+    buttons = [
+        [
+            Button.inline("🎬 Video", data=f"get_dl|video|{msg_id}"),
+            Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}")
+        ],
+        [Button.inline("🗑️ Dismiss", data="close_dl")]
+    ]
+    
+    await event.reply(
+        f"**[ {source} Detected ]**\nHow would you like to download this media?",
+        buttons=buttons
+    )
+
+# --------------------------------------------------------------------------
+# CALLBACK HANDLERS
+# --------------------------------------------------------------------------
+
+@callback(re.compile("get_dl\\|(video|audio)\\|(.*)"))
+async def process_media_selection(event):
+    """Handles format selection for media downloads."""
+    fmt = event.pattern_match.group(1).decode("utf-8")
+    msg_id = event.pattern_match.group(2).decode("utf-8")
+    
+    data = _ult_cache["media_dl"].get(msg_id)
+    if not data:
+        return await event.answer("Download prompt expired or invalid.", alert=True)
+    
+    url = data["url"]
+    await event.edit(f"`[DL] Preparing {fmt.upper()}... please wait.`")
     
     try:
         start_time = time.time()
-        # Extract metadata first
+        # Extract metadata (once more for fresh info)
         info = await extractor.extract(url)
         if not info:
-             return await msg.edit("`[DL ERROR] Failed to fetch metadata.`")
+             return await event.edit("`[DL ERROR] Failed to fetch metadata.`")
 
-        # Download media
-        files = await extractor.download(url)
+        # Start download with selected format
+        files = await extractor.download(url, format_type=fmt)
         duration = round(time.time() - start_time, 2)
         
         if not files:
-            return await msg.delete()
+            return await event.edit("`[DL ERROR] Extraction failed.`")
 
         # Determine Source and Metadata
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X"
         uploader = info.get("uploader") or info.get("uploader_id") or "Unknown"
         uploader_url = info.get("uploader_url") or url
         title = info.get("title") or info.get("description") or ""
-        # Clean title (limit length)
         if len(title) > 150: title = title[:147] + "..."
         
-        # Build Caption (Minimalist & Professional)
+        # Delivery
         caption = f"**Uploaded by [{uploader}]({uploader_url})**\n\n"
         if title:
             caption += f"`{title}`\n\n"
-        caption += f"**[ {source} ]** • `{duration}s`"
+        caption += f"**[ {source} | {fmt.upper()} ]** • `{duration}s`"
         
-        # Buttons
-        buttons = [
-            [
-                Button.url("View Original", url=url),
-                Button.inline("Share", data="share_dl")
-            ],
-            [Button.inline("🗑️ Close", data="close_dl")]
-        ]
-
-        # Filter existing files
+        # Final delivery
         valid_files = [f for f in files if os.path.exists(f)]
         if not valid_files:
-            return await msg.edit("`[DL ERROR] File download failed.`")
+            return await event.edit("`[DL ERROR] File download failed.`")
 
-        # Upload
         await event.client.send_file(
             event.chat_id,
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
-            buttons=buttons,
-            reply_to=event.id
+            reply_to=event.id,
+            buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         
         # Cleanup
         for f in valid_files:
             if os.path.exists(f): os.remove(f)
-        await msg.delete()
+        await event.delete()
+        
+        # Remove from cache after success
+        _ult_cache["media_dl"].pop(msg_id, None)
 
     except Exception as e:
-        LOGS.error(f"Media Downloader Error: {e}")
-        await msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
-
-# --------------------------------------------------------------------------
-# CALLBACKS
-# --------------------------------------------------------------------------
+        LOGS.error(f"Media Selection Error: {e}")
+        await event.edit(f"`[DL ERROR] {str(e)[:100]}`")
 
 @callback(re.compile("close_dl"))
 async def close_media(event):
     await event.delete()
-
-@callback(re.compile("share_dl"))
-async def share_media(event):
-    await event.answer("Feature coming soon: Sharing to other chats.", alert=True)
