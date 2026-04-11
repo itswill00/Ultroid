@@ -146,13 +146,23 @@ async def unified_ai(e):
             # Generate display text for the input
             input_text = query or ("[Image Analysis]" if image_b64 else "[Reply Context]")
             
-            # Double Box Technical Layout
-            out = f"**In:**\n```{input_text}```\n"
-            out += f"**Out:**\n```{sanitized_ans}```\n"
-            out += f"---\n"
-            out += f"**Model:** `{short_model}` | **Time:** `{duration}ms`"
+            # 1. Quote Layout
+            q_preview = input_text[:200].replace('\n', ' ')
+            output = f"> \"{q_preview}\"\n\n{sanitized_ans.strip()}"
             
-            await msg.edit(out, link_preview=False)
+            # 2. Telemetry Metrix & Footer
+            footer = f"\n\n`[{short_model}]` • `[{duration}ms]`"
+            
+            # 3. Smart Auto-Fallback
+            if len(output) > 1000:
+                from io import BytesIO
+                file_name = "ai_response.md"
+                with BytesIO(str.encode(output)) as out_file:
+                    out_file.name = file_name
+                    await e.reply(f"> \"{q_preview}\"{footer}", file=out_file)
+                await msg.delete()
+            else:
+                await msg.edit(output + footer, link_preview=False)
             
             # Update history (keep last 5 interactions, text-only)
             CHAT_HISTORY[chat_id].append({"role": "user", "content": query or "[Visual Inquiry]"})
