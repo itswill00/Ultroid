@@ -23,12 +23,13 @@ _main_help_menu = [
         Button.inline("ADDONS", data="uh_Addons_"),
     ],
     [
+        Button.inline("INLINE", data="inlone"),
         Button.inline("SYSTEM", data="ownr"),
-        Button.url(
-            "SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"
-        ),
     ],
-    [Button.inline("CLOSE", data="close")],
+    [
+        Button.url("SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"),
+        Button.inline("CLOSE", data="close"),
+    ],
 ]
 
 
