@@ -37,11 +37,16 @@ help_smart_reply = __doc__
 
 _DEFAULT_MODEL = "llama-3.3-70b-versatile"
 _MODEL_KEY = "GROQ_AI_MODEL"
+_PROMPT_KEY = "GROQ_SYSTEM_PROMPT"
 _MAX_TOKENS = 1024
 _SYSTEM_PROMPT = (
     "You are a precise, technical assistant. "
     "Respond concisely and directly in the same language the user writes in."
 )
+
+
+def _get_system_prompt() -> str:
+    return udB.get_key(_PROMPT_KEY) or _SYSTEM_PROMPT
 
 
 def _get_model() -> str:
@@ -121,6 +126,18 @@ async def ask_ai(e):
     
     context = ""
     sources = []
+    
+    # Audit Mode Logic
+    special_system = None
+    if "--code" in question:
+        question = question.replace("--code", "").strip()
+        special_system = (
+            "You are a Senior Systems Architect and Security Engineer. "
+            "Analyze the following code or technical problem with focus on: "
+            "1. Efficiency and Performance. 2. Security Vulnerabilities. 3. Best Practices. "
+            "Be extremely technical and rigorous."
+        )
+
     if use_search:
         await xx.edit("`[AI] Searching web for context...`")
         results = await google_search(question)
@@ -130,7 +147,7 @@ async def ask_ai(e):
                 context += f"- {r['title']}: {r['description']}\n"
                 sources.append(r['link'])
             
-            system_prompt = (
+            system_prompt = special_system or (
                 "You are a precise, technical assistant with access to real-time web search results. "
                 "Use the provided context to answer the user's question accurately. "
                 "If the context is irrelevant, rely on your core knowledge but prioritize real-time data for current events."
@@ -138,17 +155,18 @@ async def ask_ai(e):
             prompt = f"CONTEXT:\n{context}\n\nUSER QUESTION: {question}"
             result = await _call_groq(prompt, system=system_prompt)
         else:
-             await xx.edit("`[AI] Search returned no results. Falling back to core knowledge...`")
-             result = await _call_groq(question)
+            await xx.edit("`[AI] Search returned no results. Falling back to core knowledge...`")
+            result = await _call_groq(question, system=special_system or _get_system_prompt())
     else:
-        result = await _call_groq(question)
+        result = await _call_groq(question, system=special_system or _get_system_prompt())
 
     if not result:
         return await xx.edit("`[AI] No response from AI. Check your API key.`")
 
     model = _get_model()
+    header = "🛠 Engineering Audit" if special_system else "Answer"
     output = f"**Question:** {question[:200]}\n\n"
-    output += f"**Answer:**\n{result}\n\n"
+    output += f"**{header}:**\n{result}\n\n"
     
     if sources:
         output += "**Sources:**\n"
@@ -256,3 +274,55 @@ async def web_search(e):
         output += f"   `{r['description'][:150]}...`\n\n"
     
     await xx.edit(output, link_preview=False)
+
+
+@ultroid_cmd(pattern="setprompt( (.*)|$)", fullsudo=True)
+async def set_ai_prompt(e):
+    prompt = e.pattern_match.group(1).strip()
+    if not prompt:
+        current = _get_system_prompt()
+        return await e.eor(f"**Current System Prompt:**\n`{current}`")
+    
+    udB.set_key(_PROMPT_KEY, prompt)
+    await e.eor("`[AI] System prompt updated successfully.`")
+
+
+@ultroid_cmd(pattern="remprompt$", fullsudo=True)
+async def rem_ai_prompt(e):
+    udB.del_key(_PROMPT_KEY)
+    await e.eor("`[AI] System prompt reset to default.`")
+
+
+@ultroid_cmd(pattern="debug$", fullsudo=True)
+async def ai_debug(e):
+    if not _get_api_key():
+        return await e.eor("`[AI] GROQ_API_KEY is not set.`")
+
+    xx = await e.eor("`[AI] Analyzing system logs...`")
+    
+    log_file = "ultroid.log"
+    if not os.path.exists(log_file):
+        return await xx.edit("`[DEBUG] log file (ultroid.log) not found.`")
+
+    try:
+        with open(log_file, "r") as f:
+            lines = f.readlines()
+            logs = "".join(lines[-50:])
+    except Exception as err:
+        return await xx.edit(f"`[DEBUG] Error reading logs: {err}`")
+
+    prompt = (
+        "The following are the last 50 lines of a Telegram userbot's logs. "
+        "Identify any errors, tracebacks, or critical failures. "
+        "Explain what happened and provide a code fix or solution if possible.\n\n"
+        f"LOGS:\n{logs}"
+    )
+    
+    system = "You are a professional Python Debugger and Systems Engineer."
+    result = await _call_groq(prompt, system=system)
+
+    if not result:
+        return await xx.edit("`[AI] Debugger failed to analyze logs.`")
+
+    output = f"🔍 **Autonomous Log Analysis**\n\n{result}\n\n`Audit Complete.`"
+    await xx.edit(output)
