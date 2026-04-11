@@ -46,7 +46,8 @@ from telethon.tl.types import (
 from telethon.utils import get_peer_id
 from decouple import config, RepositoryEnv
 from .. import LOGS, ULTConfig
-from ..fns import KEEP_SAFE, download_file, inline_mention, updater
+from ..fns import KEEP_SAFE
+from ..fns.helper import download_file, inline_mention, updater
 
 db_url = 0
 REDIS_KEEPALIVE_KEY = "KEEP_ACTIVE"
