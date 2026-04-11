@@ -9,10 +9,6 @@ from pyUltroid.fns.tools import encode_image_base64
 
 GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
 
-# In-memory chat history (sliding window of 5 interactions per chat)
-# Hard cap: max 500 active chat sessions to prevent memory leak
-CHAT_HISTORY = {}
-_CHAT_HISTORY_MAX_SESSIONS = 500
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are Ultroid Optimized, a high-end technical system architect and professional assistant. "

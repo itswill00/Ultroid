@@ -14,6 +14,10 @@ from .. import udB, LOGS
 Bank = KeyManager("ULTROID_AI_TOKENS", cast=dict)
 Verified = KeyManager("VERIFIED_AI_USERS", cast=list)
 
+# In-Memory History (Reset on restart)
+CHAT_HISTORY = {}
+MAX_HISTORY = 10  # 5 user, 5 assistant
+
 # Constants
 STARTING_GIFT = 5000
 DEFAULT_SYSTEM_PROMPT = (
@@ -154,6 +158,13 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         # 4. Construct Messages
         messages = [{"role": "system", "content": system_prompt}]
         
+        # Inject History
+        chat_id = str(event.chat_id)
+        if chat_id not in CHAT_HISTORY:
+            CHAT_HISTORY[chat_id] = []
+        for past_msg in CHAT_HISTORY[chat_id][-MAX_HISTORY:]:
+            messages.append(past_msg)
+        
         content = []
         if query:
             content.append({"type": "text", "text": query})
@@ -172,6 +183,15 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         if not ans:
             # Re-fetch logic if it was a search query that failed
             return await msg.edit(f"`[GROQ ERROR] {usage_or_err}`")
+            
+        # Update History
+        clean_user_text = query if query else "Attached an image for analysis."
+        CHAT_HISTORY[chat_id].append({"role": "user", "content": clean_user_text})
+        CHAT_HISTORY[chat_id].append({"role": "assistant", "content": ans.strip()})
+        
+        # Prune memory
+        if len(CHAT_HISTORY[chat_id]) > MAX_HISTORY * 2:
+            CHAT_HISTORY[chat_id] = CHAT_HISTORY[chat_id][-(MAX_HISTORY * 2):]
         
         # 6. Token Deduction
         total_tokens = usage_or_err if isinstance(usage_or_err, int) else 0
