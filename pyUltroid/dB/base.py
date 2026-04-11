@@ -8,9 +8,11 @@ class KeyManager:
 
     def get(self):
         _data = udB.get_key(self._key)
+        if _data is None:
+            return self._cast() if callable(self._cast) else self._cast
         if self._cast and not isinstance(_data, self._cast):
             return [_data] if self._cast == list else self._cast(_data)
-        return _data or (self._cast() if callable(self._cast) else self._cast)
+        return _data
 
     def get_child(self, key):
         return self.get()[key]
