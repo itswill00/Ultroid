@@ -1,5 +1,15 @@
-# Ultroid - System Management Plugin
-# Optimized for Termux by itswill00
+"""
+✘ Commands Available -
+
+• `{i}cleanup`
+    Perform a manual cleanup of temporary files in downloads, temp, and cache folders.
+
+• `{i}sysstats`
+    Retrieve detailed Termux system information including battery status, uptime, disk usage, and database type.
+
+**Automated Feature:**
+- Background Auto-Cleaner: Automatically clears temporary files older than 30 minutes every hour.
+"""
 
 import os
 import shutil

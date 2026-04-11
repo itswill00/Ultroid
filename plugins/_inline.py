@@ -220,7 +220,7 @@ async def uptd_plugin(event):
     buttons.append([Button.inline("« Back", data=back_data)])
     
     try:
-        await event.edit(help_, buttons=buttons)
+        await event.edit(help_.replace("{i}", HNDLR), buttons=buttons)
     except Exception as er:
         LOGS.exception(er)
         await event.edit(f"Use `{HNDLR}help {file}` to view help.", buttons=buttons)

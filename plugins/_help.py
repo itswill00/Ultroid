@@ -44,7 +44,7 @@ async def _help(ult):
                 if HELP.get(key) and plug in HELP[key]:
                     desc = HELP[key][plug]
                     if desc and desc != "No description available.":
-                        output = f"**Plugin** - `{plug}`\n" + desc
+                        output = f"**Plugin** - `{plug}`\n" + desc.replace("{i}", HNDLR)
                         output += "\n© @TeamUltroid"
                         await ult.eor(output)
                         _help_found = True
@@ -88,7 +88,7 @@ async def _help(ult):
                         if HELP.get(key) and file in HELP[key]:
                             desc = HELP[key][file]
                             if desc and desc != "No description available.":
-                                output += desc
+                                output += desc.replace("{i}", HNDLR)
                                 break
                     else:
                         output += get_string("help_11").format(file)
