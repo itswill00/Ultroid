@@ -71,30 +71,56 @@ async def auto_media_downloader(event):
         return
     
     url = match.group(0)
-    msg = await event.reply("`[DL] Extracting media...`")
+    msg = await event.reply("`[DL] Processing media...`")
     
     try:
         start_time = time.time()
+        # Extract metadata first
+        info = await extractor.extract(url)
+        if not info:
+             return await msg.edit("`[DL ERROR] Failed to fetch metadata.`")
+
+        # Download media
         files = await extractor.download(url)
         duration = round(time.time() - start_time, 2)
         
         if not files:
             return await msg.delete()
 
-        # Determine Source
+        # Determine Source and Metadata
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X"
+        uploader = info.get("uploader") or info.get("uploader_id") or "Unknown"
+        uploader_url = info.get("uploader_url") or url
+        title = info.get("title") or info.get("description") or ""
+        # Clean title (limit length)
+        if len(title) > 150: title = title[:147] + "..."
         
+        # Build Caption (Minimalist & Professional)
+        caption = f"**Uploaded by [{uploader}]({uploader_url})**\n\n"
+        if title:
+            caption += f"`{title}`\n\n"
+        caption += f"**[ {source} ]** • `{duration}s`"
+        
+        # Buttons
+        buttons = [
+            [
+                Button.url("View Original", url=url),
+                Button.inline("Share", data="share_dl")
+            ],
+            [Button.inline("🗑️ Close", data="close_dl")]
+        ]
+
         # Filter existing files
         valid_files = [f for f in files if os.path.exists(f)]
         if not valid_files:
-            return await msg.edit("`[DL ERROR] Media extracted but file not found on server.`")
+            return await msg.edit("`[DL ERROR] File download failed.`")
 
         # Upload
-        caption = f"**[ {source} ]**\n\n`Extraction Time: {duration}s`"
         await event.client.send_file(
             event.chat_id,
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
+            buttons=buttons,
             reply_to=event.id
         )
         
@@ -106,3 +132,15 @@ async def auto_media_downloader(event):
     except Exception as e:
         LOGS.error(f"Media Downloader Error: {e}")
         await msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
+
+# --------------------------------------------------------------------------
+# CALLBACKS
+# --------------------------------------------------------------------------
+
+@callback(re.compile("close_dl"))
+async def close_media(event):
+    await event.delete()
+
+@callback(re.compile("share_dl"))
+async def share_media(event):
+    await event.answer("Feature coming soon: Sharing to other chats.", alert=True)
