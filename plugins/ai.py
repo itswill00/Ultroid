@@ -2,7 +2,7 @@
 # Powered by Groq LPU™ Inference Engine
 
 import os
-from . import udB, ultroid_cmd, LOGS, HNDLR
+from . import udB, ultroid_cmd, LOGS, HNDLR, eor
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.fns.helper import async_searcher
 from pyUltroid.fns.tools import encode_image_base64
