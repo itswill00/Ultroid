@@ -142,6 +142,28 @@ async def ultroid(event):
             )
 
 
+@asst_cmd(pattern="help$", owner=True)
+async def asst_help(event):
+    _main_help_menu = [
+        [
+            Button.inline("PLUGINS", data="uh_Official_"),
+            Button.inline("ADDONS", data="uh_Addons_"),
+        ],
+        [
+            Button.inline("INLINE", data="inlone"),
+            Button.inline("SYSTEM", data="ownr"),
+        ],
+        [
+            Button.url("SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"),
+            Button.inline("CLOSE", data="close"),
+        ],
+    ]
+    await event.reply(
+        "**[Ultroid] Panel**\nWelcome. Use the buttons below to browse the command catalog.",
+        buttons=_main_help_menu
+    )
+
+
 @callback("itkkstyo", owner=True)
 async def ekekdhdb(e):
     text = f"When New Visitor will visit your Assistant Bot. You will get this log message!\n\nTo Disable : {HNDLR}setdb OFF_START_LOG True"
