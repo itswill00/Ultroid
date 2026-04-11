@@ -19,16 +19,16 @@ from . import HNDLR, LOGS, OWNER_NAME, asst, get_string, inline_pic, udB, ultroi
 
 _main_help_menu = [
     [
-        Button.inline("• Plugins •", data="uh_Official_"),
-        Button.inline("• Addons •", data="uh_Addons_"),
+        Button.inline("PLUGINS", data="uh_Official_"),
+        Button.inline("ADDONS", data="uh_Addons_"),
     ],
     [
-        Button.inline("• Status & Core •", data="ownr"),
+        Button.inline("SYSTEM", data="ownr"),
         Button.url(
-            "• Settings •", url=f"https://t.me/{asst.me.username}?start=set"
+            "SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"
         ),
     ],
-    [Button.inline("• EXIT •", data="close")],
+    [Button.inline("CLOSE", data="close")],
 ]
 
 

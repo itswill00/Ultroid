@@ -28,7 +28,6 @@ from . import (
     asst,
     get_string,
     inline_pic,
-    split_list,
     start_time,
     udB,
 )
@@ -150,14 +149,14 @@ async def setting(event):
         link_preview=False,
         buttons=[
             [
-                Button.inline("•Pɪɴɢ•", data="pkng"),
-                Button.inline("•Uᴘᴛɪᴍᴇ•", data="upp"),
+                Button.inline("PING", data="pkng"),
+                Button.inline("UPTIME", data="upp"),
             ],
             [
-                Button.inline("•Stats•", data="alive"),
-                Button.inline("•Uᴘᴅᴀᴛᴇ•", data="doupdate"),
+                Button.inline("STATS", data="alive"),
+                Button.inline("UPDATE", data="doupdate"),
             ],
-            [Button.inline("« Bᴀᴄᴋ", data="open")],
+            [Button.inline("BACK", data="open")],
         ],
     )
 
@@ -167,24 +166,35 @@ _strings = {"Official": helps, "Addons": zhelps, "VCBot": get_string("inline_6")
 
 @callback(re.compile("uh_(.*)"), owner=True)
 async def help_func(ult):
-    key, count = ult.data_match.group(1).decode("utf-8").split("_")
+    data = ult.data_match.group(1).decode("utf-8")
+    if "_" not in data:
+        # Fallback for unexpected data format
+        return await ult.answer("Invalid Data", alert=True)
+        
+    key, count = data.split("_", maxsplit=1)
     if key == "VCBot" and HELP.get("VCBot") is None:
         return await ult.answer(get_string("help_12"), alert=True)
     elif key == "Addons" and HELP.get("Addons") is None:
         return await ult.answer(get_string("help_13").format(HNDLR), alert=True)
+    
     if "|" in count:
         _, count = count.split("|")
     count = int(count) if count else 0
-    text = _strings.get(key, "").format(OWNER_NAME, len(HELP.get(key)))
+    text = _strings.get(key, "").format(OWNER_NAME, len(HELP.get(key, [])))
     await ult.edit(text, buttons=page_num(count, key), link_preview=False)
 
 
 @callback(re.compile("uplugin_(.*)"), owner=True)
 async def uptd_plugin(event):
-    key, file = event.data_match.group(1).decode("utf-8").split("_")
+    data = event.data_match.group(1).decode("utf-8")
+    if "_" not in data:
+        return await event.answer("Invalid Data", alert=True)
+        
+    key, file = data.split("_", maxsplit=1)
     index = None
     if "|" in file:
         file, index = file.split("|")
+    
     key_ = HELP.get(key, {})
     help_ = key_.get(file, "")
     if not help_ or help_ == "No description available.":
@@ -193,10 +203,10 @@ async def uptd_plugin(event):
             for d in LIST[file]:
                 help_ += f"{HNDLR}{d}\n"
         else:
-            help_ = f"**Plugin Name** - `{file}`\n\n{file} has no Detailed Help!"
+            help_ = f"**Plugin** - `{file}`\n\nNo detailed help available."
     
-    if help_ and not help_.startswith(f"**Plugin Name** - `{file}`"):
-         help_ = f"**Plugin Name** - `{file}`\n\n" + help_
+    if help_ and not help_.startswith(f"**Plugin** - `{file}`"):
+         help_ = f"**Plugin** - `{file}`\n\n" + help_
 
     help_ += "\n© @TeamUltroid"
     buttons = []
@@ -204,28 +214,39 @@ async def uptd_plugin(event):
         data = f"sndplug_{key}_{file}"
         if index is not None:
             data += f"|{index}"
-        buttons.append(
-            [
-                Button.inline(
-                    "« Sᴇɴᴅ Pʟᴜɢɪɴ »",
-                    data=data,
-                )
-            ]
-        )
-    data = f"uh_{key}_"
-    if index is not None:
-        data += f"|{index}"
-    buttons.append(
-        [
-            Button.inline("« Bᴀᴄᴋ", data=data),
-        ]
-    )
+        buttons.append([Button.inline("« Send Plugin »", data=data)])
+        
+    back_data = f"uh_{key}_{index}" if index is not None else f"uh_{key}_"
+    buttons.append([Button.inline("« Back", data=back_data)])
+    
     try:
         await event.edit(help_, buttons=buttons)
     except Exception as er:
         LOGS.exception(er)
-        help = f"Do `{HNDLR}help {key}` to get list of commands."
-        await event.edit(help, buttons=buttons)
+        await event.edit(f"Use `{HNDLR}help {file}` to view help.", buttons=buttons)
+
+
+@callback(re.compile("sndplug_(.*)"), owner=True)
+async def send_plugin_cb(event):
+    data = event.data_match.group(1).decode("utf-8")
+    if "_" not in data:
+        return await event.answer("Invalid Request", alert=True)
+        
+    key, file = data.split("_", maxsplit=1)
+    if "|" in file:
+        file, _ = file.split("|")
+        
+    path = f"plugins/{file}.py"
+    import os
+    if os.path.exists(path):
+        await event.client.send_file(
+            event.chat_id, 
+            path, 
+            caption=f"**Ultroid Plugin**: `{file}`\n**Category**: `{key}`"
+        )
+        await event.answer("Plugin file sent to chat.")
+    else:
+        await event.answer(f"Source file for '{file}' not found.", alert=True)
 
 
 @callback(data="doupdate", owner=True)
@@ -317,7 +338,7 @@ async def opner(event):
 async def on_plug_in_callback_query_handler(event):
     await event.edit(
         get_string("inline_5"),
-        buttons=Button.inline("Oᴘᴇɴ Aɢᴀɪɴ", data="open"),
+        buttons=Button.inline("OPEN AGAIN", data="open"),
     )
 
 
@@ -338,19 +359,13 @@ def page_num(index, key):
         new_ = fl_[0] if fl_ else []
         index = 0
     if index == 0 and len(fl_) == 1:
-        new_.append([Button.inline("« Bᴀᴄᴋ »", data="open")])
+        new_.append([Button.inline("BACK", data="open")])
     else:
         new_.append(
             [
-                Button.inline(
-                    "« Pʀᴇᴠɪᴏᴜs",
-                    data=f"uh_{key}_{index-1}",
-                ),
-                Button.inline("« Bᴀᴄᴋ »", data="open"),
-                Button.inline(
-                    "Nᴇxᴛ »",
-                    data=f"uh_{key}_{index+1}",
-                ),
+                Button.inline("PREVIOUS", data=f"uh_{key}_{index-1}"),
+                Button.inline("BACK", data="open"),
+                Button.inline("NEXT", data=f"uh_{key}_{index+1}"),
             ]
         )
     return new_
