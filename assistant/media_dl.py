@@ -155,7 +155,6 @@ async def process_media_selection(event):
             event.chat_id,
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
-            reply_to=event.id,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         
