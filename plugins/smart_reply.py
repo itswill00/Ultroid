@@ -197,13 +197,13 @@ async def ask_ai(e):
             output += f"• {s}\n"
             
     # 2. Telemetry Metrix
-    footer = f"\n`[{model}]` • `[{exec_time}s]` • `[{total_tokens} tokens]`"
+    footer = f"\n**model**: `{model}`\n**detik**: `{exec_time}s`\n**token**: `{total_tokens}`"
     if not is_admin:
         # Deduct tokens for non-admins
         balance = Bank.get().get(str(e.sender_id), 0)
         new_balance = max(0, balance - total_tokens)
         Bank.add({str(e.sender_id): new_balance})
-        footer += f" • `[-{total_tokens} tokens]`"
+        footer += f"\n**limit**: `-{total_tokens}`"
     
     # 3. Smart File-Fallback
     if len(output) > 1000:

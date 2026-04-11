@@ -168,9 +168,9 @@ async def unified_ai(e):
             output = f"> \"{q_preview}\"\n\n{sanitized_ans.strip()}"
             
             # 2. Telemetry Metrix & Footer
-            footer = f"\n\n`[{short_model}]` • `[{duration}ms]` • `[{total_tokens} tokens]`"
+            footer = f"\n\n**model**: `{short_model}`\n**detik**: `{duration}ms`\n**token**: `{total_tokens}`"
             if not is_admin:
-                footer += f" • `[-{total_tokens} tokens]`"
+                footer += f"\n**limit**: `-{total_tokens}`"
             
             # 3. Smart Auto-Fallback
             if len(output) > 1000:
