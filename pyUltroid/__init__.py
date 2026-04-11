@@ -68,7 +68,7 @@ if run_as_module:
             sys.exit()
     else:
         ultroid_bot = UltroidClient(
-            validate_session(Var.SESSION, LOGS),
+            validate_session(Var.SESSION or udB.get_key("SESSION"), LOGS),
             udB=udB,
             app_version=ultroid_version,
             device_model="Ultroid",

@@ -103,7 +103,17 @@ def update_envs():
             pass
     for envs in _envs:
         if (
-            envs in ["LOG_CHANNEL", "BOT_TOKEN", "BOTMODE", "DUAL_MODE", "language"]
+            envs
+            in [
+                "LOG_CHANNEL",
+                "BOT_TOKEN",
+                "BOTMODE",
+                "DUAL_MODE",
+                "language",
+                "SESSION",
+                "API_ID",
+                "API_HASH",
+            ]
             or envs in udB.keys()
         ):
             _value = os.environ.get(envs)
