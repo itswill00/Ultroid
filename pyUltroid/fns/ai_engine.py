@@ -108,7 +108,7 @@ async def _call_groq(messages):
 
 async def run_ai_task(event, query, image_b64=None, system_override=None, use_search=False):
     """Unified AI processor for all plugins."""
-    from . import eor
+    from .._misc._wrappers import eor
     uid = event.sender_id
     is_admin = uid in owner_and_sudos()
     
