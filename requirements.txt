@@ -1,4 +1,10 @@
-# Important Requirements here.
+# Core AI & Search
+groq
+beautifulsoup4
+duckduckgo_search
+lxml
+
+# System Requirements
 telethon
 gitpython
 https://github.com/New-dev0/Telethon-Patch/archive/main.zip
