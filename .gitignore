@@ -44,3 +44,7 @@ bin-release/
 
 # fly.io configs
 fly.toml
+
+# IDE & local environment
+pyrightconfig.json
+.venv/
