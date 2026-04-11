@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}ask <question>`
     Ask anything to the AI (via Groq API). Requires GROQ_API_KEY in .env.
@@ -28,6 +28,8 @@
 """
 
 import os
+import time
+from io import BytesIO
 from datetime import datetime
 
 from . import udB, ultroid_cmd, LOGS, HNDLR
@@ -138,6 +140,9 @@ async def ask_ai(e):
             "Be extremely technical and rigorous."
         )
 
+    
+    start_time = time.time()
+    
     if use_search:
         await xx.edit("`[AI] Searching web for context...`")
         results = await google_search(question)
@@ -160,22 +165,34 @@ async def ask_ai(e):
     else:
         result = await _call_groq(question, system=special_system or _get_system_prompt())
 
+    exec_time = round(time.time() - start_time, 2)
+
     if not result:
         return await xx.edit("`[AI] No response from AI. Check your API key.`")
 
     model = _get_model()
-    header = "🛠 Engineering Audit" if special_system else "Answer"
-    output = f"**Question:** {question[:200]}\n\n"
-    output += f"**{header}:**\n{result}\n\n"
+    
+    # 1. Quote Layout
+    q_preview = question[:200].replace('\n', ' ')
+    output = f"> \"{q_preview}\"\n\n{result.strip()}\n"
     
     if sources:
-        output += "**Sources:**\n"
+        output += "\n**Sources:**\n"
         for s in sources[:3]:
             output += f"• {s}\n"
-        output += "\n"
-        
-    output += f"`Model: {model}`"
-    await xx.edit(output, link_preview=False)
+            
+    # 2. Telemetry Metrix
+    footer = f"\n`[{model}]` • `[{exec_time}s]`"
+    
+    # 3. Smart File-Fallback
+    if len(output) > 1000:
+        file_name = "audit.md" if special_system else "response.md"
+        with BytesIO(str.encode(output)) as out_file:
+            out_file.name = file_name
+            await e.reply(f"> \"{q_preview}\"{footer}", file=out_file)
+        await xx.delete()
+    else:
+        await xx.edit(output + footer, link_preview=False)
 
 
 @ultroid_cmd(pattern="summarize$")
