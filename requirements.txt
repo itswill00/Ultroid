@@ -10,3 +10,5 @@ requests
 aiohttp
 catbox-uploader
 cloudscraper
+google-api-python-client
+oauth2client
