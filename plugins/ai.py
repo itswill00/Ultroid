@@ -15,6 +15,16 @@ _CHAT_HISTORY_MAX_SESSIONS = 500
 
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
 async def unified_ai(e):
+    from assistant.public_ai import Bank, Verified, STARTING_GIFT
+    
+    is_admin = e.sender_id in owner_and_sudos()
+    if not is_admin:
+        if not Verified.contains(e.sender_id):
+            return await eor(e, "`[Ultroid] Access Denied. Use /apply_ai in Assistant Bot to request access.`")
+        balance = Bank.get().get(str(e.sender_id), 0)
+        if balance <= 0:
+            return await eor(e, "`[Ultroid Bank] Insufficient balance. Please refill at Assistant Bot.`")
+    
     if not GROQ_API_KEY:
         return await eor(e, "`GROQ_API_KEY` is not set in environment.")
     
@@ -129,9 +139,15 @@ async def unified_ai(e):
         
         if response and response.get("choices"):
             ans = response["choices"][0]["message"]["content"]
+            total_tokens = response.get("usage", {}).get("total_tokens", 0)
+            
+            # Deduct tokens for non-admins
+            if not is_admin:
+                balance = Bank.get().get(str(e.sender_id), 0)
+                new_balance = max(0, balance - total_tokens)
+                Bank.add({str(e.sender_id): new_balance})
             
             # Measurement for duration already handled
-            duration = round(time.time() * 1000 - start_time)
             
             # Sanitize answer for nested code blocks (Telegram limitation)
             # We replace triple backticks inside the answer to avoid breaking the outer block
@@ -151,7 +167,9 @@ async def unified_ai(e):
             output = f"> \"{q_preview}\"\n\n{sanitized_ans.strip()}"
             
             # 2. Telemetry Metrix & Footer
-            footer = f"\n\n`[{short_model}]` • `[{duration}ms]`"
+            footer = f"\n\n`[{short_model}]` • `[{duration}ms]` • `[{total_tokens} tokens]`"
+            if not is_admin:
+                footer += f" • `[-{total_tokens} tokens]`"
             
             # 3. Smart Auto-Fallback
             if len(output) > 1000:

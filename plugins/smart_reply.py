@@ -59,8 +59,8 @@ def _get_api_key() -> str | None:
     return udB.get_key("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
 
 
-async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
-    """Call Groq API and return response text, or None on failure."""
+async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT, return_usage: bool = False) -> str | tuple | None:
+    """Call Groq API and return response text, or (text, tokens) if return_usage is True."""
     api_key = _get_api_key()
     if not api_key:
         return None
@@ -91,7 +91,11 @@ async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
                     LOGS.warning(f"[AI] Groq API error {resp.status}: {err[:200]}")
                     return None
                 data = await resp.json()
-                return data["choices"][0]["message"]["content"].strip()
+                content = data["choices"][0]["message"]["content"].strip()
+                if return_usage:
+                    tokens = data.get("usage", {}).get("total_tokens", 0)
+                    return content, tokens
+                return content
     except Exception as err:
         LOGS.exception(err)
         return None
@@ -158,18 +162,19 @@ async def ask_ai(e):
                 "If the context is irrelevant, rely on your core knowledge but prioritize real-time data for current events."
             )
             prompt = f"CONTEXT:\n{context}\n\nUSER QUESTION: {question}"
-            result = await _call_groq(prompt, system=system_prompt)
+            res_data = await _call_groq(prompt, system=system_prompt, return_usage=True)
         else:
             await xx.edit("`[AI] Search returned no results. Falling back to core knowledge...`")
-            result = await _call_groq(question, system=special_system or _get_system_prompt())
+            res_data = await _call_groq(question, system=special_system or _get_system_prompt(), return_usage=True)
     else:
-        result = await _call_groq(question, system=special_system or _get_system_prompt())
+        res_data = await _call_groq(question, system=special_system or _get_system_prompt(), return_usage=True)
 
     exec_time = round(time.time() - start_time, 2)
 
-    if not result:
+    if not res_data:
         return await xx.edit("`[AI] No response from AI. Check your API key.`")
 
+    result, total_tokens = res_data
     model = _get_model()
     
     # 1. Quote Layout
@@ -182,7 +187,7 @@ async def ask_ai(e):
             output += f"• {s}\n"
             
     # 2. Telemetry Metrix
-    footer = f"\n`[{model}]` • `[{exec_time}s]`"
+    footer = f"\n`[{model}]` • `[{exec_time}s]` • `[{total_tokens} tokens]`"
     
     # 3. Smart File-Fallback
     if len(output) > 1000:
