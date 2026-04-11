@@ -32,7 +32,7 @@ _main_help_menu = [
 ]
 
 
-@ultroid_cmd(pattern="help( (.*)|$)")
+@ultroid_cmd(pattern="help( (.*)|$)", fullsudo=True)
 async def _help(ult):
     plug = ult.pattern_match.group(1).strip()
     chat = await ult.get_chat()

@@ -34,6 +34,20 @@ async def eor(event, text=None, time=None, link_preview=False, edit_time=None, *
             except MessageNotModifiedError:
                 ok = event
     else:
+        from pyUltroid import asst, udB
+        if (
+            asst 
+            and asst != event.client 
+            and udB.get_key("ASST_SUDO_RESPOND")
+        ):
+            try:
+                # Attempt to respond via Assistant Bot
+                return await asst.send_message(
+                    event.chat_id, text, link_preview=link_preview, reply_to=reply_to, **args
+                )
+            except Exception:
+                pass # Fallback to Userbot if Asst fails
+        
         ok = await event.client.send_message(
             event.chat_id, text, link_preview=link_preview, reply_to=reply_to, **args
         )

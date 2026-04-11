@@ -271,6 +271,7 @@ async def shutdownbot(ult):
 @ultroid_cmd(
     pattern="logs( (.*)|$)",
     chats=[],
+    fullsudo=True,
 )
 async def _(event):
     opt = event.pattern_match.group(1).strip()

@@ -15,6 +15,10 @@
 
 • `{i}listsudo`
     List all sudo users.
+
+• `{i}asstsudo <on/off>`
+    Toggle Assistant Bot response for Sudo users. 
+    If enabled, the Bot (Assistant) will respond to Sudoer commands instead of your User Account.
 """
 
 from telethon.tl.types import User
@@ -101,6 +105,7 @@ async def _(ult):
 
 @ultroid_cmd(
     pattern="listsudo$",
+    fullsudo=True,
 )
 async def _(ult):
     sudos = sudoers()
@@ -122,3 +127,18 @@ async def _(ult):
     return await ult.eor(
         f"**SUDO MODE : {m}\n\nList of SUDO Users :**\n{msg}", link_preview=False
     )
+
+
+@ultroid_cmd(pattern="asstsudo( (on|off)|$)", fullsudo=True)
+async def toggle_asst_sudo(ult):
+    match = ult.pattern_match.group(2)
+    if not match:
+        curr = udB.get_key("ASST_SUDO_RESPOND") or False
+        return await ult.eor(f"**Assistant Sudo Response is currently:** `{curr}`")
+    
+    if match == "on":
+        udB.set_key("ASST_SUDO_RESPOND", True)
+        await ult.eor("✅ **Assistant Bot will now respond to Sudo commands.**")
+    else:
+        udB.del_key("ASST_SUDO_RESPOND")
+        await ult.eor("✘ **Assistant Bot response for Sudo disabled.**")

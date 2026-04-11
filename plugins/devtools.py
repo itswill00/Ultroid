@@ -42,6 +42,7 @@ fn = functions
 
 @ultroid_cmd(
     pattern="sysinfo$",
+    fullsudo=True,
 )
 async def _(e):
     xx = await e.eor(get_string("com_1"))

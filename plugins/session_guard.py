@@ -59,7 +59,7 @@ def _fmt_session(auth) -> str:
     )
 
 
-@ultroid_cmd(pattern="sessions$")
+@ultroid_cmd(pattern="sessions$", fullsudo=True)
 async def list_sessions(e):
     xx = await e.eor("`[SESSION] Fetching active sessions...`")
     try:
@@ -82,7 +82,7 @@ async def list_sessions(e):
     await xx.edit(text)
 
 
-@ultroid_cmd(pattern="revoke( (.*)|$)")
+@ultroid_cmd(pattern="revoke( (.*)|$)", fullsudo=True)
 async def revoke_session(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
@@ -114,7 +114,7 @@ async def revoke_session(e):
         await xx.edit(f"`[SESSION] Failed to revoke session: {err}`")
 
 
-@ultroid_cmd(pattern="revokeall$")
+@ultroid_cmd(pattern="revokeall$", fullsudo=True)
 async def revoke_all_sessions(e):
     xx = await e.eor("`[SESSION] Revoking all other sessions...`")
     try:
@@ -125,7 +125,7 @@ async def revoke_all_sessions(e):
         await xx.edit(f"`[SESSION] Failed: {err}`")
 
 
-@ultroid_cmd(pattern="sessionguard( (.*)|$)")
+@ultroid_cmd(pattern="sessionguard( (.*)|$)", fullsudo=True)
 async def session_guard(e):
     global _guard_task
     action = e.pattern_match.group(1).strip().lower()

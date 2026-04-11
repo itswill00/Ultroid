@@ -216,7 +216,7 @@ async def tldr(e):
     await xx.edit(f"**TL;DR — last {limit} messages:**\n\n{result}")
 
 
-@ultroid_cmd(pattern="aimodel( (.*)|$)")
+@ultroid_cmd(pattern="aimodel( (.*)|$)", fullsudo=True)
 async def set_ai_model(e):
     _VALID = ["llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it"]
     model = e.pattern_match.group(1).strip()
