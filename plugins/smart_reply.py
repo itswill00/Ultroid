@@ -207,6 +207,14 @@ async def ask_ai(e):
     
     # 3. Smart File-Fallback
     if len(output) > 1000:
+        # Try Telegraph first
+        from assistant.public_ai import fast_telegraph
+        tg_url = await fast_telegraph(f"Ultroid AI: {q_preview[:30]}...", output)
+        if tg_url:
+            await e.reply(f"> \"{q_preview}\"\n\n**Read Full Response**: [Telegraph]({tg_url}){footer}", link_preview=True)
+            return await xx.delete()
+        
+        # Original File Fallback if Telegraph fails
         file_name = "audit.md" if special_system else "response.md"
         with BytesIO(str.encode(output)) as out_file:
             out_file.name = file_name

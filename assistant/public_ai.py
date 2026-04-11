@@ -182,6 +182,14 @@ async def public_ask(event):
         footer += f"\n**limit**: `-{total_tokens}`"
 
     if len(output) > 1000:
+        # Try Telegraph first
+        from assistant.public_ai import fast_telegraph
+        tg_url = await fast_telegraph(f"Ultroid AI: {query[:30]}...", output)
+        if tg_url:
+            await event.reply(f"> \"{q_preview}\"\n\n**Read Full Response**: [Telegraph]({tg_url}){footer}", link_preview=True)
+            return await processing.delete()
+        
+        # Original File Fallback if Telegraph fails
         with BytesIO(str.encode(output)) as out_file:
             out_file.name = "response.md"
             await event.reply(f"> \"{q_preview}\"{footer}", file=out_file)
@@ -246,3 +254,36 @@ async def verify_and_deduct(event, tokens):
     new_balance = balance - tokens
     Bank.add({str(uid): new_balance})
     return True
+
+# --------------------------------------------------------------------------
+# TELEGRAPH PASTE UTILITY
+# --------------------------------------------------------------------------
+
+def markdown_to_html(text):
+    """Basic MD to HTML conversion for Telegraph."""
+    import html
+    # Escape HTML to prevent injection
+    text = html.escape(text)
+    # Bold
+    text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
+    # Italic
+    text = re.sub(r"\*(.*?)\*", r"<i>\1</i>", text)
+    # Pre-formatted code
+    text = re.sub(r"```(.*?)```", r"<pre>\1</pre>", text, flags=re.DOTALL)
+    # Inline code
+    text = re.sub(r"`(.*?)`", r"<code>\1</code>", text)
+    # Line breaks
+    text = text.replace("\n", "<br/>")
+    return text
+
+async def fast_telegraph(title, markdown_text):
+    """Pasts to telegraph with fallback."""
+    from pyUltroid.fns.tools import make_html_telegraph
+    from . import LOGS
+    try:
+        html_code = markdown_to_html(markdown_text)
+        url = await make_html_telegraph(title, html_code)
+        return url
+    except Exception as e:
+        LOGS.warning(f"Telegraph Paste Failed: {str(e)}")
+        return None
