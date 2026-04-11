@@ -7,11 +7,7 @@ from pyUltroid.dB.base import KeyManager
 from . import asst, callback, asst_cmd, udB, OWNER_ID, owner_and_sudos, get_string, inline_mention
 
 # Database Managers
-Bank = KeyManager("ULTROID_AI_TOKENS", cast=dict)
-Verified = KeyManager("VERIFIED_AI_USERS", cast=list)
-
-# Constants
-STARTING_GIFT = 5000  # Default tokens for new verified users
+from pyUltroid.fns.ai_engine import Bank, Verified, STARTING_GIFT, fast_telegraph
 
 # --------------------------------------------------------------------------
 # ADMINISTRATIVE COMMANDS (Owner Only)
@@ -161,16 +157,6 @@ async def user_balance(event):
 @asst_cmd(pattern="(ask|ai)( (.*)|$)")
 async def public_ask(event):
     """Public AI command for Assistant Bot."""
-    if event.sender_id in owner_and_sudos():
-        # Sudoers should use the main bot, but we allow them here too
-        pass
-    elif not Verified.contains(event.sender_id):
-        return await event.reply("`[Ultroid] Access Denied. Use /apply_ai to request verification.`")
-    
-    balance = Bank.get().get(str(event.sender_id), 0)
-    if balance <= 0 and event.sender_id not in owner_and_sudos():
-        return await event.reply("`[Ultroid Bank] Insufficient balance. Please contact owner for refill.`")
-
     query = event.pattern_match.group(2).strip()
     if not query:
         reply = await event.get_reply_message()
@@ -180,50 +166,8 @@ async def public_ask(event):
     if not query:
         return await event.reply("`Usage: /ask <your question>`")
 
-    # Import the worker from smart_reply (we will refactor this next)
-    from plugins.smart_reply import _call_groq, _get_model
-    from pyUltroid.fns.tools import get_stored_file
-    import time
-    from io import BytesIO
-
-    processing = await event.reply("`[AI] Processing...`")
-    start_time = time.time()
-    
-    # We will modify _call_groq to return (text, tokens)
-    res_data = await _call_groq(query, return_usage=True)
-    if not res_data:
-        return await processing.edit("`[AI] API Error. Please try again later.`")
-    
-    ans, total_tokens = res_data
-    duration = round(time.time() - start_time, 2)
-    
-    # Deduct tokens for non-sudoers
-    if event.sender_id not in owner_and_sudos():
-        new_balance = balance - total_tokens
-        Bank.add({str(event.sender_id): max(0, new_balance)})
-    
-    model = _get_model()
-    q_preview = query[:200].replace('\n', ' ')
-    output = f"> \"{q_preview}\"\n\n{ans.strip()}\n"
-    footer = f"\n**model**: `{model}`\n**time**: `{duration}s`\n**tokens**: `{total_tokens}`"
-    if event.sender_id not in owner_and_sudos():
-        footer += f"\n**limit**: `-{total_tokens}`"
-
-    if len(output) > 1000:
-        # Try Telegraph first
-        from assistant.public_ai import fast_telegraph
-        tg_url = await fast_telegraph(f"Ultroid AI: {query[:30]}...", output)
-        if tg_url:
-            await event.reply(f"> \"{q_preview}\"\n\n**Read Full Response**: [Telegraph]({tg_url}){footer}", link_preview=True)
-            return await processing.delete()
-        
-        # Original File Fallback if Telegraph fails
-        with BytesIO(str.encode(output)) as out_file:
-            out_file.name = "response.md"
-            await event.reply(f"> \"{q_preview}\"{footer}", file=out_file)
-        await processing.delete()
-    else:
-        await processing.edit(output + footer, link_preview=False)
+    from pyUltroid.fns.ai_engine import run_ai_task
+    await run_ai_task(event, query)
 
 # --------------------------------------------------------------------------
 # CALLBACK HANDLERS
@@ -255,63 +199,9 @@ async def reject_ai(event):
     target_id = int(event.data_match.group(1))
     await event.edit(f"`[BANK] Request from {target_id} rejected.`")
     try:
-        await asst.send_message(target_id, "`[Ultroid Bank] Sorry, your AI access request was rejected.`")
+        await asst.send_message(target_id, f"`[Ultroid Bank] Sorry, your AI access request was rejected.`")
     except Exception:
         pass
 
-# --------------------------------------------------------------------------
-# CORE HELPER
-# --------------------------------------------------------------------------
+# Legacy logic removed. All AI processing is now handled by pyUltroid.fns.ai_engine.
 
-async def verify_and_deduct(event, tokens):
-    """Check if user is verified and has enough tokens, then deduct."""
-    uid = event.sender_id
-    if uid in owner_and_sudos():
-        return True # Unlimited
-    
-    if not Verified.contains(uid):
-        await event.reply("`[Ultroid] Verification required. Use /apply_ai to request access.`")
-        return False
-    
-    balance = Bank.get().get(str(uid), 0)
-    if balance < tokens:
-        await event.reply(f"`[BANK] Insufficient balance. Required: {tokens:,} | Available: {balance:,}`")
-        return False
-    
-    # Deduct
-    new_balance = balance - tokens
-    Bank.add({str(uid): new_balance})
-    return True
-
-# --------------------------------------------------------------------------
-# TELEGRAPH PASTE UTILITY
-# --------------------------------------------------------------------------
-
-def markdown_to_html(text):
-    """Basic MD to HTML conversion for Telegraph."""
-    import html
-    # Escape HTML to prevent injection
-    text = html.escape(text)
-    # Bold
-    text = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", text)
-    # Italic
-    text = re.sub(r"\*(.*?)\*", r"<i>\1</i>", text)
-    # Pre-formatted code
-    text = re.sub(r"```(.*?)```", r"<pre>\1</pre>", text, flags=re.DOTALL)
-    # Inline code
-    text = re.sub(r"`(.*?)`", r"<code>\1</code>", text)
-    # Line breaks
-    text = text.replace("\n", "<br/>")
-    return text
-
-async def fast_telegraph(title, markdown_text):
-    """Pasts to telegraph with fallback."""
-    from pyUltroid.fns.tools import make_html_telegraph
-    from . import LOGS
-    try:
-        html_code = markdown_to_html(markdown_text)
-        url = await make_html_telegraph(title, html_code)
-        return url
-    except Exception as e:
-        LOGS.warning(f"Telegraph Paste Failed: {str(e)}")
-        return None
