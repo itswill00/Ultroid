@@ -151,12 +151,12 @@ async def process_media_selection(event):
         if not valid_files:
             return await event.edit("`[DL ERROR] File download failed.`")
 
-        # Use send_file with EXPLICIT msg_id to avoid 64-bit struct error
+        # Use send_file with EXPLICIT message_id to avoid 64-bit struct error
         await event.client.send_file(
             event.chat_id,
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
-            reply_to=event.msg_id,
+            reply_to=event.message_id,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         
