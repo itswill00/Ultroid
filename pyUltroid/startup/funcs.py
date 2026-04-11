@@ -696,6 +696,10 @@ async def WasItRestart(udb):
 async def DoRestartBroadcast(udb):
     if not udb.get_key("_RESTART_BROADCAST"):
         return
+        
+    if str(udb.get_key("REBOOT_PULSE")).lower() == "false":
+        udb.del_key("_RESTART_BROADCAST")
+        return
     
     from .. import ultroid_bot
     from ..version import ultroid_version as version
@@ -705,7 +709,10 @@ async def DoRestartBroadcast(udb):
 
     LOGS.info("Starting Global Restart Broadcast...")
     
-    msg = f"✓ **System reboot complete.** `[v{version}]`"
+    msg = udb.get_key("REBOOT_MSG")
+    if not msg:
+        msg = f"✓ **System reboot complete.** `[v{version}]`"
+        
     success = 0
     failed = 0
     
