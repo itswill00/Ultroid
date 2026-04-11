@@ -215,7 +215,6 @@ async def restartbt(ult):
         "chat_id": ult.chat_id,
         "msg_id": msg.id,
     }))
-    udB.set_key("_RESTART_BROADCAST", True)
 
     # Heroku restart: delegate to restart() helper
     if heroku_api:
@@ -259,39 +258,6 @@ async def restartbt(ult):
     # Always restart with -m pyUltroid, passing any existing argv after index 0
     args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
     os.execl(sys.executable, *args)
-
-
-@ultroid_cmd(
-    pattern="setreboot( (.*)|$)",
-    fullsudo=True,
-)
-async def _(ult):
-    """Enable or disable the reboot broadcast."""
-    match = ult.pattern_match.group(1).strip().lower()
-    if match in ["on", "true", "enable"]:
-        udB.set_key("REBOOT_PULSE", "True")
-        await ult.eor("`[SYS] Reboot Pulse enabled.`")
-    elif match in ["off", "false", "disable"]:
-        udB.set_key("REBOOT_PULSE", "False")
-        await ult.eor("`[SYS] Reboot Pulse disabled.`")
-    else:
-        current = str(udB.get_key("REBOOT_PULSE") or "True")
-        await ult.eor(f"`[SYS] Current Reboot Pulse Status: {current}`\n`Usage: .setreboot [on/off]`")
-
-
-@ultroid_cmd(
-    pattern="rebootmsg( (.*)|$)",
-    fullsudo=True,
-)
-async def _(ult):
-    """Set custom broadcast message on restart."""
-    match = ult.pattern_match.group(1).strip()
-    if not match:
-        udB.del_key("REBOOT_MSG")
-        return await ult.eor("`[SYS] Reboot Pulse message reset to default.`")
-    
-    udB.set_key("REBOOT_MSG", match)
-    await ult.eor(f"`[SYS] Custom reboot message configured.`\n**Preview:** {match}")
 
 
 @ultroid_cmd(

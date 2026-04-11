@@ -693,53 +693,6 @@ async def WasItRestart(udb):
     udb.del_key("_RESTART")
 
 
-async def DoRestartBroadcast(udb):
-    if not udb.get_key("_RESTART_BROADCAST"):
-        return
-        
-    if str(udb.get_key("REBOOT_PULSE")).lower() == "false":
-        udb.del_key("_RESTART_BROADCAST")
-        return
-    
-    from .. import ultroid_bot
-    from ..version import ultroid_version as version
-    import asyncio
-    from telethon.tl.types import Chat, Channel
-    from telethon.errors import FloodWaitError, ForbiddenError
-
-    LOGS.info("Starting Global Restart Broadcast...")
-    
-    msg = udb.get_key("REBOOT_MSG")
-    if not msg:
-        msg = f"✓ **System reboot complete.** `[v{version}]`"
-        
-    success = 0
-    failed = 0
-    
-    try:
-        async for dialog in ultroid_bot.iter_dialogs():
-            if dialog.is_group or dialog.is_channel:
-                try:
-                    await ultroid_bot.send_message(dialog.id, msg)
-                    success += 1
-                    # Enforce anti-spam delay
-                    await asyncio.sleep(random.uniform(0.8, 1.5))
-                except FloodWaitError as e:
-                    LOGS.warning(f"Broadcast FloodWait: sleeping for {e.seconds}s")
-                    await asyncio.sleep(e.seconds)
-                except ForbiddenError:
-                    failed += 1
-                except Exception as e:
-                    LOGS.error(f"Failed to notify {dialog.id}: {e}")
-                    failed += 1
-        
-        LOGS.info(f"Broadcast Complete. Notified {success} chats, {failed} failed.")
-    except Exception as e:
-        LOGS.error(f"Global Broadcast failed: {e}")
-    finally:
-        udb.del_key("_RESTART_BROADCAST")
-
-
 def _version_changes(udb):
     for _ in [
         "BOT_USERS",

@@ -15,7 +15,6 @@ def main():
 
     from .fns.helper import bash, time_formatter, updater
     from .startup.funcs import (
-        DoRestartBroadcast,
         WasItRestart,
         autopilot,
         customize,
@@ -91,8 +90,6 @@ def main():
             await ready()
         # Edit Restarting Message (if It's restarting)
         await WasItRestart(udB)
-        # Global Multi-Group Notification
-        await DoRestartBroadcast(udB)
         try:
             cleanup_cache()
         except BaseException:
