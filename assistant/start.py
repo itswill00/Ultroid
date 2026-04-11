@@ -144,7 +144,7 @@ async def ultroid(event):
 
 @asst_cmd(pattern="help$", owner=True)
 async def asst_help(event):
-    help_text = """**[KODA Yardım] Sudo Guide**
+    help_text = """**[Ultroid] Sudo Guide**
 
 You have been granted Sudo permissions for this Userbot. You can execute commands remotely by typing them in any group where the bot is active.
 
