@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}get var <variable name>`
    Get value of the given variable name.
@@ -25,7 +25,7 @@ import os
 from . import eor, get_string, udB, ultroid_cmd, HNDLR
 
 
-@ultroid_cmd(pattern="get($| (.*))", fullsudo=True)
+@ultroid_cmd(pattern="get($| (.*))", owner_only=True)
 async def get_var(event):
     try:
         opt = event.text.split(maxsplit=2)[1]

@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}sessions`
     List all active Telegram sessions on your account.
@@ -59,7 +59,7 @@ def _fmt_session(auth) -> str:
     )
 
 
-@ultroid_cmd(pattern="sessions$", fullsudo=True)
+@ultroid_cmd(pattern="sessions$", owner_only=True)
 async def list_sessions(e):
     xx = await e.eor("`[SESSION] Fetching active sessions...`")
     try:
@@ -82,7 +82,7 @@ async def list_sessions(e):
     await xx.edit(text)
 
 
-@ultroid_cmd(pattern="revoke( (.*)|$)", fullsudo=True)
+@ultroid_cmd(pattern="revoke( (.*)|$)", owner_only=True)
 async def revoke_session(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
@@ -114,7 +114,7 @@ async def revoke_session(e):
         await xx.edit(f"`[SESSION] Failed to revoke session: {err}`")
 
 
-@ultroid_cmd(pattern="revokeall$", fullsudo=True)
+@ultroid_cmd(pattern="revokeall$", owner_only=True)
 async def revoke_all_sessions(e):
     xx = await e.eor("`[SESSION] Revoking all other sessions...`")
     try:
@@ -125,7 +125,7 @@ async def revoke_all_sessions(e):
         await xx.edit(f"`[SESSION] Failed: {err}`")
 
 
-@ultroid_cmd(pattern="sessionguard( (.*)|$)", fullsudo=True)
+@ultroid_cmd(pattern="sessionguard( (.*)|$)", owner_only=True)
 async def session_guard(e):
     global _guard_task
     action = e.pattern_match.group(1).strip().lower()

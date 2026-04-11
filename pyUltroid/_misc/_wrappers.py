@@ -37,8 +37,7 @@ async def eor(event, text=None, time=None, link_preview=False, edit_time=None, *
         from pyUltroid import asst, udB
         if (
             asst 
-            and asst != event.client 
-            and udB.get_key("ASST_SUDO_RESPOND")
+            and asst.me.id != event.client.me.id
         ):
             try:
                 # Attempt to respond via Assistant Bot

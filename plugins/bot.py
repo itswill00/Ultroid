@@ -201,7 +201,7 @@ heroku_api = Var.HEROKU_API
 
 @ultroid_cmd(
     pattern="restart( (.*)|$)",
-    fullsudo=True,
+    owner_only=True,
 )
 async def restartbt(ult):
     match = ult.pattern_match.group(1).strip()
@@ -262,7 +262,7 @@ async def restartbt(ult):
 
 @ultroid_cmd(
     pattern="shutdown$",
-    fullsudo=True,
+    owner_only=True,
 )
 async def shutdownbot(ult):
     await shutdown(ult)
@@ -271,7 +271,7 @@ async def shutdownbot(ult):
 @ultroid_cmd(
     pattern="logs( (.*)|$)",
     chats=[],
-    fullsudo=True,
+    owner_only=True,
 )
 async def _(event):
     opt = event.pattern_match.group(1).strip()

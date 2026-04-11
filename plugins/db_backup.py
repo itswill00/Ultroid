@@ -5,7 +5,7 @@
 from . import get_help
 
 __doc__ = """
-✘ Commands Available -
+» Commands Available -
 
 • `.backup`
     Backup semua data database ke Log Channel sebagai file JSON.
@@ -109,7 +109,7 @@ def _restore_db(payload: dict) -> tuple:
 # Commands
 # ──────────────────────────────────────────────────────────────
 
-@ultroid_cmd(pattern="backup$", fullsudo=True)
+@ultroid_cmd(pattern="backup$", owner_only=True)
 async def cmd_backup(event):
     """Backup database ke Log Channel dengan tombol inline."""
     log_ch = udB.get_key("LOG_CHANNEL")

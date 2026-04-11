@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}addsudo`
     Add Sudo Users by replying to user or using <space> separated userid(s)
@@ -68,7 +68,7 @@ async def _(ult):
     await ult.eor(mmm, time=5)
 
 
-@ultroid_cmd(pattern="addfullsudo( (.*)|$)", fullsudo=True)
+@ultroid_cmd(pattern="addfullsudo( (.*)|$)", owner_only=True)
 async def _(ult):
     # Only the real owner can add fullsudos
     if ult.sender_id != ultroid_bot.uid:
@@ -151,7 +151,7 @@ async def _(ult):
     await ult.eor(mmm, time=5)
 
 
-@ultroid_cmd(pattern="delfullsudo( (.*)|$)", fullsudo=True)
+@ultroid_cmd(pattern="delfullsudo( (.*)|$)", owner_only=True)
 async def _(ult):
     if ult.sender_id != ultroid_bot.uid:
         return await ult.eor("`Only the Account Owner can manage Full Sudoers.`", time=5)
@@ -246,4 +246,4 @@ async def toggle_asst_sudo(ult):
         await ult.eor("✅ **Assistant Bot will now respond to Sudo commands.**")
     else:
         udB.del_key("ASST_SUDO_RESPOND")
-        await ult.eor("✘ **Assistant Bot response for Sudo disabled.**")
+        await ult.eor("» **Assistant Bot response for Sudo disabled.**")
