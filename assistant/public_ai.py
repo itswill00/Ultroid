@@ -193,7 +193,7 @@ async def public_ask(event):
 # CALLBACK HANDLERS
 # --------------------------------------------------------------------------
 
-@callback(re.compile("ai_app_(\d+)"), owner=True)
+@callback(re.compile(r"ai_app_(\d+)"), owner=True)
 async def approve_ai(event):
     target_id = int(event.data_match.group(1))
     if not Verified.contains(target_id):
@@ -214,7 +214,7 @@ async def approve_ai(event):
     else:
         await event.answer("User already verified.", alert=True)
 
-@callback(re.compile("ai_rej_(\d+)"), owner=True)
+@callback(re.compile(r"ai_rej_(\d+)"), owner=True)
 async def reject_ai(event):
     target_id = int(event.data_match.group(1))
     await event.edit(f"`[BANK] Request from {target_id} rejected.`")
