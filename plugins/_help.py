@@ -20,7 +20,7 @@ from . import HNDLR, LOGS, OWNER_NAME, asst, get_string, inline_pic, udB, ultroi
 _main_help_menu = [
     [
         Button.inline("• Plugins •", data="uh_Official_"),
-        Button.inline("• Custom •", data="uh_Addons_"),
+        Button.inline("• Addons •", data="uh_Addons_"),
     ],
     [
         Button.inline("• Status & Core •", data="ownr"),
