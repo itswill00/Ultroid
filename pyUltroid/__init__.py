@@ -9,6 +9,7 @@ import os
 import sys
 import telethonpatch
 from .version import __version__
+from .fns import KEEP_SAFE
 
 run_as_module = __package__ in sys.argv or sys.argv[0] == "-m"
 
