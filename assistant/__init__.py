@@ -1,9 +1,5 @@
-# Ultroid - UserBot
-# Copyright (C) 2021-2026 TeamUltroid
-#
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
-# PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# Ultroid - Assistant Bot System
+# (c) TeamUltroid
 
 from telethon import Button, custom
 
@@ -16,13 +12,15 @@ from pyUltroid.fns.helper import *
 from pyUltroid.fns.tools import get_stored_file
 from strings import get_languages, get_string
 
-OWNER_NAME = ultroid_bot.full_name
-OWNER_ID = ultroid_bot.uid
+# Lazy Properties for Owner Identity
+# We use udB for ID to prevent early-startup AttributeError
+OWNER_ID = udB.get_key("OWNER_ID") or 0
+OWNER_NAME = "Owner" # Default fallback
 
 AST_PLUGINS = {}
 
-# Cleanup previous manual imports to rely on Ultroid's dynamic Loader
-
+# The dynamic loader in pyUltroid/startup/loader.py handles loading submodules.
+# Explicit imports are removed here to prevent circular dependency crashes.
 
 async def setit(event, name, value):
     try:

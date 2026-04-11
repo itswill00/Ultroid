@@ -5,7 +5,8 @@ import os
 import re
 import time
 import asyncio
-from pyUltroid import asst, udB, LOGS, owner_and_sudos
+from pyUltroid import asst, udB, LOGS
+from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE
 from pyUltroid.fns.helper import humanbytes, time_formatter

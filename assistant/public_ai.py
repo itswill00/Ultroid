@@ -3,11 +3,17 @@
 
 import re
 from telethon import Button
+from pyUltroid import asst, udB, LOGS, owner_and_sudos
 from pyUltroid.dB.base import KeyManager
-from . import asst, callback, asst_cmd, udB, OWNER_ID, owner_and_sudos, get_string, inline_mention
+from pyUltroid._misc._assistant import asst_cmd, callback
+from pyUltroid.fns.helper import inline_mention
+from strings import get_string
 
-# Database Managers
+# Core Engine Logic
 from pyUltroid.fns.ai_engine import Bank, Verified, STARTING_GIFT, fast_telegraph
+
+# Re-define OWNER_ID locally or use safely from udB
+OWNER_ID = udB.get_key("OWNER_ID")
 
 # --------------------------------------------------------------------------
 # ADMINISTRATIVE COMMANDS (Owner Only)
@@ -20,82 +26,63 @@ async def gift_tokens(event):
     target_id = None
     amount = 0
 
-    if event.is_reply:
-        reply = await event.get_reply_message()
+    reply = await event.get_reply_message()
+    if reply:
         target_id = reply.sender_id
-        if args:
-            try:
-                amount = int(args[0])
-            except ValueError:
-                return await event.reply("`[BANK] Invalid amount.`")
-    elif len(args) >= 2:
-        try:
-            target_id = int(args[0])
-            amount = int(args[1])
-        except ValueError:
-            return await event.reply("`[BANK] Usage: /gift <id> <amount>`")
+        if args: amount = int(args[0])
+    elif len(args) == 2:
+        target_id = int(args[0])
+        amount = int(args[1])
     
-    if not target_id or amount <= 0:
-        return await event.reply("`[BANK] Usage: Reply to user with /gift <amount> or use /gift <id> <amount>`")
+    if not target_id or not amount:
+        return await event.reply("`Usage: /gift <user_id> <amount> or reply to a message with /gift <amount>`")
 
-    # Add to bank
-    current_tokens = Bank.get().get(str(target_id), 0)
-    new_total = current_tokens + amount
-    Bank.add({str(target_id): new_total})
+    current_bank = Bank.get() or {}
+    current_balance = current_bank.get(str(target_id), 0)
+    current_bank[str(target_id)] = current_balance + amount
+    Bank.add(current_bank)
     
-    await event.reply(f"`[BANK] Successfully granted {amount:,} tokens to {target_id}. New balance: {new_total:,}`")
-    try:
-        await asst.send_message(target_id, f"**[Ultroid Bank]**\nYou have received a gift of **{amount:,} tokens**!\nYour new balance is **{new_total:,} tokens**.")
-    except Exception:
-        pass
+    await event.reply(f"`[Ultroid Bank] Successfully gifted {amount:,} tokens to {target_id}.`")
 
 @asst_cmd(pattern="setbank( (.*)|$)", owner=True)
-async def set_tokens(event):
-    """Force set a user's balance."""
+async def set_user_tokens(event):
+    """Directly set a user's token balance."""
     args = event.pattern_match.group(1).strip().split()
-    if len(args) < 2:
-        return await event.reply("`[BANK] Usage: /setbank <id> <amount>`")
+    if len(args) != 2:
+        return await event.reply("`Usage: /setbank <user_id> <amount>`")
     
-    try:
-        target_id = str(args[0])
-        amount = int(args[1])
-        Bank.add({target_id: amount})
-        await event.reply(f"`[BANK] Set balance for {target_id} to {amount:,}`")
-    except ValueError:
-        await event.reply("`[BANK] Invalid ID or amount.`")
+    uid, amount = args[0], int(args[1])
+    current_bank = Bank.get() or {}
+    current_bank[str(uid)] = amount
+    Bank.add(current_bank)
+    await event.reply(f"`[Ultroid Bank] Balance for {uid} set to {amount:,} tokens.`")
 
 @asst_cmd(pattern="checkbank( (.*)|$)", owner=True)
-async def check_user_bank(event):
-    """Check status of a user."""
-    target_id = None
-    args = event.pattern_match.group(1).strip()
-    if event.is_reply:
+async def check_user_tokens(event):
+    """Check a specific user's balance."""
+    uid = event.pattern_match.group(1).strip()
+    if not uid:
         reply = await event.get_reply_message()
-        target_id = reply.sender_id
-    elif args:
-        target_id = args
+        if reply: uid = reply.sender_id
     
-    if not target_id:
-        return await event.reply("`[BANK] Provide ID or reply to a user.`")
+    if not uid:
+        return await event.reply("`Usage: /checkbank <user_id> or reply to a message.`")
     
-    balance = Bank.get().get(str(target_id), 0)
-    is_verified = Verified.contains(int(target_id)) if str(target_id).isdigit() else False
-    
-    status = "Verified" if is_verified else "Unverified"
-    await event.reply(f"**[Ultroid Bank Status]**\nUser: `{target_id}`\nStatus: `{status}`\nBalance: `{balance:,} tokens`")
+    balance = Bank.get().get(str(uid), 0)
+    await event.reply(f"`[Ultroid Bank] User {uid} has {balance:,} tokens.`")
 
 # --------------------------------------------------------------------------
-# PERSONA MANAGEMENT (Owner Only)
+# PERSONA MANAGEMENT
 # --------------------------------------------------------------------------
 
 @asst_cmd(pattern="setsystem( (.*)|$)", owner=True)
 async def set_ai_system(event):
-    """Update the AI system prompt."""
-    meta = event.pattern_match.group(1).strip()
-    if not meta:
-        return await event.reply("`[PERSONA] Usage: /setsystem <your instructions>`")
+    """Directly update the global AI system prompt."""
+    prompt = event.pattern_match.group(1).strip()
+    if not prompt:
+        return await event.reply("`Usage: /setsystem <new prompt content>`")
     
-    udB.set_key("GROQ_SYSTEM_PROMPT", meta)
+    udB.set_key("GROQ_SYSTEM_PROMPT", prompt)
     await event.reply("`[PERSONA] System Prompt updated successfully.`")
 
 @asst_cmd(pattern="getsystem$", owner=True)
@@ -159,13 +146,8 @@ async def public_ask(event):
     """Public AI command for Assistant Bot."""
     query = event.pattern_match.group(2).strip()
     if not query:
-        reply = await event.get_reply_message()
-        if reply and reply.text:
-            query = reply.text.strip()
-            
-    if not query:
-        return await event.reply("`Usage: /ask <your question>`")
-
+        return await event.reply("`[Usage] /ask <pertanyaan>`")
+    
     from pyUltroid.fns.ai_engine import run_ai_task
     await run_ai_task(event, query)
 
@@ -173,35 +155,26 @@ async def public_ask(event):
 # CALLBACK HANDLERS
 # --------------------------------------------------------------------------
 
-@callback(re.compile(r"ai_app_(\d+)"), owner=True)
-async def approve_ai(event):
-    target_id = int(event.data_match.group(1))
-    if not Verified.contains(target_id):
-        Verified.add(target_id)
-        # Give starting gift if no balance exists
-        curr = Bank.get().get(str(target_id), 0)
-        if curr == 0:
-            Bank.add({str(target_id): STARTING_GIFT})
-            gift_msg = f" and received a starting gift of {STARTING_GIFT:,} tokens"
-        else:
-            gift_msg = ""
+@callback(re.compile("ai_(app|rej)_(.*)"))
+async def ai_callback_handler(event):
+    if event.sender_id != OWNER_ID:
+        return await event.answer("Owner Only!", alert=True)
+    
+    action = event.pattern_match.group(1).decode("utf-8")
+    target_id = int(event.pattern_match.group(2).decode("utf-8"))
+    
+    if action == "app":
+        if not Verified.contains(target_id):
+            Verified.add(target_id)
+            # Give starting gift
+            current_bank = Bank.get() or {}
+            current_bank[str(target_id)] = current_bank.get(str(target_id), 0) + STARTING_GIFT
+            Bank.add(current_bank)
             
-        await event.edit(f"`[BANK] User {target_id} has been approved{gift_msg}.`")
-        try:
-            await asst.send_message(target_id, f"**[Ultroid Bank]**\nYour AI access has been **Approved**!\nYou have `{Bank.get().get(str(target_id), 0):,} tokens` available.\n\nUsage: Send questions to this bot or use `/ask <question>`.")
-        except Exception:
-            pass
+            await event.edit(f"`User {target_id} approved and gifted {STARTING_GIFT:,} tokens.`")
+            await asst.send_message(target_id, f"`[Ultroid] Congratulations! Your AI access is approved.`\nStarting balance: `{STARTING_GIFT:,} tokens`.")
+        else:
+            await event.answer("User already verified.", alert=True)
     else:
-        await event.answer("User already verified.", alert=True)
-
-@callback(re.compile(r"ai_rej_(\d+)"), owner=True)
-async def reject_ai(event):
-    target_id = int(event.data_match.group(1))
-    await event.edit(f"`[BANK] Request from {target_id} rejected.`")
-    try:
-        await asst.send_message(target_id, f"`[Ultroid Bank] Sorry, your AI access request was rejected.`")
-    except Exception:
-        pass
-
-# Legacy logic removed. All AI processing is now handled by pyUltroid.fns.ai_engine.
-
+        await event.edit(f"`Request from {target_id} rejected.`")
+        await asst.send_message(target_id, "`[Ultroid] Sorry, your AI access request was rejected.`")
