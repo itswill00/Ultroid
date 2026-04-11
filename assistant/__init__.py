@@ -21,6 +21,17 @@ OWNER_ID = ultroid_bot.uid
 
 AST_PLUGINS = {}
 
+from . import (
+    games,
+    initial,
+    inlinestuff,
+    pmbot,
+    public_ai,
+    start,
+    ytdl,
+    media_dl,
+)
+
 
 async def setit(event, name, value):
     try:
