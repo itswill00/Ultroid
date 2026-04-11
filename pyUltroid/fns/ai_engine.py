@@ -8,6 +8,8 @@ import html
 import asyncio
 from io import BytesIO
 from pyUltroid.dB.base import KeyManager
+from .. import udB, LOGS
+
 # Database Managers
 Bank = KeyManager("ULTROID_AI_TOKENS", cast=dict)
 Verified = KeyManager("VERIFIED_AI_USERS", cast=list)
@@ -107,7 +109,6 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
     """Unified AI processor for all plugins."""
     from pyUltroid._misc import owner_and_sudos
     from .._misc._wrappers import eor
-    from .. import udB, LOGS
     
     uid = event.sender_id
     is_admin = uid in owner_and_sudos()
