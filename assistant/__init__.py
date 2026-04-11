@@ -21,16 +21,7 @@ OWNER_ID = ultroid_bot.uid
 
 AST_PLUGINS = {}
 
-from . import (
-    games,
-    initial,
-    inlinestuff,
-    pmbot,
-    public_ai,
-    start,
-    ytdl,
-    media_dl,
-)
+# Cleanup previous manual imports to rely on Ultroid's dynamic Loader
 
 
 async def setit(event, name, value):
