@@ -13,8 +13,18 @@ from pyUltroid.fns.admins import admin_check
 from pyUltroid._misc._assistant import asst_cmd
 
 # Database Manager for Disabled Chats
-# We store 'disabled' chats so the default is 'enabled'
 DisabledDL = KeyManager("DISABLED_DL_CHATS", cast=list)
+
+LOGS.info("Loading Universal Media Downloader Service...")
+
+# --------------------------------------------------------------------------
+# DEBUG COMMAND
+# --------------------------------------------------------------------------
+
+@asst_cmd(pattern="dlping$")
+async def dl_ping(event):
+    """Test if the downloader service is alive."""
+    await event.reply("`[DL SERVICE] I am alive and listening!`")
 
 # --------------------------------------------------------------------------
 # TOGGLE COMMAND
@@ -49,7 +59,8 @@ async def toggle_dl_service(event):
 @asst_cmd(incoming=True, func=lambda e: e.is_group)
 async def auto_media_downloader(event):
     """Listens for media links and downloads them automatically."""
-    if event.text.startswith("/") or DisabledDL.contains(event.chat_id):
+    # Ignore if service is disabled or it's a command
+    if not event.text or event.text.startswith("/") or DisabledDL.contains(event.chat_id):
         return
     
     text = event.text
@@ -61,47 +72,36 @@ async def auto_media_downloader(event):
     url = match.group(0)
     msg = await event.reply("`[DL] Extracting media...`")
     
-    start_time = time.time()
-    files = await extractor.download(url)
-    duration = round(time.time() - start_time, 2)
-    
-    if not files:
-        return await msg.delete() # Silent fail for cleaner UX
-
     try:
+        start_time = time.time()
+        files = await extractor.download(url)
+        duration = round(time.time() - start_time, 2)
+        
+        if not files:
+            return await msg.delete()
+
         # Determine Source
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X"
         
-        # Fast Upload
-        if len(files) == 1:
-            file_path = files[0]
-            if not os.path.exists(file_path):
-                return await msg.delete()
-                
-            await event.client.send_file(
-                event.chat_id,
-                file=file_path,
-                caption=f"**[ {source} ]**\n\n`Extraction Time: {duration}s`",
-                reply_to=event.id
-            )
-            os.remove(file_path)
-        else:
-            # Multi-file support (TikTok Slides or IG Carousel)
-            valid_files = [f for f in files if os.path.exists(f)]
-            if valid_files:
-                await event.client.send_file(
-                    event.chat_id,
-                    file=valid_files,
-                    caption=f"**[ {source} (Album) ]**\n\n`Extraction Time: {duration}s`",
-                    reply_to=event.id
-                )
-                for f in valid_files:
-                    os.remove(f)
+        # Filter existing files
+        valid_files = [f for f in files if os.path.exists(f)]
+        if not valid_files:
+            return await msg.edit("`[DL ERROR] Media extracted but file not found on server.`")
+
+        # Upload
+        caption = f"**[ {source} ]**\n\n`Extraction Time: {duration}s`"
+        await event.client.send_file(
+            event.chat_id,
+            file=valid_files if len(valid_files) > 1 else valid_files[0],
+            caption=caption,
+            reply_to=event.id
+        )
         
-        await msg.delete()
-    except Exception as e:
-        LOGS.error(f"Media Upload Error: {e}")
-        await msg.edit(f"`[DL ERROR] Failed to upload media.`")
         # Cleanup
-        for f in files:
+        for f in valid_files:
             if os.path.exists(f): os.remove(f)
+        await msg.delete()
+
+    except Exception as e:
+        LOGS.error(f"Media Downloader Error: {e}")
+        await msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
