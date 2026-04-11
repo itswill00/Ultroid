@@ -144,24 +144,23 @@ async def ultroid(event):
 
 @asst_cmd(pattern="help$", owner=True)
 async def asst_help(event):
-    _main_help_menu = [
-        [
-            Button.inline("PLUGINS", data="uh_Official_"),
-            Button.inline("ADDONS", data="uh_Addons_"),
-        ],
-        [
-            Button.inline("INLINE", data="inlone"),
-            Button.inline("SYSTEM", data="ownr"),
-        ],
-        [
-            Button.url("SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"),
-            Button.inline("CLOSE", data="close"),
-        ],
-    ]
-    await event.reply(
-        "**[Ultroid] Panel**\nWelcome. Use the buttons below to browse the command catalog.",
-        buttons=_main_help_menu
-    )
+    help_text = """**[KODA Yardım] Sudo Guide**
+
+You have been granted Sudo permissions for this Userbot. You can execute commands remotely by typing them in any group where the bot is active.
+
+**Capabilities:**
+» Execute standard utility commands.
+» Access AI integrations and media tools.
+» Handle basic automated moderation.
+
+**Vital Restrictions:**
+» No access to system remote code execution (`.bash`, `.eval`).
+» No access to internal Bot Configurations.
+» No access to Sudo Management.
+
+*Usage:* Simply send a command prefix (usually `.`) followed by the command name (e.g. `.ping`) in the chat."""
+    
+    await event.reply(help_text)
 
 
 @callback("itkkstyo", owner=True)
