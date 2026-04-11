@@ -141,9 +141,11 @@ async def user_balance(event):
     balance = Bank.get().get(str(event.sender_id), 0)
     await event.reply(f"**[Ultroid Bank]**\nYour current balance: `{balance:,} tokens`.")
 
-@asst_cmd(pattern="(ask|ai)( (.*)|$)")
+@asst_cmd(pattern="(ask|ai)(?:@\\w+)?( (.*)|$)")
 async def public_ask(event):
     """Public AI command for Assistant Bot."""
+    from pyUltroid import LOGS
+    LOGS.info(f"[Asst Bot] /ai command triggered by user {event.sender_id}")
     query = event.pattern_match.group(2).strip()
     if not query:
         return await event.reply("`[Usage] /ask <pertanyaan>`")

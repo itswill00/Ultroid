@@ -113,6 +113,9 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
     uid = event.sender_id
     is_admin = uid in owner_and_sudos()
     
+    from .. import udB, LOGS
+    LOGS.info(f"run_ai_task started. sender={uid}, is_admin={is_admin}")
+    
     try:
         # 1. Authorization & Auto-registration
         if not is_admin:
@@ -218,5 +221,5 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
              err_msg += f"\n\n**Traceback:**\n`{format_exc()[:500]}`"
         try:
             await eor(event, err_msg)
-        except Exception:
-            pass
+        except Exception as e2:
+            LOGS.error(f"[AI ENGINE] eor failed during error dispatch: {e2}")
