@@ -177,7 +177,7 @@ async def public_ask(event):
     model = _get_model()
     q_preview = query[:200].replace('\n', ' ')
     output = f"> \"{q_preview}\"\n\n{ans.strip()}\n"
-    footer = f"\n**model**: `{model}`\n**detik**: `{duration}s`\n**token**: `{total_tokens}`"
+    footer = f"\n**model**: `{model}`\n**time**: `{duration}s`\n**tokens**: `{total_tokens}`"
     if event.sender_id not in owner_and_sudos():
         footer += f"\n**limit**: `-{total_tokens}`"
 

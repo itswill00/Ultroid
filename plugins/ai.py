@@ -168,7 +168,7 @@ async def unified_ai(e):
             output = f"> \"{q_preview}\"\n\n{sanitized_ans.strip()}"
             
             # 2. Telemetry Metrix & Footer
-            footer = f"\n\n**model**: `{short_model}`\n**detik**: `{duration}ms`\n**token**: `{total_tokens}`"
+            footer = f"\n\n**model**: `{short_model}`\n**time**: `{duration}ms`\n**tokens**: `{total_tokens}`"
             if not is_admin:
                 footer += f"\n**limit**: `-{total_tokens}`"
             
