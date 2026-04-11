@@ -19,7 +19,7 @@ DisabledDL = KeyManager("DISABLED_DL_CHATS", cast=list)
 # TOGGLE COMMAND
 # --------------------------------------------------------------------------
 
-@asst_cmd(pattern="dlservice( (on|off)|$)", is_group=True)
+@asst_cmd(pattern="dlservice( (on|off)|$)", func=lambda e: e.is_group)
 async def toggle_dl_service(event):
     """Enable or disable auto-downloader in the group."""
     if not await admin_check(event):
@@ -45,7 +45,7 @@ async def toggle_dl_service(event):
 # AUTOMATIC LISTENER
 # --------------------------------------------------------------------------
 
-@asst_cmd(incoming=True, is_group=True)
+@asst_cmd(incoming=True, func=lambda e: e.is_group)
 async def auto_media_downloader(event):
     """Listens for media links and downloads them automatically."""
     if event.text.startswith("/") or DisabledDL.contains(event.chat_id):
