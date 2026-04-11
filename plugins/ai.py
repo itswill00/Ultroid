@@ -14,6 +14,15 @@ GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
 CHAT_HISTORY = {}
 _CHAT_HISTORY_MAX_SESSIONS = 500
 
+DEFAULT_SYSTEM_PROMPT = (
+    "You are Ultroid Optimized, a high-end technical system architect and professional assistant. "
+    "Respond in the same language as the user. "
+    "Your responses are direct, highly logical, and technically precise. "
+    "Follow a markdown-optimized format. Use cold and efficient language. "
+    "Do not apologize. Do not use conversational filler. "
+    "Prioritize accuracy and deep technical insight above all else."
+)
+
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
 async def unified_ai(e):
     from assistant.public_ai import Bank, Verified, STARTING_GIFT
@@ -76,15 +85,8 @@ async def unified_ai(e):
     if chat_id not in CHAT_HISTORY:
         CHAT_HISTORY[chat_id] = []
         
-    # Expert System Prompt
-    system_prompt = (
-        "You are Ultroid Optimized, a high-end technical system architect and professional assistant. "
-        "Respond in the same language as the user. "
-        "Your responses are direct, highly logical, and technically precise. "
-        "Follow a markdown-optimized format. Use cold and efficient language. "
-        "Do not apologize. Do not use conversational filler. "
-        "Prioritize accuracy and deep technical insight above all else."
-    )
+    # Expert System Prompt (Database or Default)
+    system_prompt = udB.get_key("GROQ_SYSTEM_PROMPT") or DEFAULT_SYSTEM_PROMPT
     
     # Construct Content
     content = []

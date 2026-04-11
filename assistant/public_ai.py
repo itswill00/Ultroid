@@ -89,6 +89,34 @@ async def check_user_bank(event):
     await event.reply(f"**[Ultroid Bank Status]**\nUser: `{target_id}`\nStatus: `{status}`\nBalance: `{balance:,} tokens`")
 
 # --------------------------------------------------------------------------
+# PERSONA MANAGEMENT (Owner Only)
+# --------------------------------------------------------------------------
+
+@asst_cmd(pattern="setsystem( (.*)|$)", owner=True)
+async def set_ai_system(event):
+    """Update the AI system prompt."""
+    meta = event.pattern_match.group(1).strip()
+    if not meta:
+        return await event.reply("`[PERSONA] Usage: /setsystem <your instructions>`")
+    
+    udB.set_key("GROQ_SYSTEM_PROMPT", meta)
+    await event.reply("`[PERSONA] System Prompt updated successfully.`")
+
+@asst_cmd(pattern="getsystem$", owner=True)
+async def get_ai_system(event):
+    """Retrieve the current system prompt."""
+    prompt = udB.get_key("GROQ_SYSTEM_PROMPT")
+    if not prompt:
+        return await event.reply("`[PERSONA] Currently using default Technical System Architect prompt.`")
+    await event.reply(f"**[Current System Prompt]**\n\n`{prompt}`")
+
+@asst_cmd(pattern="resetsystem$", owner=True)
+async def reset_ai_system(event):
+    """Reset to default prompt."""
+    udB.del_key("GROQ_SYSTEM_PROMPT")
+    await event.reply("`[PERSONA] System Prompt reset to default.`")
+
+# --------------------------------------------------------------------------
 # USER COMMANDS
 # --------------------------------------------------------------------------
 
