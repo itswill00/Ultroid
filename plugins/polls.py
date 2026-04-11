@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}poll <question> ; <option> ; <option>`
     Get the Anonymous Poll with Given Options

@@ -1,5 +1,5 @@
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}cleanup`
     Perform a manual cleanup of temporary files in downloads, temp, and cache folders.

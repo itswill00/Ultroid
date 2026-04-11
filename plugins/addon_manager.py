@@ -1,5 +1,5 @@
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}addons <on/off>`
     Enable or disable the loading of external addons. 
