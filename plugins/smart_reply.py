@@ -33,6 +33,7 @@ from io import BytesIO
 from datetime import datetime
 
 from . import udB, ultroid_cmd, LOGS, HNDLR
+from pyUltroid._misc import owner_and_sudos
 from pyUltroid.fns.misc import google_search
 
 help_smart_reply = __doc__
@@ -130,6 +131,15 @@ async def ask_ai(e):
 
     xx = await e.eor("`[AI] Processing...`")
     
+    from assistant.public_ai import Bank, Verified
+    is_admin = e.sender_id in owner_and_sudos()
+    if not is_admin:
+        if not Verified.contains(e.sender_id):
+            return await xx.edit("`[Ultroid] Access Denied. Use /apply_ai in Assistant Bot to request access.`")
+        balance = Bank.get().get(str(e.sender_id), 0)
+        if balance <= 0:
+            return await xx.edit("`[Ultroid Bank] Insufficient balance. Please refill at Assistant Bot.`")
+    
     context = ""
     sources = []
     
@@ -188,6 +198,12 @@ async def ask_ai(e):
             
     # 2. Telemetry Metrix
     footer = f"\n`[{model}]` • `[{exec_time}s]` • `[{total_tokens} tokens]`"
+    if not is_admin:
+        # Deduct tokens for non-admins
+        balance = Bank.get().get(str(e.sender_id), 0)
+        new_balance = max(0, balance - total_tokens)
+        Bank.add({str(e.sender_id): new_balance})
+        footer += f" • `[-{total_tokens} tokens]`"
     
     # 3. Smart File-Fallback
     if len(output) > 1000:
