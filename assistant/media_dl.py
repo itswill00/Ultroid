@@ -7,7 +7,8 @@ import time
 import uuid
 import asyncio
 from telethon import Button
-from pyUltroid import asst, udB, LOGS, owner_and_sudos, _ult_cache
+from pyUltroid import asst, udB, LOGS, _ult_cache
+from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE
 from pyUltroid.fns.helper import humanbytes, time_formatter
