@@ -215,6 +215,7 @@ async def restartbt(ult):
         "chat_id": ult.chat_id,
         "msg_id": msg.id,
     }))
+    udB.set_key("_RESTART_BROADCAST", True)
 
     # Heroku restart: delegate to restart() helper
     if heroku_api:
