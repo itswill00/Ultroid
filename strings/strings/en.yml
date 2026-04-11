@@ -431,12 +431,12 @@ udl_6: "`This Directory is Empty.`"
 udl_7: "`You can't do that!`"
 
 # vctools
-vct_1: "`Voice Chat Started...`"
-vct_2: "**Successfully Changed VC Title to** `{}`"
-vct_3: "`Inviting Members to Voice Chat...`"
-vct_4: "`Voice Chat Stopped...`"
-vct_5: "`Invited {} users`"
-vct_6: "No input Found!"
+vct_1: "`[VCT] Voice Call Initiated.`"
+vct_2: "`[VCT] Title updated to: {}`"
+vct_3: "`[VCT] Broadcasting invites...`"
+vct_4: "`[VCT] Voice Call Terminated.`"
+vct_5: "`[VCT] Invites sent: {}`"
+vct_6: "`[ERROR] No input specified.`"
 
 # words
 wrd_1: "• **Word :** `{}`\n• **Meaning :** __{}__\n\n• **Example :** __{}__"

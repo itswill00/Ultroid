@@ -6,7 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}setstory <reply media>`
     Set replied media as your story.
@@ -32,7 +32,7 @@ from telethon.events import NewMessage
 async def setStory(event: NewMessage.Event):
     reply = await event.get_reply_message()
     if not (reply and (reply.photo or reply.video)):
-        await event.eor("Please reply to a photo or video!", time=5)
+        await event.eor("`[STORY] Invalid media. Reply to a photo or video.`", time=5)
         return
     msg = await event.eor(get_string("com_1"))
     try:
@@ -45,9 +45,9 @@ async def setStory(event: NewMessage.Event):
             ]
         )
     )
-        await msg.eor("🔥 **Story is Live!**", time=5)
+        await msg.eor("`[STORY] Successfully published.`", time=5)
     except Exception as er:
-        await msg.edit(f"__ERROR: {er}__")
+        await msg.edit(f"`[ERROR] {er}`")
         LOGS.exception(er)
 
 
@@ -81,7 +81,7 @@ async def downloadUserStories(event: NewMessage.Event):
                 print(stories_response)
                 
                 if not stories_response.stories:
-                    return await message.eor("ERROR: Story not found or expired!")
+                    return await message.eor("`[ERROR] Story not found or expired.`")
 
                 # Download and upload the story
                 for story in stories_response.stories:
@@ -94,10 +94,10 @@ async def downloadUserStories(event: NewMessage.Event):
                     )
                     os.remove(file)
                 
-                return await message.eor("**Uploaded Story!**", time=5)
+                return await message.eor("`[STORY] Upload complete.`", time=5)
 
             except Exception as er:
-                await message.eor(f"ERROR while fetching story: __{er}__")
+                await message.eor(f"`[ERROR] Fetching failed: {er}`")
                 LOGS.exception(er)
                 return
         
@@ -110,7 +110,7 @@ async def downloadUserStories(event: NewMessage.Event):
             username = replied.sender_id
         else:
             return await message.eor(
-                "Please reply to a user, provide username or story link!"
+                "`[STORY] Specify target. Reply to a user, provide username, or link.`"
             )
             
     with suppress(ValueError):
@@ -131,11 +131,11 @@ async def downloadUserStories(event: NewMessage.Event):
             ).full_user 
             stories = full_user.stories
     except Exception as er:
-        await message.eor(f"ERROR: __{er}__")
+        await message.eor(f"`[ERROR] {er}`")
         return
 
     if not (stories and stories.stories):
-        await message.eor("ERROR: Stories not found!")
+        await message.eor("`[ERROR] No stories found.`")
         return
     for story in stories.stories[:5]:
         client: TelegramClient = event.client
@@ -147,4 +147,4 @@ async def downloadUserStories(event: NewMessage.Event):
         )
         os.remove(file)
 
-    await message.eor("**Uploaded Stories!**", time=5)
+    await message.eor("`[STORY] Upload complete.`", time=5)

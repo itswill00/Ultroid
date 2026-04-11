@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-✘ Commands Available -
+» Commands Available -
 
 • `{i}circle`
     Reply to a audio song or gif to get video note.
@@ -181,9 +181,9 @@ async def _(ult):
 async def _(e):
     reply = await e.get_reply_message()
     if not (reply and reply.media):
-        return await e.eor("`Reply to a gif or audio file only.`")
+        return await e.eor("`[MEDIA] Invalid target. Reply to a GIF or audio.`")
     if "audio" in mediainfo(reply.media):
-        msg = await e.eor("`Downloading...`")
+        msg = await e.eor("`[MEDIA] Downloading payload...`")
         try:
             bbbb = await reply.download_media(thumb=-1)
         except TypeError:
@@ -194,11 +194,11 @@ async def _(e):
         cv2.imwrite("img.jpg", output)
         thumb = "img.jpg"
         audio, _ = await e.client.fast_downloader(reply.document)
-        await msg.edit("`Creating video note...`")
+        await msg.edit("`[MEDIA] Rendering video note...`")
         await bash(
             f'ffmpeg -i "{thumb}" -i "{audio.name}" -preset ultrafast -c:a libmp3lame -ab 64 circle.mp4 -y'
         )
-        await msg.edit("`Uploading...`")
+        await msg.edit("`[MEDIA] Uploading...`")
         data = await metadata("circle.mp4")
         file, _ = await e.client.fast_uploader("circle.mp4", to_delete=True)
         await e.client.send_file(
@@ -219,7 +219,7 @@ async def _(e):
         await msg.delete()
         [os.remove(k) for k in [audio.name, thumb]]
     elif mediainfo(reply.media) == "gif" or mediainfo(reply.media).startswith("video"):
-        msg = await e.eor("**Creating video note**")
+        msg = await e.eor("`[MEDIA] Rendering video note...`")
         file = await reply.download_media("resources/downloads/")
         if file.endswith(".webm"):
             nfile = await con.ffmpeg_convert(file, "file.mp4")
@@ -237,7 +237,7 @@ async def _(e):
         await msg.delete()
 
     else:
-        await e.eor("`Reply to a gif or audio file only.`")
+        await e.eor("`[MEDIA] Invalid target. Reply to a GIF or audio.`")
 
 
 FilesEMOJI = {
