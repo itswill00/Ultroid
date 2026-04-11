@@ -151,8 +151,8 @@ async def process_media_selection(event):
         if not valid_files:
             return await event.edit("`[DL ERROR] File download failed.`")
 
-        await event.client.send_file(
-            event.chat_id,
+        # Use event.respond for safer delivery (handles reply_to correctly)
+        await event.respond(
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
