@@ -7,18 +7,18 @@
 """
 ✘ Commands Available -
 
-• `{i}remind <waktu> <pesan>`
-    Set pengingat. Waktu bisa: 30s, 10m, 2h, 1d
-    Contoh: `.remind 30m Beli makan malam`
+• `{i}remind <time> <message>`
+    Set a reminder. Time formats: 30s, 10m, 2h, 1d
+    Example: `.remind 30m Buy dinner`
 
 • `{i}reminders`
-    Lihat semua pengingat yang aktif.
+    List all active reminders.
 
 • `{i}cancelremind <id>`
-    Batalkan pengingat berdasarkan ID.
+    Cancel a reminder by its ID.
 
 • `{i}clearremind`
-    Hapus semua pengingat yang aktif.
+    Cancel all active reminders.
 """
 
 import asyncio
@@ -56,15 +56,15 @@ async def set_reminder(e):
     match = e.pattern_match.group(1).strip()
     if not match:
         return await e.eor(
-            "`[REMIND] Penggunaan: .remind <waktu> <pesan>`\n"
-            "`Contoh: .remind 30m Beli makan malam`"
+            "`[REMIND] Usage: .remind <time> <message>`\n"
+            "`Example: .remind 30m Buy dinner`"
         )
 
     parts = match.split(" ", 1)
     if len(parts) < 2:
         return await e.eor(
-            "`[REMIND] Harap sertakan waktu dan pesan.`\n"
-            "`Contoh: .remind 1h Ambil laundry`"
+            "`[REMIND] Please provide both a time and a message.`\n"
+            "`Example: .remind 1h Pick up laundry`"
         )
 
     time_str, message = parts[0], parts[1]
@@ -72,12 +72,12 @@ async def set_reminder(e):
 
     if secs <= 0:
         return await e.eor(
-            "`[REMIND] Format waktu tidak valid.`\n"
-            "`Gunakan: 30s, 10m, 2h, 1d`"
+            "`[REMIND] Invalid time format.`\n"
+            "`Use: 30s, 10m, 2h, 1d`"
         )
 
     if secs > 7 * 24 * 3600:
-        return await e.eor("`[REMIND] Maksimum pengingat adalah 7 hari.`")
+        return await e.eor("`[REMIND] Maximum reminder duration is 7 days.`")
 
     _counter += 1
     rid = _counter
@@ -91,11 +91,11 @@ async def set_reminder(e):
         try:
             await ultroid_bot.send_message(
                 chat_id,
-                f"⏰ **Pengingat #{rid}**\n\n{message}\n\n`Dijadwalkan: {fire_time}`",
+                f"⏰ **Reminder #{rid}**\n\n{message}\n\n`Triggered at: {fire_time}`",
                 reply_to=msg_id,
             )
         except Exception as err:
-            LOGS.warning(f"[REMIND] Gagal mengirim pengingat #{rid}: {err}")
+            LOGS.warning(f"[REMIND] Failed to send reminder #{rid}: {err}")
         _reminders.pop(rid, None)
 
     task = asyncio.get_event_loop().create_task(_fire())
@@ -103,28 +103,28 @@ async def set_reminder(e):
 
     trigger_fmt = datetime.fromtimestamp(trigger_ts).strftime("%d %b %Y %H:%M:%S")
     await e.eor(
-        f"`[REMIND] Pengingat #{rid} diset.`\n"
-        f"**Pesan:** {message}\n"
-        f"**Waktu:** `{trigger_fmt}`"
+        f"`[REMIND] Reminder #{rid} set.`\n"
+        f"**Message:** {message}\n"
+        f"**Trigger:** `{trigger_fmt}`"
     )
 
 
 @ultroid_cmd(pattern="reminders$")
 async def list_reminders(e):
     if not _reminders:
-        return await e.eor("`[REMIND] Tidak ada pengingat aktif.`")
+        return await e.eor("`[REMIND] No active reminders.`")
 
     now = int(time.time())
-    out = "**Pengingat Aktif:**\n\n"
+    out = "**Active Reminders:**\n\n"
     for rid, (_, msg, ts) in sorted(_reminders.items()):
         remaining = ts - now
         if remaining > 0:
             h, rem = divmod(remaining, 3600)
             m, s = divmod(rem, 60)
-            time_left = f"{h}j {m}m {s}d" if h else f"{m}m {s}d"
+            time_left = f"{h}h {m}m {s}s" if h else f"{m}m {s}s"
         else:
-            time_left = "segera"
-        out += f"• **#{rid}** — `{msg[:50]}` — sisa `{time_left}`\n"
+            time_left = "imminent"
+        out += f"• **#{rid}** — `{msg[:50]}` — in `{time_left}`\n"
 
     await e.eor(out)
 
@@ -133,24 +133,24 @@ async def list_reminders(e):
 async def cancel_reminder(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
-        return await e.eor("`[REMIND] Contoh: .cancelremind 1`")
+        return await e.eor("`[REMIND] Example: .cancelremind 1`")
 
     rid = int(match)
     if rid not in _reminders:
-        return await e.eor(f"`[REMIND] Pengingat #{rid} tidak ditemukan.`")
+        return await e.eor(f"`[REMIND] Reminder #{rid} not found.`")
 
     task, msg, _ = _reminders.pop(rid)
     task.cancel()
-    await e.eor(f"`[REMIND] Pengingat #{rid} (`{msg[:40]}`) dibatalkan.`")
+    await e.eor(f"`[REMIND] Reminder #{rid} ('{msg[:40]}') cancelled.`")
 
 
 @ultroid_cmd(pattern="clearremind$")
 async def clear_reminders(e):
     if not _reminders:
-        return await e.eor("`[REMIND] Tidak ada pengingat aktif.`")
+        return await e.eor("`[REMIND] No active reminders.`")
 
     count = len(_reminders)
     for rid, (task, _, _) in list(_reminders.items()):
         task.cancel()
     _reminders.clear()
-    await e.eor(f"`[REMIND] {count} pengingat dihapus.`")
+    await e.eor(f"`[REMIND] {count} reminder(s) cleared.`")

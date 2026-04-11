@@ -8,15 +8,15 @@
 ✘ Commands Available -
 
 • `{i}pingcheck`
-    Cek latency ke server Telegram saat ini (one-shot).
+    One-shot latency check to Telegram servers.
 
 • `{i}pingwatch <interval> <limit>`
-    Monitor latency setiap <interval> detik selama <limit> kali.
-    Default: interval=10, limit=6 (1 menit).
-    Contoh: `.pingwatch 5 12`
+    Monitor latency every <interval> seconds for <limit> pings.
+    Defaults: interval=10, limit=6 (1 minute total).
+    Example: `.pingwatch 5 12`
 
 • `{i}pingstop`
-    Hentikan sesi pingwatch yang sedang berjalan.
+    Stop an active pingwatch session.
 """
 
 import asyncio
@@ -42,7 +42,7 @@ def _latency_bar(ms: float) -> str:
 @ultroid_cmd(pattern="pingcheck$")
 async def ping_check(e):
     t1 = time.perf_counter()
-    msg = await e.eor("`[PING] Mengukur latency...`")
+    msg = await e.eor("`[PING] Measuring latency...`")
     t2 = time.perf_counter()
     ms = round((t2 - t1) * 1000, 2)
     icon = _latency_bar(ms)
@@ -58,7 +58,7 @@ async def ping_watch(e):
 
     if _watch_task and not _watch_task.done():
         return await e.eor(
-            "`[PING] Sesi watch sudah aktif. Gunakan .pingstop untuk menghentikannya.`"
+            "`[PING] A watch session is already active. Use .pingstop to stop it.`"
         )
 
     match = e.pattern_match.group(1).strip().split()
@@ -69,7 +69,7 @@ async def ping_watch(e):
         interval, limit = 10, 6
 
     msg = await e.eor(
-        f"`[PING] Memulai watch: {limit}x ping setiap {interval} detik...`"
+        f"`[PING] Starting watch: {limit} pings every {interval}s...`"
     )
     results = []
 
@@ -84,7 +84,6 @@ async def ping_watch(e):
                 pass
             ms = round((time.perf_counter() - t1) * 1000, 2)
             results.append(ms)
-            icon = _latency_bar(ms)
             lines = "\n".join(
                 f"`{j+1:02d}.` {_latency_bar(r)} `{r} ms`"
                 for j, r in enumerate(results)
@@ -106,7 +105,7 @@ async def ping_watch(e):
             mn, mx = min(results), max(results)
             try:
                 await msg.edit(
-                    f"**Ping Watch — Selesai**\n\n"
+                    f"**Ping Watch — Complete**\n\n"
                     f"**Samples:** `{len(results)}`\n"
                     f"**Min:** `{mn} ms` · **Max:** `{mx} ms` · **Avg:** `{avg:.1f} ms`"
                 )
@@ -122,6 +121,6 @@ async def ping_stop(e):
     if _watch_task and not _watch_task.done():
         _watch_task.cancel()
         _watch_task = None
-        await e.eor("`[PING] Sesi watch dihentikan.`")
+        await e.eor("`[PING] Watch session stopped.`")
     else:
-        await e.eor("`[PING] Tidak ada sesi watch yang aktif.`")
+        await e.eor("`[PING] No active watch session.`")

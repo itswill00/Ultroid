@@ -7,19 +7,19 @@
 """
 ✘ Commands Available -
 
-• `{i}ask <pertanyaan>`
-    Tanyakan sesuatu ke AI (Groq API). Membutuhkan GROQ_API_KEY di .env.
+• `{i}ask <question>`
+    Ask anything to the AI (via Groq API). Requires GROQ_API_KEY in .env.
 
 • `{i}summarize`
-    Reply ke pesan atau rangkaian teks untuk meringkasnya.
+    Reply to a message to get a concise AI-generated summary.
 
-• `{i}tldr <jumlah>`
-    Baca <jumlah> pesan terakhir di chat dan buat ringkasan singkat.
-    Contoh: `.tldr 50`
+• `{i}tldr <count>`
+    Read the last N messages in the chat and produce a summary.
+    Example: `.tldr 50`
 
-• `{i}aimodel <nama>`
-    Ganti model AI. Default: llama-3.3-70b-versatile
-    Model tersedia: llama-3.3-70b-versatile, mixtral-8x7b-32768, gemma2-9b-it
+• `{i}aimodel <name>`
+    Switch the AI model. Default: llama-3.3-70b-versatile
+    Available: llama-3.3-70b-versatile, mixtral-8x7b-32768, gemma2-9b-it
 """
 
 import os
@@ -34,8 +34,7 @@ _MODEL_KEY = "GROQ_AI_MODEL"
 _MAX_TOKENS = 1024
 _SYSTEM_PROMPT = (
     "You are a precise, technical assistant. "
-    "Respond concisely and directly. "
-    "Use Indonesian if the user writes in Indonesian, otherwise use English."
+    "Respond concisely and directly in the same language the user writes in."
 )
 
 
@@ -48,7 +47,7 @@ def _get_api_key() -> str | None:
 
 
 async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
-    """Call Groq API and return response text or None on failure."""
+    """Call Groq API and return response text, or None on failure."""
     api_key = _get_api_key()
     if not api_key:
         return None
@@ -70,7 +69,10 @@ async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
             "temperature": 0.5,
         }
         async with aiohttp.ClientSession() as sess:
-            async with sess.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+            async with sess.post(
+                url, headers=headers, json=payload,
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
                 if resp.status != 200:
                     err = await resp.text()
                     LOGS.warning(f"[AI] Groq API error {resp.status}: {err[:200]}")
@@ -86,31 +88,31 @@ async def _call_groq(prompt: str, system: str = _SYSTEM_PROMPT) -> str | None:
 async def ask_ai(e):
     question = e.pattern_match.group(1).strip()
 
-    # Optionally take question from replied message
+    # Accept question from replied message if not provided inline
     if not question:
         reply = await e.get_reply_message()
         if reply and reply.text:
             question = reply.text.strip()
 
     if not question:
-        return await e.eor("`[AI] Contoh: .ask Apa itu machine learning?`")
+        return await e.eor("`[AI] Example: .ask What is machine learning?`")
 
     if not _get_api_key():
         return await e.eor(
-            "`[AI] GROQ_API_KEY belum diset.`\n"
-            "`Tambahkan ke .env: GROQ_API_KEY=gsk_xxx`"
+            "`[AI] GROQ_API_KEY is not set.`\n"
+            "`Add to .env: GROQ_API_KEY=gsk_xxx`"
         )
 
-    xx = await e.eor("`[AI] Memproses...`")
+    xx = await e.eor("`[AI] Processing...`")
     result = await _call_groq(question)
 
     if not result:
-        return await xx.edit("`[AI] Tidak mendapat respons dari AI. Cek API key.`")
+        return await xx.edit("`[AI] No response from AI. Check your API key.`")
 
     model = _get_model()
     await xx.edit(
-        f"**Pertanyaan:** {question[:200]}\n\n"
-        f"**Jawaban:**\n{result}\n\n"
+        f"**Question:** {question[:200]}\n\n"
+        f"**Answer:**\n{result}\n\n"
         f"`Model: {model}`"
     )
 
@@ -119,19 +121,19 @@ async def ask_ai(e):
 async def summarize_msg(e):
     reply = await e.get_reply_message()
     if not reply or not reply.text:
-        return await e.eor("`[AI] Reply ke pesan yang ingin diringkas.`")
+        return await e.eor("`[AI] Reply to the message you want summarized.`")
 
     if not _get_api_key():
-        return await e.eor("`[AI] GROQ_API_KEY belum diset.`")
+        return await e.eor("`[AI] GROQ_API_KEY is not set.`")
 
-    xx = await e.eor("`[AI] Meringkas pesan...`")
-    prompt = f"Ringkas pesan berikut dalam 2-3 kalimat singkat:\n\n{reply.text[:3000]}"
+    xx = await e.eor("`[AI] Summarizing...`")
+    prompt = f"Summarize the following message in 2-3 concise sentences:\n\n{reply.text[:3000]}"
     result = await _call_groq(prompt)
 
     if not result:
-        return await xx.edit("`[AI] Gagal mendapatkan ringkasan.`")
+        return await xx.edit("`[AI] Failed to get a summary.`")
 
-    await xx.edit(f"**Ringkasan:**\n{result}")
+    await xx.edit(f"**Summary:**\n{result}")
 
 
 @ultroid_cmd(pattern="tldr( (.*)|$)")
@@ -143,9 +145,9 @@ async def tldr(e):
         limit = 50
 
     if not _get_api_key():
-        return await e.eor("`[AI] GROQ_API_KEY belum diset.`")
+        return await e.eor("`[AI] GROQ_API_KEY is not set.`")
 
-    xx = await e.eor(f"`[AI] Membaca {limit} pesan terakhir...`")
+    xx = await e.eor(f"`[AI] Reading last {limit} messages...`")
 
     collected = []
     async for msg in e.client.iter_messages(e.chat_id, limit=limit):
@@ -154,23 +156,21 @@ async def tldr(e):
             collected.append(f"{sender}: {msg.text.strip()}")
 
     if not collected:
-        return await xx.edit("`[AI] Tidak ada pesan teks untuk diringkas.`")
+        return await xx.edit("`[AI] No text messages found to summarize.`")
 
-    await xx.edit("`[AI] Menganalisis percakapan...`")
+    await xx.edit("`[AI] Analyzing conversation...`")
     conversation = "\n".join(reversed(collected))[:4000]
     prompt = (
-        "Berikut adalah percakapan dari sebuah grup Telegram. "
-        "Buat ringkasan singkat (max 5 poin) tentang apa yang sedang dibahas:\n\n"
+        "The following is a conversation from a Telegram group. "
+        "Summarize it in up to 5 bullet points covering the key topics discussed:\n\n"
         f"{conversation}"
     )
     result = await _call_groq(prompt)
 
     if not result:
-        return await xx.edit("`[AI] Gagal menganalisis percakapan.`")
+        return await xx.edit("`[AI] Failed to analyze the conversation.`")
 
-    await xx.edit(
-        f"**TL;DR — {limit} pesan terakhir:**\n\n{result}"
-    )
+    await xx.edit(f"**TL;DR — last {limit} messages:**\n\n{result}")
 
 
 @ultroid_cmd(pattern="aimodel( (.*)|$)")
@@ -181,15 +181,15 @@ async def set_ai_model(e):
     if not model:
         current = _get_model()
         return await e.eor(
-            f"**Model AI saat ini:** `{current}`\n\n"
-            f"**Tersedia:**\n" + "\n".join(f"• `{m}`" for m in _VALID)
+            f"**Current AI model:** `{current}`\n\n"
+            f"**Available models:**\n" + "\n".join(f"• `{m}`" for m in _VALID)
         )
 
     if model not in _VALID:
         return await e.eor(
-            f"`[AI] Model '{model}' tidak dikenali.`\n"
-            f"Model tersedia: `{'`, `'.join(_VALID)}`"
+            f"`[AI] Unknown model '{model}'.`\n"
+            f"Available: `{'`, `'.join(_VALID)}`"
         )
 
     udB.set_key(_MODEL_KEY, model)
-    await e.eor(f"`[AI] Model diubah ke: {model}`")
+    await e.eor(f"`[AI] Model switched to: {model}`")

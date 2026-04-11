@@ -8,17 +8,17 @@
 ✘ Commands Available -
 
 • `{i}sessions`
-    Lihat semua sesi aktif akun Telegram Anda.
+    List all active Telegram sessions on your account.
 
-• `{i}revoke <nomor>`
-    Cabut sesi berdasarkan nomor dari daftar `.sessions`.
+• `{i}revoke <number>`
+    Revoke a session by its number from the `.sessions` list.
 
 • `{i}revokeall`
-    Cabut semua sesi aktif kecuali sesi saat ini.
+    Revoke all active sessions except the current one.
 
 • `{i}sessionguard on|off`
-    Aktifkan/nonaktifkan pemantauan login baru.
-    Jika aktif, bot akan mengirim alert ke LOG_CHANNEL jika ada login baru.
+    Enable/disable new login monitoring.
+    When active, sends an alert to LOG_CHANNEL on any new login detected.
 """
 
 import asyncio
@@ -37,7 +37,7 @@ help_session_guard = __doc__
 _GUARD_KEY = "SESSION_GUARD"
 _KNOWN_HASHES_KEY = "SESSION_KNOWN_HASHES"
 _guard_task: asyncio.Task | None = None
-_CHECK_INTERVAL = 300  # 5 menit
+_CHECK_INTERVAL = 300  # seconds (5 minutes)
 
 
 def _fmt_session(auth) -> str:
@@ -61,24 +61,24 @@ def _fmt_session(auth) -> str:
 
 @ultroid_cmd(pattern="sessions$")
 async def list_sessions(e):
-    xx = await e.eor("`[SESSION] Mengambil daftar sesi...`")
+    xx = await e.eor("`[SESSION] Fetching active sessions...`")
     try:
         result = await e.client(GetAuthorizationsRequest())
         auths = result.authorizations
     except Exception as err:
         LOGS.exception(err)
-        return await xx.edit(f"`[SESSION] Gagal: {err}`")
+        return await xx.edit(f"`[SESSION] Failed: {err}`")
 
     if not auths:
-        return await xx.edit("`[SESSION] Tidak ada sesi aktif.`")
+        return await xx.edit("`[SESSION] No active sessions found.`")
 
-    lines = [f"**Sesi Aktif ({len(auths)}):**\n"]
+    lines = [f"**Active Sessions ({len(auths)}):**\n"]
     for i, auth in enumerate(auths, 1):
         lines.append(f"**[{i}]** {_fmt_session(auth)}\n")
 
     text = "\n".join(lines)
     if len(text) > 4000:
-        text = text[:4000] + "\n...(terpotong)"
+        text = text[:4000] + "\n...(truncated)"
     await xx.edit(text)
 
 
@@ -86,43 +86,43 @@ async def list_sessions(e):
 async def revoke_session(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
-        return await e.eor("`[SESSION] Contoh: .revoke 2`\nGunakan .sessions untuk melihat daftar.")
+        return await e.eor("`[SESSION] Example: .revoke 2`\nUse .sessions to see the list.")
 
     idx = int(match) - 1
-    xx = await e.eor("`[SESSION] Mengambil daftar sesi...`")
+    xx = await e.eor("`[SESSION] Fetching session list...`")
     try:
         result = await e.client(GetAuthorizationsRequest())
         auths = result.authorizations
     except Exception as err:
-        return await xx.edit(f"`[SESSION] Gagal mengambil sesi: {err}`")
+        return await xx.edit(f"`[SESSION] Failed to fetch sessions: {err}`")
 
     if idx < 0 or idx >= len(auths):
-        return await xx.edit(f"`[SESSION] Nomor sesi tidak valid. Pilih 1-{len(auths)}.`")
+        return await xx.edit(f"`[SESSION] Invalid session number. Choose 1-{len(auths)}.`")
 
     auth = auths[idx]
     if getattr(auth, "current", False):
-        return await xx.edit("`[SESSION] Tidak bisa mencabut sesi yang sedang aktif.`")
+        return await xx.edit("`[SESSION] Cannot revoke the currently active session.`")
 
     try:
         await e.client(ResetAuthorizationRequest(hash=auth.hash))
         await xx.edit(
-            f"`[SESSION] Sesi #{match} berhasil dicabut.`\n"
+            f"`[SESSION] Session #{match} revoked successfully.`\n"
             f"Device: `{auth.device_model}`"
         )
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[SESSION] Gagal mencabut sesi: {err}`")
+        await xx.edit(f"`[SESSION] Failed to revoke session: {err}`")
 
 
 @ultroid_cmd(pattern="revokeall$")
 async def revoke_all_sessions(e):
-    xx = await e.eor("`[SESSION] Mencabut semua sesi lain...`")
+    xx = await e.eor("`[SESSION] Revoking all other sessions...`")
     try:
         await e.client(ResetAuthorizationsRequest())
-        await xx.edit("`[SESSION] Semua sesi selain sesi ini berhasil dicabut.`")
+        await xx.edit("`[SESSION] All sessions except the current one have been revoked.`")
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[SESSION] Gagal: {err}`")
+        await xx.edit(f"`[SESSION] Failed: {err}`")
 
 
 @ultroid_cmd(pattern="sessionguard( (.*)|$)")
@@ -133,14 +133,14 @@ async def session_guard(e):
 
     if action == "on":
         if not log_ch:
-            return await e.eor("`[GUARD] LOG_CHANNEL belum diset.`")
+            return await e.eor("`[GUARD] LOG_CHANNEL is not set.`")
 
         if _guard_task and not _guard_task.done():
-            return await e.eor("`[GUARD] Session Guard sudah aktif.`")
+            return await e.eor("`[GUARD] Session Guard is already active.`")
 
         udB.set_key(_GUARD_KEY, "on")
 
-        # Snapshot sesi saat ini
+        # Snapshot current sessions
         try:
             result = await e.client(GetAuthorizationsRequest())
             known = {str(a.hash) for a in result.authorizations}
@@ -160,11 +160,11 @@ async def session_guard(e):
                     old_known = eval(stored) if stored else set()
                     new_sessions = current_hashes - old_known
                     if new_sessions:
-                        # Login baru terdeteksi
+                        # New login detected
                         for auth in result.authorizations:
                             if str(auth.hash) in new_sessions:
                                 alert = (
-                                    f"⚠️ **SESSION GUARD — Login Baru Terdeteksi**\n\n"
+                                    f"⚠️ **SESSION GUARD — New Login Detected**\n\n"
                                     f"{_fmt_session(auth)}\n\n"
                                     f"`{datetime.now().strftime('%d %b %Y %H:%M:%S')}`"
                                 )
@@ -175,8 +175,8 @@ async def session_guard(e):
 
         _guard_task = asyncio.get_event_loop().create_task(_guard_loop())
         await e.eor(
-            f"`[GUARD] Session Guard diaktifkan.`\n"
-            f"Interval: `{_CHECK_INTERVAL}s` · Alert ke LOG_CHANNEL."
+            f"`[GUARD] Session Guard enabled.`\n"
+            f"Interval: `{_CHECK_INTERVAL}s` · Alerts sent to LOG_CHANNEL."
         )
 
     elif action == "off":
@@ -184,7 +184,7 @@ async def session_guard(e):
         if _guard_task and not _guard_task.done():
             _guard_task.cancel()
             _guard_task = None
-        await e.eor("`[GUARD] Session Guard dinonaktifkan.`")
+        await e.eor("`[GUARD] Session Guard disabled.`")
 
     else:
         status = udB.get_key(_GUARD_KEY) or "off"
@@ -192,5 +192,5 @@ async def session_guard(e):
         await e.eor(
             f"**Session Guard**\n"
             f"Status: `{status}` · Running: `{is_running}`\n\n"
-            f"Gunakan: `.sessionguard on` atau `.sessionguard off`"
+            f"Usage: `.sessionguard on` or `.sessionguard off`"
         )

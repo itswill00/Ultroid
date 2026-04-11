@@ -8,13 +8,13 @@
 ✘ Commands Available -
 
 • `{i}sysmon`
-    Tampilkan snapshot penggunaan CPU, RAM, disk, dan network saat ini.
+    Show a snapshot of current CPU, RAM, disk, and network usage.
 
 • `{i}sysmon live`
-    Mode live — update otomatis setiap 5 detik selama 30 detik.
+    Live mode — auto-updates every 5 seconds for 30 seconds.
 
 • `{i}sysinfo`
-    Informasi sistem lengkap: OS, Python, arsitektur, uptime.
+    Full system information: OS, Python version, architecture, uptime.
 """
 
 import asyncio
@@ -61,7 +61,7 @@ def _uptime() -> str:
 
 def _build_snapshot() -> str:
     if not _HAS_PSUTIL:
-        return "`[SYSMON] psutil tidak terinstal. Jalankan: pip install psutil`"
+        return "`[SYSMON] psutil is not installed. Run: pip install psutil`"
 
     cpu = psutil.cpu_percent(interval=0.5)
     ram = psutil.virtual_memory()
@@ -69,9 +69,7 @@ def _build_snapshot() -> str:
 
     try:
         net = psutil.net_io_counters()
-        net_str = (
-            f"↑ {_fmt_bytes(net.bytes_sent)}  ↓ {_fmt_bytes(net.bytes_recv)}"
-        )
+        net_str = f"↑ {_fmt_bytes(net.bytes_sent)}  ↓ {_fmt_bytes(net.bytes_recv)}"
     except Exception:
         net_str = "N/A"
 
@@ -97,15 +95,15 @@ async def sys_monitor(e):
     match = e.pattern_match.group(1).strip()
 
     if match == "live":
-        msg = await e.eor("`[SYSMON] Memulai mode live (30 detik)...`")
-        for _ in range(6):  # 6 iterasi × 5 detik = 30 detik
+        msg = await e.eor("`[SYSMON] Starting live mode (30 seconds)...`")
+        for _ in range(6):  # 6 iterations × 5 seconds = 30 seconds
             try:
                 await msg.edit(_build_snapshot())
                 await asyncio.sleep(5)
             except Exception:
                 break
         try:
-            await msg.edit(_build_snapshot() + "\n\n`[SYSMON] Sesi live selesai.`")
+            await msg.edit(_build_snapshot() + "\n\n`[SYSMON] Live session ended.`")
         except Exception:
             pass
     else:
@@ -116,7 +114,7 @@ async def sys_monitor(e):
 async def sys_info(e):
     if not _HAS_PSUTIL:
         return await e.eor(
-            "`[SYSINFO] psutil tidak terinstal. Jalankan: pip install psutil`"
+            "`[SYSINFO] psutil is not installed. Run: pip install psutil`"
         )
 
     uname = platform.uname()
@@ -135,7 +133,7 @@ async def sys_info(e):
         f"**Arch**     `{uname.machine}`\n"
         f"**Hostname** `{uname.node}`\n"
         f"**Python**   `{py_ver}`\n"
-        f"**CPU**      `{cpu_count} core @ {freq_str}`\n"
+        f"**CPU**      `{cpu_count} core(s) @ {freq_str}`\n"
         f"**Boot**     `{boot_ts}`\n"
         f"**Uptime**   `{_uptime()}`\n"
         f"{sep}"

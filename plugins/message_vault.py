@@ -8,23 +8,23 @@
 ✘ Commands Available -
 
 • `{i}vault <label>`
-    Reply ke pesan untuk menyimpannya ke vault dengan label tertentu.
-    Contoh: `.vault password-wifi`
+    Reply to a message to save it to the vault with the given label.
+    Example: `.vault wifi-password`
 
 • `{i}vaultget <label>`
-    Ambil pesan yang tersimpan di vault dengan label tersebut.
+    Retrieve a saved vault entry by its label.
 
 • `{i}vaultdel <label>`
-    Hapus entri vault berdasarkan label.
+    Delete a vault entry by its label.
 
 • `{i}vaultlist`
-    Lihat semua label yang tersimpan di vault.
+    Show all labels currently stored in the vault.
 
 • `{i}vaultclear`
-    Hapus seluruh isi vault (konfirmasi diperlukan).
+    Delete all vault entries (requires confirmation).
 
-CATATAN: Vault disimpan di database bot (terenkripsi oleh mekanisme DB).
-Jangan simpan sesitive credential di sini kecuali Anda percaya keamanan DB Anda.
+NOTE: Vault entries are stored in the bot's database.
+Do not store sensitive credentials unless you trust your DB backend security.
 """
 
 import json
@@ -58,8 +58,8 @@ async def vault_save(e):
     label = e.pattern_match.group(1).strip()
     if not label:
         return await e.eor(
-            "`[VAULT] Contoh: .vault password-wifi`\n"
-            "`(Reply ke pesan yang ingin disimpan)`"
+            "`[VAULT] Example: .vault wifi-password`\n"
+            "`(Reply to the message you want to save)`"
         )
 
     # Sanitize label
@@ -67,12 +67,12 @@ async def vault_save(e):
 
     reply = await e.get_reply_message()
     if not reply:
-        return await e.eor("`[VAULT] Reply ke pesan yang ingin disimpan.`")
+        return await e.eor("`[VAULT] Reply to the message you want to save.`")
 
     content = reply.text or ""
     media_id = None
 
-    # Jika pesan punya photo/document, simpan file_id
+    # If the message has media, store its file_id
     if reply.media:
         try:
             from telethon.utils import pack_bot_file_id
@@ -81,7 +81,7 @@ async def vault_save(e):
             media_id = None
 
     if not content and not media_id:
-        return await e.eor("`[VAULT] Pesan tidak memiliki konten yang bisa disimpan.`")
+        return await e.eor("`[VAULT] Message has no storable content.`")
 
     vault = _get_vault()
     vault[label] = {
@@ -92,25 +92,25 @@ async def vault_save(e):
         "msg_id": reply.id,
     }
     _save_vault(vault)
-    await e.eor(f"`[VAULT] Tersimpan dengan label: '{label}'`")
+    await e.eor(f"`[VAULT] Saved under label: '{label}'`")
 
 
 @ultroid_cmd(pattern="vaultget( (.*)|$)")
 async def vault_get(e):
     label = e.pattern_match.group(1).strip().lower().replace(" ", "-")
     if not label:
-        return await e.eor("`[VAULT] Contoh: .vaultget password-wifi`")
+        return await e.eor("`[VAULT] Example: .vaultget wifi-password`")
 
     vault = _get_vault()
     if label not in vault:
-        return await e.eor(f"`[VAULT] Label '{label}' tidak ditemukan.`")
+        return await e.eor(f"`[VAULT] Label '{label}' not found.`")
 
     entry = vault[label]
     text = entry.get("text", "")
     media = entry.get("media")
     saved_at = entry.get("saved_at", "?")
 
-    header = f"**[VAULT] {label}**\nDisimpan: `{saved_at}`\n\n"
+    header = f"**[VAULT] {label}**\nSaved: `{saved_at}`\n\n"
     try:
         if media:
             await e.client.send_file(
@@ -124,33 +124,33 @@ async def vault_get(e):
             await e.eor(header + text)
     except Exception as err:
         LOGS.exception(err)
-        await e.eor(f"`[VAULT] Gagal mengambil entri: {err}`")
+        await e.eor(f"`[VAULT] Failed to retrieve entry: {err}`")
 
 
 @ultroid_cmd(pattern="vaultdel( (.*)|$)")
 async def vault_del(e):
     label = e.pattern_match.group(1).strip().lower().replace(" ", "-")
     if not label:
-        return await e.eor("`[VAULT] Contoh: .vaultdel password-wifi`")
+        return await e.eor("`[VAULT] Example: .vaultdel wifi-password`")
 
     vault = _get_vault()
     if label not in vault:
-        return await e.eor(f"`[VAULT] Label '{label}' tidak ditemukan.`")
+        return await e.eor(f"`[VAULT] Label '{label}' not found.`")
 
     del vault[label]
     _save_vault(vault)
-    await e.eor(f"`[VAULT] Label '{label}' dihapus dari vault.`")
+    await e.eor(f"`[VAULT] Label '{label}' deleted from vault.`")
 
 
 @ultroid_cmd(pattern="vaultlist$")
 async def vault_list(e):
     vault = _get_vault()
     if not vault:
-        return await e.eor("`[VAULT] Vault kosong.`")
+        return await e.eor("`[VAULT] Vault is empty.`")
 
-    lines = [f"**Vault — {len(vault)} entri:**\n"]
+    lines = [f"**Vault — {len(vault)} entry/entries:**\n"]
     for i, (label, entry) in enumerate(sorted(vault.items()), 1):
-        typ = "📄 teks" if not entry.get("media") else "📎 media"
+        typ = "📄 text" if not entry.get("media") else "📎 media"
         saved = entry.get("saved_at", "?")
         lines.append(f"`{i:02d}.` **{label}** — {typ} — `{saved}`")
 
@@ -162,13 +162,13 @@ async def vault_clear(e):
     confirm = e.pattern_match.group(1).strip()
     vault = _get_vault()
     if not vault:
-        return await e.eor("`[VAULT] Vault sudah kosong.`")
+        return await e.eor("`[VAULT] Vault is already empty.`")
 
     if confirm.lower() != "confirm":
         return await e.eor(
-            f"`[VAULT] Vault memiliki {len(vault)} entri.`\n"
-            "`Ketik .vaultclear confirm untuk menghapus semua.`"
+            f"`[VAULT] Vault has {len(vault)} entry/entries.`\n"
+            "`Type .vaultclear confirm to delete all.`"
         )
 
     udB.del_key(_VAULT_KEY)
-    await e.eor("`[VAULT] Seluruh vault berhasil dihapus.`")
+    await e.eor("`[VAULT] All vault entries deleted.`")
