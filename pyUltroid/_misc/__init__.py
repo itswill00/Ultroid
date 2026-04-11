@@ -30,7 +30,12 @@ class _SudoManager:
         if self._sudos is not None:
             return self._sudos
         db = self._init_db()
-        self._sudos = db.get_key("SUDOS") or []
+        sudos = db.get_key("SUDOS") or []
+        if isinstance(sudos, str):
+            sudos = [int(x) for x in sudos.split()]
+        elif isinstance(sudos, list):
+            sudos = [int(x) for x in sudos]
+        self._sudos = sudos
         return self._sudos
 
     @property
@@ -38,13 +43,19 @@ class _SudoManager:
         if self._should_allow_sudo is not None:
             return self._should_allow_sudo
         db = self._init_db()
-        self._should_allow_sudo = db.get_key("SUDO")
+        val = db.get_key("SUDO")
+        # Ensure it handles 'True/False/1/0' correctly from DB
+        if isinstance(val, str):
+            self._should_allow_sudo = val.lower() in ("true", "1", "yes")
+        else:
+            self._should_allow_sudo = bool(val)
         return self._should_allow_sudo
 
     def owner_and_sudos(self):
         if not self._owner:
             db = self._init_db()
-            self._owner = db.get_key("OWNER_ID")
+            oid = db.get_key("OWNER_ID")
+            self._owner = int(oid) if oid else None
         return [self._owner, *self.get_sudos()]
 
     @property

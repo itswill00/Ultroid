@@ -185,7 +185,17 @@ def ultroid_cmd(
         
         # Main Handler
         cmd = compile_pattern(pattern, HNDLR) if pattern else None
-        ultroid_bot.add_event_handler(wrapp, NewMessage(pattern=cmd, outgoing=True if _add_new else None, forwards=False, func=func, chats=chats, blacklist_chats=bool(chats)))
+        ultroid_bot.add_event_handler(
+            wrapp,
+            NewMessage(
+                pattern=cmd,
+                outgoing=True if not allow_sudo else None,
+                forwards=False,
+                func=func,
+                chats=chats,
+                blacklist_chats=bool(chats),
+            ),
+        )
         
         # Sudo Handler
         if _add_new and pattern:
