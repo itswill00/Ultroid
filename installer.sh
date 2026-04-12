@@ -228,58 +228,76 @@ install_termux_prebuilt() {
 
 # ── Termux: pydantic-core (Rust-based, needs special treatment) ─
 #
-# pydantic v2 requires pydantic-core which is written in Rust.
-# Building Rust on Termux fails 99% of the time:
-#   - Android uses Bionic libc (not glibc) → linker errors
-#   - OOM during Rust compilation on 3-4GB RAM phones
-#   - rustc/cargo version mismatches with maturin
+# pydantic v2 uses pydantic-core (Rust). Cannot build from source:
+#   - Android uses Bionic libc → linker errors
+#   - OOM during Rust compilation on mobile
+#   - No official ARM64 PyPI wheel for aarch64-android
 #
-# Solution: use community pre-compiled wheel for aarch64-android
-# Source: https://github.com/Eutalix/android-pydantic-core
+# Community wheels exist at Eutalix/android-pydantic-core but only
+# up to Python 3.12. Python 3.13+ → go straight to pydantic v1.
+#
+# IMPORTANT: always pass --only-binary=:all: so pip NEVER tries to
+# compile from source. Without this, pip silently falls through to
+# Rust build and hangs indefinitely.
 #
 install_termux_pydantic() {
     [ "$PLATFORM" != "termux" ] && return
     done_step "termux_pydantic" && { ok "pydantic-core: done"; return; }
 
-    # Check if pydantic-core is already installed and working
     if "$PYTHON" -c "import pydantic_core" 2>/dev/null; then
         ok "pydantic-core: already installed"
         mark_done "termux_pydantic"
         return
     fi
 
-    [ $OFFLINE -eq 1 ] && { warn "pydantic-core: offline, skipping"; return; }
+    [ $OFFLINE -eq 1 ] && {
+        warn "pydantic-core: offline — installing pydantic v1 (no network needed)"
+        pip install "pydantic>=1.10,<2" --quiet 2>/dev/null \
+            && ok "pydantic v1: installed" || fail "pydantic v1: failed"
+        mark_done "termux_pydantic"
+        return
+    }
 
-    info "Installing pydantic-core via community ARM64 wheel..."
-    info "(Standard pip build requires Rust — fails on Android)"
+    # Get Python minor version to decide strategy
+    PY_MINOR=$("$PYTHON" -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo 99)
 
-    # Try the Eutalix pre-compiled index first
-    if pip install pydantic-core \
+    if [ "$PY_MINOR" -ge 13 ]; then
+        # Eutalix community wheels only exist for Python <=3.12.
+        # Attempting pip install on 3.13 causes pip to try Rust build → hangs.
+        warn "Python 3.${PY_MINOR} detected — no ARM64 pydantic-core wheel available yet"
+        warn "Using pydantic v1 (pure Python, fully compatible with groq>=1.9)"
+        timeout 60 pip install "pydantic>=1.10,<2" --quiet 2>/dev/null \
+            && ok "pydantic v1: installed" \
+            || fail "pydantic v1: install failed"
+        mark_done "termux_pydantic"
+        return
+    fi
+
+    # Python <=3.12: try the community ARM64 pre-built wheel
+    info "Python 3.${PY_MINOR}: trying community ARM64 pydantic-core wheel..."
+    info "(This avoids Rust compilation entirely)"
+
+    # --only-binary=:all: is CRITICAL — prevents pip from falling back to Rust source build
+    # --timeout 30 limits the network request itself
+    if timeout 90 pip install pydantic-core \
+        --only-binary=:all: \
         --extra-index-url https://eutalix.github.io/android-pydantic-core/ \
+        --timeout 30 \
         --quiet 2>/dev/null; then
-        ok "pydantic-core: installed via ARM64 index"
+        ok "pydantic-core: installed via ARM64 community wheel"
         mark_done "termux_pydantic"
         return
     fi
 
-    # Fallback: try the direct installer script
-    warn "ARM64 index failed — trying direct installer..."
-    if curl -sL https://raw.githubusercontent.com/Eutalix/android-pydantic-core/main/install_pydantic_core.sh \
-        | bash 2>/dev/null; then
-        ok "pydantic-core: installed via installer script"
-        mark_done "termux_pydantic"
-        return
-    fi
-
-    # Nothing worked — use pydantic v1 instead (no Rust required)
-    warn "pydantic-core: all methods failed — pinning to pydantic v1 (no Rust required)"
-    warn "Note: groq uses pydantic >=1.9 so v1 is compatible."
-    pip install "pydantic>=1.10,<2" --quiet 2>/dev/null \
+    # Wheel not found for this version either — fall back to pydantic v1
+    warn "No compatible wheel found — falling back to pydantic v1"
+    timeout 60 pip install "pydantic>=1.10,<2" --quiet 2>/dev/null \
         && ok "pydantic v1: installed as fallback" \
         || fail "pydantic: could not install any version"
 
     mark_done "termux_pydantic"
 }
+
 
 # ── pip Package Install (with skip + per-package error isolation) ─
 #
