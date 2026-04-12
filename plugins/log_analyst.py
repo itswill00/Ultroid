@@ -19,9 +19,10 @@ from . import udB, LOGS, ultroid_cmd, asst, OWNER_NAME, get_string
 # ── Configuration ──────────────────────────────────────────────────────────
 
 # Max lines to send to AI (Digest size)
-MAX_DIGEST_LINES = 250
+MAX_DIGEST_LINES = 150
 # Context window for each detected error (lines before/after)
-CONTEXT_WINDOW = 15
+CONTEXT_WINDOW = 10
+
 
 
 
@@ -98,13 +99,14 @@ def _smart_sample(content: str) -> str:
 
     final_text = "\n".join(digest)
     
-    # 6. Hard character limit (approx 5k-6k tokens)
-    # 18,000 chars ensures we stay well under the 12,000 token limit 
-    # even with dense logs.
-    if len(final_text) > 18000:
-        final_text = final_text[:18000] + "\n... [truncated due to API size limit]"
+    # 6. Hard character limit for low-TPM accounts (e.g. 6k limit)
+    # 10,000 chars = ~3,800 to 4,200 tokens for hex-heavy content.
+    # This leaves space for the 2k tokens system prompt/overhead.
+    if len(final_text) > 10000:
+        final_text = final_text[:10000] + "\n... [truncated due to strict API limit]"
         
     return final_text
+
 
 
 
