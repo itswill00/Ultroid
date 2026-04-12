@@ -19,9 +19,10 @@ from . import udB, LOGS, ultroid_cmd, asst, OWNER_NAME, get_string
 # ── Configuration ──────────────────────────────────────────────────────────
 
 # Max lines to send to AI (Digest size)
-MAX_DIGEST_LINES = 350
+MAX_DIGEST_LINES = 250
 # Context window for each detected error (lines before/after)
-CONTEXT_WINDOW = 20
+CONTEXT_WINDOW = 15
+
 
 
 # ── LOG PATTERNS ────────────────────────────────────────────────────────────
@@ -97,12 +98,14 @@ def _smart_sample(content: str) -> str:
 
     final_text = "\n".join(digest)
     
-    # 6. Hard character limit (approx 9k-10k tokens)
-    # 35,000 chars is a safe buffer for Groq's 12k TPM/TPR limit.
-    if len(final_text) > 35000:
-        final_text = final_text[:35000] + "\n... [truncated due to API size limit]"
+    # 6. Hard character limit (approx 5k-6k tokens)
+    # 18,000 chars ensures we stay well under the 12,000 token limit 
+    # even with dense logs.
+    if len(final_text) > 18000:
+        final_text = final_text[:18000] + "\n... [truncated due to API size limit]"
         
     return final_text
+
 
 
 def _detect_type(content: str) -> str:
@@ -151,9 +154,12 @@ async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = 
         {"role": "user", "content": query}
     ]
     
-    # Increase timeout for complex analysis
-    ans, usage = await _call_groq(messages)
+    # Use a high-TPM model for heavy log processing
+    # llama-3.1-8b-instant typically has 30k-100k TPM limits, 
+    # preventing the 413 error seen on the 70b model.
+    ans, usage = await _call_groq(messages, model="llama-3.1-8b-instant")
     return ans, usage
+
 
 # ── COMMAND HANDLER ────────────────────────────────────────────────────────
 

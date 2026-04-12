@@ -82,21 +82,21 @@ async def google_search(query):
 # Model khusus vision (support gambar)
 VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-async def _call_groq(messages, vision_model=None):
+async def _call_groq(messages, vision_model=None, model=None):
     """Internal helper to call Groq API and extract usage.
     
     Args:
         messages: List of message dicts.
-        vision_model: If set, overrides model with a vision-capable one.
+        vision_model: Deprecated. Use 'model' parameter.
+        model: Manual model override (e.g. 'llama-3.1-8b-instant')
     """
     import aiohttp
     api_key = udB.get_key("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
     
-    # Gunakan vision model jika ada gambar, sinon pakai model default
-    if vision_model:
-        model = vision_model
-    else:
-        model = udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
+    # Priority: model > vision_model (legacy) > udB > default
+    if not model:
+        model = vision_model or udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
+
     
     if not api_key:
         return None, "API Key Missing."
