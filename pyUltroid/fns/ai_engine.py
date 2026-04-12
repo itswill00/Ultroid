@@ -82,57 +82,108 @@ async def google_search(query):
 # Model khusus vision (support gambar)
 VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-async def _call_groq(messages, vision_model=None, model=None):
-    """Internal helper to call Groq API and extract usage.
-    
-    Args:
-        messages: List of message dicts.
-        vision_model: Deprecated. Use 'model' parameter.
-        model: Manual model override (e.g. 'llama-3.1-8b-instant')
-    """
+def _get_api_keys(key_name):
+    """Parses multiple space-separated keys from DB or Env."""
+    raw = udB.get_key(key_name) or os.environ.get(key_name)
+    if not raw:
+        return []
+    return [k.strip() for k in str(raw).split() if k.strip()]
+
+async def _call_gemini(messages, model=None):
+    """Fallback handler for Google Gemini AI."""
     import aiohttp
-    api_key = udB.get_key("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
+    keys = _get_api_keys("GEMINI_API_KEY")
+    if not keys:
+        return None, "No Gemini API Keys."
+    
+    # Use the first key for now (rotation can be added if needed)
+    key = keys[0]
+    model = model or "gemini-1.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+    
+    # Adapt messages for Gemini structure
+    gemini_contents = []
+    system_instruction = ""
+    for m in messages:
+        if m['role'] == "system":
+            system_instruction = m['content']
+        else:
+            parts = []
+            content = m['content']
+            if isinstance(content, list):
+                for part in content:
+                    if part['type'] == "text":
+                        parts.append({"text": part['text']})
+                    # Vision support can be added here if needed
+            else:
+                parts.append({"text": str(content)})
+            gemini_contents.append({"role": "model" if m['role'] == "assistant" else "user", "parts": parts})
+
+    payload = {"contents": gemini_contents}
+    if system_instruction:
+        payload["system_instruction"] = {"parts": [{"text": system_instruction}]}
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload, timeout=60) as resp:
+                if resp.status != 200:
+                    err = await resp.text()
+                    return None, f"Gemini Error {resp.status}"
+                data = await resp.json()
+                ans = data['candidates'][0]['content']['parts'][0]['text']
+                # Gemini doesn't report exact token counts easily in simple REST, estimate or use 0
+                return ans, 0
+    except Exception as e:
+        return None, str(e)
+
+async def _call_groq(messages, model=None, vision_model=None):
+    """Internal helper to call Groq API with Multi-Key Rotation."""
+    import aiohttp
+    keys = _get_api_keys("GROQ_API_KEY")
+    
+    if not keys:
+        return None, "Groq API Key Missing."
     
     # Priority: model > vision_model (legacy) > udB > default
     if not model:
         model = vision_model or udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
 
-    
-    if not api_key:
-        return None, "API Key Missing."
-
-    LOGS.info(f"[Groq] Using model: {model}")
     url = "https://api.groq.com/openai/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    payload = {"model": model, "messages": messages, "temperature": 0.2}
     
-    for attempt in range(max_retries := 2):
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
-                    if resp.status in [413, 429]:  # Rate Limit or TPM Limit
-                        wait = (attempt + 1) * 10
-                        LOGS.warning(f"[Groq] Rate Limit Hit ({resp.status}). Retrying in {wait}s...")
-                        await asyncio.sleep(wait)
-                        continue
+    # Try every key in the pool
+    last_err = "No Result."
+    for api_key in keys:
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        payload = {"model": model, "messages": messages, "temperature": 0.2}
+        
+        for attempt in range(max_retries := 2):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
+                        if resp.status in [413, 429]:  # Rate/Token Limit
+                            if attempt < max_retries - 1:
+                                await asyncio.sleep(10)
+                                continue
+                            else:
+                                LOGS.warning(f"[Groq] Key {api_key[:8]}... limited. Rotating...")
+                                break # Move to next key
 
-                    if resp.status != 200:
-                        err = await resp.text()
-                        LOGS.error(f"[Groq] API Error {resp.status}: {err[:300]}")
-                        return None, f"API Error {resp.status}: {err[:200]}"
-                    
-                    data = await resp.json()
-                    ans = data['choices'][0]['message']['content']
-                    usage = data.get('usage', {}).get('total_tokens', 0)
-                    return ans, usage
-        except Exception as e:
-            if attempt < max_retries - 1:
-                await asyncio.sleep(5)
-                continue
-            LOGS.exception(f"[Groq] Request failed: {e}")
-            return None, str(e)
+                        if resp.status != 200:
+                            last_err = await resp.text()
+                            break # Move to next key
+                        
+                        data = await resp.json()
+                        return data['choices'][0]['message']['content'], data.get('usage', {}).get('total_tokens', 0)
+            except Exception as e:
+                last_err = str(e)
+                break
     
-    return None, "Rate Limit Exhausted after retries."
+    # ----------------------------------------------------------------------
+    # LEVEL 2 FALLBACK: Switch to Gemini if Groq fails
+    # ----------------------------------------------------------------------
+    LOGS.info("[AI Engine] Groq pool exhausted. Initializing Gemini Fallback...")
+    return await _call_gemini(messages)
+
 
 
 # --------------------------------------------------------------------------
