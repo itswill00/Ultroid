@@ -341,6 +341,23 @@ SKIP_ON_TERMUX=(
     "pandas"
 )
 
+# Version pins for Termux — newer versions pull C/Rust heavy deps.
+# Format: "package_name:pinned_spec"
+# Applied only on Termux, overrides the requirements.txt line.
+TERMUX_VERSION_PINS=(
+    # v5+  pulls curl_cffi (C extension, libcurl TLS, fails on Termux)
+    # v3.x is pure Python + requests, works fine
+    "duckduckgo_search:duckduckgo_search<5"
+
+    # groq>=0.9 works with pydantic v1 (which we install instead of pydantic-core)
+    # Pin to avoid resolution trying to force pydantic v2
+    "groq:groq>=0.9,<1"
+
+    # cloudscraper pulls newer cffi which may need compilation
+    # pin to known working version
+    "cloudscraper:cloudscraper==1.2.71"
+)
+
 install_pip_packages() {
     done_step "pip_packages" && { ok "pip packages: done"; return; }
     [ -f "$REQ_FILE" ] || { warn "$REQ_FILE not found"; return; }
@@ -379,8 +396,22 @@ install_pip_packages() {
             continue
         fi
 
+        # On Termux, check if we have a version pin override for this package
+        install_spec="$line"
+        if [ "$PLATFORM" = "termux" ]; then
+            for pin_entry in "${TERMUX_VERSION_PINS[@]}"; do
+                pin_pkg="${pin_entry%%:*}"
+                pin_spec="${pin_entry##*:}"
+                if [ "$pin_pkg" = "$pkg_name" ]; then
+                    install_spec="$pin_spec"
+                    info "$pkg_name: using Termux version pin: $pin_spec"
+                    break
+                fi
+            done
+        fi
+
         info "Installing $pkg_name..."
-        if _try_pip_install "$line"; then   # pass full line to preserve version pins
+        if _try_pip_install "$install_spec"; then
             ok "$pkg_name: installed"
         else
             failed+=("$pkg_name")
@@ -399,16 +430,35 @@ install_pip_packages() {
     mark_done "pip_packages"
 }
 
-# Install package — Termux-aware flags
+# Install package — Termux-aware flags + global timeout
+#
+# timeout 180: hard wall-clock limit — kills pip if it hangs
+# --timeout 30: limits individual network requests (download stall)
+# --only-binary=:all: on Termux: NEVER fall through to source build
+#   (source builds require compiler/Rust and hang indefinitely)
+# Fallback chain: standard → --break-system-packages → return 1
+#
 _try_pip_install() {
     local spec="$1"
     if [ "$PLATFORM" = "termux" ]; then
-        pip install --quiet "$spec" 2>/dev/null \
-        || pip install --quiet --break-system-packages "$spec" 2>/dev/null \
-        || pip install --quiet --no-build-isolation "$spec" 2>/dev/null \
-        || return 1
+        # Primary: binary-only, hard timeout
+        timeout 180 pip install \
+            --quiet \
+            --only-binary=:all: \
+            --timeout 30 \
+            "$spec" 2>/dev/null && return 0
+
+        # Some packages have no binary wheel but compile quickly (pure-C, no Rust)
+        # Allow source build ONLY with a strict time limit
+        timeout 120 pip install \
+            --quiet \
+            --break-system-packages \
+            --timeout 30 \
+            "$spec" 2>/dev/null && return 0
+
+        return 1
     else
-        pip install --quiet "$spec" 2>/dev/null || return 1
+        timeout 300 pip install --quiet --timeout 60 "$spec" 2>/dev/null || return 1
     fi
 }
 
