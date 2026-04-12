@@ -1,45 +1,33 @@
 #!/usr/bin/env bash
 # ============================================================
-#   Ultroid Optimized — Termux Auto-Setup
-#   High-Performance Engine for Android Environment
+#   Ultroid Optimized — Termux Quick Setup
+#   This is a thin wrapper. The full logic lives in installer.sh
 # ============================================================
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
+set -euo pipefail
 
-step() { echo -e "\n${GREEN}[>>] $1${NC}"; }
-warn() { echo -e "${YELLOW}[!] $1${NC}"; }
-err()  { echo -e "${RED}[X] $1${NC}"; exit 1; }
+G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; N='\033[0m'
+ok()   { echo -e "${G}[OK]${N} $1"; }
+warn() { echo -e "${Y}[!]${N} $1"; }
+fail() { echo -e "${R}[ERROR]${N} $1"; exit 1; }
 
-step "Updating system packages..."
-pkg update -y && pkg upgrade -y || warn "Pkg update failed, trying to continue..."
+echo ""
+echo "Ultroid Optimized — Termux Setup"
+echo "──────────────────────────────────────"
 
-step "Installing system dependencies..."
-pkg install git python ffmpeg libxml2 libxslt -y || err "Critical dependency failure!"
-
-# Optimized for Termux Python
-pkg install python-numpy python-pillow -y || warn "Numpy/Pillow pkg failure, pip will handle it."
-
-step "Installing requirements..."
-# We need to compile lxml in termux sometimes, so we ensure static libs are ready
-LDFLAGS="-L${PREFIX}/lib" CPPFLAGS="-I${PREFIX}/include" pip install --no-cache-dir lxml
-pip install --no-cache-dir -r requirements.txt || err "Python requirements failed!"
-
-step "Setting up environment..."
-if [ ! -f .env ]; then
-    cp .env.sample .env
-    echo "LITE_DEPLOY=True" >> .env
-    echo "HOSTED_ON=termux" >> .env
-    echo -e "${YELLOW}Config file (.env) created.${NC}"
-else
-    warn ".env already exists, skipping creation."
+# Verify we are actually in Termux
+if [ ! -d "/data/data/com.termux/files/usr" ]; then
+    fail "This script is intended for Termux only. Use installer.sh for other platforms."
 fi
 
-step "Installation Successful!"
-echo -e "\nNext steps:"
-echo -e "  1. ${YELLOW}nano .env${NC}          — Fill API_ID, API_HASH, SESSION"
-echo -e "  2. ${YELLOW}python3 ssgen.py${NC}   — Generate session if needed"
-echo -e "  3. ${YELLOW}bash run.sh${NC}        — Start the engine"
+# Basic Termux bootstrap — only if python3 is not yet available
+if ! command -v python3 &>/dev/null; then
+    warn "Python not found. Bootstrapping..."
+    pkg update -y && pkg install python git -y || fail "Cannot install python via pkg."
+fi
+
+ok "Termux environment confirmed."
 echo ""
+
+# Delegate to the main installer
+bash installer.sh

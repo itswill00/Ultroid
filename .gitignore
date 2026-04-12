@@ -48,3 +48,8 @@ fly.toml
 # IDE & local environment
 pyrightconfig.json
 .venv/
+
+# Installer state (local only)
+.setup_state
+.pkg_updated
+scratch/
