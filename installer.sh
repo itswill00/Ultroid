@@ -527,9 +527,11 @@ setup_env() {
 
     cp .env.sample .env
     [ "$PLATFORM" = "termux" ] && {
-        grep -q "^LITE_DEPLOY" .env || echo "LITE_DEPLOY=True" >> .env
-        grep -q "^HOSTED_ON"   .env || echo "HOSTED_ON=termux"  >> .env
+        # Set Termux defaults: handle empty values or placeholders
+        sed -i 's/^LITE_DEPLOY=.*/LITE_DEPLOY=True/' .env
+        sed -i 's/^HOSTED_ON=.*/HOSTED_ON=termux/' .env
     }
+
     ok ".env: created from sample"
     warn "Fill in API_ID, API_HASH, SESSION (or BOT_TOKEN) before starting"
     echo "    nano .env"

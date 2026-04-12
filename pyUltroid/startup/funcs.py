@@ -517,7 +517,10 @@ async def ready():
     boot_ts        = datetime.now(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     py_short       = platform.python_version()
     arch           = platform.machine() or "unknown"
-    hosted         = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
+    _raw_hosted    = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
+    # Clean up accidental comments/hints if they seeped into the env
+    hosted         = str(_raw_hosted).split("#")[0].strip() or "local"
+
     plugin_count   = sum(len(v) for v in LIST.values())
     official_count = len(HELP.get("Official", []))
     addon_count    = len(HELP.get("Addons", []))
