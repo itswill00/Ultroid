@@ -47,26 +47,30 @@ if run_as_module:
     if udB.ping():
         LOGS.info(f"Connected to {udB.name} Successfully!")
 
-    BOT_MODE = udB.get_key("BOTMODE")
-    DUAL_MODE = udB.get_key("DUAL_MODE")
+    # ── Runtime Mode Resolution ─────────────────────────────────────────
+    # Priority: .env RUNTIME_MODE > DB RUNTIME_MODE > legacy DB flags
+    _mode_raw = (Var.RUNTIME_MODE or udB.get_key("RUNTIME_MODE") or "").lower().strip()
 
-    USER_MODE = udB.get_key("USER_MODE")
-    if USER_MODE:
-        DUAL_MODE = False
-
-    if BOT_MODE:
-        if DUAL_MODE:
-            udB.del_key("DUAL_MODE")
-            DUAL_MODE = False
-        ultroid_bot = None
-
-        if not udB.get_key("BOT_TOKEN"):
-            LOGS.critical(
-                '"BOT_TOKEN" not Found! Please add it, in order to use "BOTMODE"'
-            )
-
-            sys.exit()
+    if _mode_raw in ("user", "bot", "dual"):
+        RUNTIME_MODE = _mode_raw
     else:
+        # Backward compat: migrate from old separate DB flag names
+        if udB.get_key("BOTMODE") or udB.get_key("BOT_MODE"):
+            RUNTIME_MODE = "bot"
+        elif udB.get_key("USER_MODE"):
+            RUNTIME_MODE = "user"
+        else:
+            RUNTIME_MODE = "dual"
+
+    # Derived booleans — kept for backward compat with existing plugin code
+    USER_MODE = (RUNTIME_MODE == "user")
+    BOT_MODE  = (RUNTIME_MODE == "bot")
+    DUAL_MODE = (RUNTIME_MODE == "dual")
+    LOGS.info(f"[MODE] Runtime: {RUNTIME_MODE.upper()}")
+
+    # ── Client Initialization ───────────────────────────────────────────
+    if RUNTIME_MODE in ("user", "dual"):
+        # Userbot required — validate and connect SESSION
         ultroid_bot = UltroidClient(
             validate_session(Var.SESSION or udB.get_key("SESSION"), LOGS),
             udB=udB,
@@ -74,14 +78,44 @@ if run_as_module:
             device_model="Ultroid",
         )
         ultroid_bot.run_in_loop(autobot())
-
-    if USER_MODE:
-        asst = ultroid_bot
     else:
-        asst = UltroidClient("asst", bot_token=udB.get_key("BOT_TOKEN"), udB=udB)
+        # bot mode — no SESSION needed
+        ultroid_bot = None
 
+    if RUNTIME_MODE == "user":
+        # No separate assistant bot — userbot handles everything
+        if not (Var.BOT_TOKEN or udB.get_key("BOT_TOKEN")):
+            LOGS.warning(
+                "[MODE] RUNTIME_MODE=user: BOT_TOKEN not set — "
+                "inline help menu will be unavailable."
+            )
+        asst = ultroid_bot  # alias — same client
+
+    elif RUNTIME_MODE == "bot":
+        # Bot-only — SESSION not used, assistant bot is primary
+        _token = udB.get_key("BOT_TOKEN") or Var.BOT_TOKEN
+        if not _token:
+            LOGS.critical(
+                '"BOT_TOKEN" is required for RUNTIME_MODE=bot. '
+                "Set it in .env or database."
+            )
+            sys.exit()
+        asst = UltroidClient("asst", bot_token=_token, udB=udB)
+        ultroid_bot = asst  # alias — same client
+
+    else:
+        # Dual mode — both clients active (classic Ultroid)
+        _token = udB.get_key("BOT_TOKEN") or Var.BOT_TOKEN
+        if not _token:
+            LOGS.warning(
+                "[MODE] RUNTIME_MODE=dual: BOT_TOKEN not set — "
+                "assistant bot features unavailable."
+            )
+        asst = UltroidClient("asst", bot_token=_token, udB=udB)
+
+    # ── Post-initialization ─────────────────────────────────────────────
     if BOT_MODE:
-        ultroid_bot = asst
+        # Restore ultroid_bot.me from stored OWNER_ID (needed by helper fns)
         if udB.get_key("OWNER_ID"):
             try:
                 ultroid_bot.me = ultroid_bot.run_in_loop(
@@ -89,8 +123,11 @@ if run_as_module:
                 )
             except Exception as er:
                 LOGS.exception(er)
-    elif not asst.me.bot_inline_placeholder and asst._bot:
-        ultroid_bot.run_in_loop(enable_inline(ultroid_bot, asst.me.username))
+    elif DUAL_MODE:
+        # Enable inline if not already configured
+        if not asst.me.bot_inline_placeholder and asst._bot:
+            ultroid_bot.run_in_loop(enable_inline(ultroid_bot, asst.me.username))
+
 
     vcClient = vc_connection(udB, ultroid_bot)
 

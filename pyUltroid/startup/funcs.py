@@ -543,21 +543,34 @@ async def ready():
         f"ver    v{ult_ver}"
     )
 
+    # Add mode line to card so it's visible at runtime
+    _mode_label = (
+        "user-only" if getattr(asst, "_bot", False) is False
+        else "bot-only" if (asst is ultroid_bot and getattr(asst, "_bot", False))
+        else "dual"
+    )
+    block += f"\nmode   {_mode_label}"
     CARD = f"`{block}`"
 
-    # ── Buttons — minimal, no emoji ───────────────────────────
+    # ── Buttons — only if asst is a real bot (not userbot alias) ─
     has_update = False
     try:
         has_update = await updater()
     except Exception:
         pass
 
-    BTTS = [[
-        Button.inline("Ping",  data="pkng"),
-        Button.inline("Logs",  data="open"),
-    ]]
-    if has_update:
-        BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
+    # Inline buttons require the sender to be a bot account
+    if getattr(asst, "_bot", False):
+        BTTS = [[
+            Button.inline("Ping",  data="pkng"),
+            Button.inline("Logs",  data="open"),
+        ]]
+        if has_update:
+            BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
+    else:
+        # user mode — userbot can't send inline buttons
+        BTTS = None
+
 
     # ── Delete previous startup card ──────────────────────────
     prev_id = udB.get_key("LAST_UPDATE_LOG_SPAM")

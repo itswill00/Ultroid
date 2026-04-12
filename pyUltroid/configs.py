@@ -73,3 +73,8 @@ class Var:
     MONGO_URI = _env("MONGO_URI", default=None)
     # extra
     TGDB_URL = _env("TGDB_URL", default=None)
+    # runtime mode: "user" | "bot" | "dual" (default: "dual")
+    # user  → userbot only, no separate assistant bot
+    # bot   → bot only via BOT_TOKEN, no SESSION userbot
+    # dual  → both userbot + assistant bot active (classic Ultroid)
+    RUNTIME_MODE = _env("RUNTIME_MODE", default="")
