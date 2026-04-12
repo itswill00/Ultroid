@@ -21,7 +21,14 @@ async def toggle_addons(e):
         udB.set_key("ADDONS", "False")
         await e.eor("`Addons have been DISABLED. Restarting to apply changes...`", time=5)
     
-    if hasattr(e.client, "re_start"):
-         await e.client.re_start()
-    else:
-         await e.respond(f"{HNDLR}restart")
+    # Trigger restart directly — no Telegram round-trip needed
+    import os, sys, json as _json, time as _time
+    udB.set_key("_RESTART", _json.dumps({
+        "who": "user",
+        "chat_id": e.chat_id,
+        "msg_id": e.id,
+        "ts": _time.time(),
+        "version": udB.get_key("ULTROID_VERSION") or "?",
+    }))
+    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
+    os.execl(sys.executable, *args)

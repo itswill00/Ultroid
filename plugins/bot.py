@@ -204,27 +204,31 @@ heroku_api = Var.HEROKU_API
     owner_only=True,
 )
 async def restartbt(ult):
+    import json as _json
+    import time as _time
+
     match = ult.pattern_match.group(1).strip()
     msg = await ult.eor("`[RESTART] Initiating restart sequence...`")
 
-    # Store restart context as JSON to safely handle negative chat IDs
-    import json as _json
+    # ── Persist restart context (JSON) so startup can report downtime ──
     who = "bot" if ult.client._bot else "user"
     udB.set_key("_RESTART", _json.dumps({
         "who": who,
         "chat_id": ult.chat_id,
         "msg_id": msg.id,
+        "ts": _time.time(),          # used for downtime calculation
+        "version": ultroid_version,
     }))
 
-    # Heroku restart: delegate to restart() helper
+    # Heroku: delegate entirely to the platform helper
     if heroku_api:
         return await restart(msg)
 
-    # Optional: pull latest code before restarting
+    # ── Optional: update from remote before restarting ─────────────────
     if match in ["-u", "--update", "-pull"]:
         try:
             await msg.edit("`[RESTART] Fetching updates from remote...`")
-            await bash("git fetch --quiet")
+            await bash("git fetch --quiet 2>&1")
 
             stdout, _ = await bash("git rev-list --count HEAD..@{u}")
             commits_behind = (stdout or "0").strip()
@@ -232,13 +236,27 @@ async def restartbt(ult):
             if commits_behind != "0" or "-pull" in match:
                 await msg.edit(f"`[RESTART] Applying {commits_behind} new commit(s)...`")
 
+                # Snapshot requirements before pull
                 old_req = ""
                 if os.path.exists("requirements.txt"):
                     with open("requirements.txt", "r") as f:
                         old_req = f.read()
 
-                await bash("git pull --rebase --quiet")
+                # Pull with conflict detection
+                pull_out, pull_err = await bash("git pull --rebase 2>&1")
+                combined = (pull_out + pull_err).lower()
 
+                if "conflict" in combined or "error:" in combined:
+                    # Abort the failed rebase and refuse to restart dirty
+                    await bash("git rebase --abort 2>&1")
+                    LOGS.error(f"[RESTART] git pull conflict detected:\n{pull_out[:400]}")
+                    return await msg.edit(
+                        f"`[RESTART] Merge conflict detected — aborting.`\n"
+                        f"`Run 'git status' to inspect. Restart cancelled.`\n\n"
+                        f"`{pull_out[:300]}`"
+                    )
+
+                # Re-read requirements and install if changed
                 new_req = ""
                 if os.path.exists("requirements.txt"):
                     with open("requirements.txt", "r") as f:
@@ -246,16 +264,32 @@ async def restartbt(ult):
 
                 if old_req != new_req:
                     await msg.edit("`[RESTART] Dependencies changed — installing...`")
-                    await bash("pip install -r requirements.txt --break-system-packages -q")
+                    pip_out, _ = await bash(
+                        "pip install -r requirements.txt --break-system-packages -q 2>&1",
+                    )
+                    LOGS.info(f"[RESTART] pip output: {pip_out[:200]}")
             else:
-                await msg.edit("`[RESTART] Already up-to-date. Restarting...`")
+                await msg.edit("`[RESTART] Already up to date. Restarting...`")
+
         except Exception as e:
-            await msg.edit(f"`[RESTART] Update failed: {e} — restarting anyway...`")
             LOGS.exception(e)
+            await msg.edit(f"`[RESTART] Update step failed: {e} — restarting anyway...`")
 
-    await msg.edit("`[RESTART] Rebooting...`")
+    # ── Graceful shutdown ───────────────────────────────────────────────
+    # Give Telegram 600ms to deliver the edit before we kill the process.
+    await msg.edit("`[RESTART] Disconnecting clients...`")
+    import asyncio as _asyncio
+    await _asyncio.sleep(0.6)
 
-    # Always restart with -m pyUltroid, passing any existing argv after index 0
+    try:
+        from pyUltroid import ultroid_bot as _ubot, asst as _asst
+        # Disconnect both clients cleanly so pending writes are flushed
+        await _ubot.disconnect()
+        await _asst.disconnect()
+    except Exception as _de:
+        LOGS.warning(f"[RESTART] Graceful disconnect warning: {_de}")
+
+    # ── In-place process replace (no fork, minimal memory footprint) ────
     args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
     os.execl(sys.executable, *args)
 

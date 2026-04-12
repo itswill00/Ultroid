@@ -146,11 +146,18 @@ async def toggle_pm(e):
         udB.del_key("PMSETTING")
         await e.eor("`PM Permit has been DISABLED. Restarting to apply changes...`", time=5)
     
-    # Trigger restart to reload the plugin with new PMSETTING state
-    if hasattr(e.client, "re_start"):
-         await e.client.re_start()
-    else:
-         await e.respond(f"{HNDLR}restart")
+    # Trigger restart directly — no Telegram round-trip needed
+    import os, sys, json as _json, time as _time
+    who = "user"
+    udB.set_key("_RESTART", _json.dumps({
+        "who": who,
+        "chat_id": e.chat_id,
+        "msg_id": e.id,
+        "ts": _time.time(),
+        "version": udB.get_key("ULTROID_VERSION") or "?",
+    }))
+    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
+    os.execl(sys.executable, *args)
 
 if udB.get_key("PMLOG"):
 

@@ -659,34 +659,70 @@ async def WasItRestart(udb):
         return
     from .. import asst, ultroid_bot
     import json as _json
+    import time as _time
 
     try:
-        # New format: JSON {"who": "user"|"bot", "chat_id": int, "msg_id": int}
+        # Current format: JSON {who, chat_id, msg_id, ts, version}
         data = _json.loads(key)
         who     = data["who"]
         chat_id = int(data["chat_id"])
         msg_id  = int(data["msg_id"])
+        ts      = float(data.get("ts", _time.time()))
+        prev_version = data.get("version", "?")
     except (ValueError, KeyError, TypeError):
-        # Legacy fallback: "user_CHATID_MSGID" (may fail on negative chat IDs)
+        # Legacy fallback: "user_CHATID_MSGID"
         try:
-            parts   = key.split("_", 2)   # split at most 2 times → ["user", "chatid", "msgid"]
+            parts   = key.split("_", 2)
             who     = parts[0]
             chat_id = int(parts[1])
             msg_id  = int(parts[2])
+            ts      = _time.time()
+            prev_version = "?"
         except Exception:
             udb.del_key("_RESTART")
             return
 
-    # The restart message was always sent/edited by the userbot, so use ultroid_bot.
-    # asst cannot edit userbot messages.
+    # ── Compute downtime ──────────────────────────────────────────────
+    downtime = round(_time.time() - ts, 1)
+    if downtime > 3600:
+        dt_str = f"{downtime / 3600:.1f}h"
+    elif downtime > 60:
+        dt_str = f"{downtime / 60:.1f}m"
+    else:
+        dt_str = f"{downtime}s"
+
+    # ── Plugin count ──────────────────────────────────────────────────
+    try:
+        from ..dB._core import LIST
+        plugin_count = sum(len(v) for v in LIST.values())
+    except Exception:
+        plugin_count = "?"
+
+    # ── Version change flag ───────────────────────────────────────────
+    try:
+        from ..version import ultroid_version as cur_ver
+    except Exception:
+        cur_ver = "?"
+
+    version_note = ""
+    if prev_version != "?" and cur_ver != "?" and prev_version != str(cur_ver):
+        version_note = f" · `{prev_version}` → `{cur_ver}`"
+
+    # ── Compose report ────────────────────────────────────────────────
+    report = (
+        f"`[RESTART] Completed in {dt_str}`\n"
+        f"**Version:** `{cur_ver}`{version_note}\n"
+        f"**Plugins:** `{plugin_count} commands loaded`"
+    )
+
+    # The restart message was sent/edited by the userbot — use same client
     client = asst if who == "bot" else ultroid_bot
     try:
-        await client.edit_message(chat_id, msg_id, "`[RESTART] Completed successfully.`")
+        await client.edit_message(chat_id, msg_id, report)
     except Exception:
-        # Fallback: try the other client
         other = ultroid_bot if client is asst else asst
         try:
-            await other.edit_message(chat_id, msg_id, "`[RESTART] Completed successfully.`")
+            await other.edit_message(chat_id, msg_id, report)
         except Exception:
             pass
 
