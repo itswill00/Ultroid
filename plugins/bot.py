@@ -244,7 +244,7 @@ async def restartbt(ult):
 
                 # Pull with conflict detection
                 pull_out, pull_err = await bash("git pull --rebase 2>&1")
-                combined = (pull_out + pull_err).lower()
+                combined = ((pull_out or "") + (pull_err or "")).lower()
 
                 if "conflict" in combined or "error:" in combined:
                     # Abort the failed rebase and refuse to restart dirty
