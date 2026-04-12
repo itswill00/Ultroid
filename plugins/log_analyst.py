@@ -37,7 +37,7 @@ CRITICAL_PATTERNS = [
     r"ninja: build stopped",
     r"FAILED:",
     r"error:",
-    r"*** *** ***",  # Tombstone header
+    r"\*\*\* \*\*\* \*\*\*",  # Tombstone header
     r"Build fingerprint:",
     r"Abort message:",
 ]
