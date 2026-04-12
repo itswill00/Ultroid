@@ -19,9 +19,10 @@ from . import udB, LOGS, ultroid_cmd, asst, OWNER_NAME, get_string
 # ── Configuration ──────────────────────────────────────────────────────────
 
 # Max lines to send to AI (Digest size)
-MAX_DIGEST_LINES = 500
+MAX_DIGEST_LINES = 300
 # Context window for each detected error (lines before/after)
-CONTEXT_WINDOW = 30
+CONTEXT_WINDOW = 20
+
 
 
 
@@ -100,12 +101,13 @@ def _smart_sample(content: str) -> str:
 
     final_text = "\n".join(digest)
     
-    # 6. Professional character limit (approx 12k-15k tokens)
-    # 40,000 chars is suitable for Tier 1+ Groq accounts.
-    if len(final_text) > 40000:
-        final_text = final_text[:40000] + "\n... [truncated for token safety]"
+    # 6. 'Safe Pro' character limit (approx 4k-6k tokens)
+    # 15,000 chars is a safe buffer for 6k-12k TPM accounts.
+    if len(final_text) > 15000:
+        final_text = final_text[:15000] + "\n... [truncated for token safety]"
         
     return final_text
+
 
 
 

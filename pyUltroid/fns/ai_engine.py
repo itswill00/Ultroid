@@ -106,20 +106,34 @@ async def _call_groq(messages, vision_model=None, model=None):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {"model": model, "messages": messages, "temperature": 0.2}
     
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
-                if resp.status != 200:
-                    err = await resp.text()
-                    LOGS.error(f"[Groq] API Error {resp.status}: {err[:300]}")
-                    return None, f"API Error {resp.status}: {err[:200]}"
-                data = await resp.json()
-                ans = data['choices'][0]['message']['content']
-                usage = data.get('usage', {}).get('total_tokens', 0)
-                return ans, usage
-    except Exception as e:
-        LOGS.exception(f"[Groq] Request failed: {e}")
-        return None, str(e)
+    for attempt in range(max_retries := 2):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
+                    if resp.status in [413, 429]:  # Rate Limit or TPM Limit
+                        wait = (attempt + 1) * 10
+                        LOGS.warning(f"[Groq] Rate Limit Hit ({resp.status}). Retrying in {wait}s...")
+                        await asyncio.sleep(wait)
+                        continue
+
+                    if resp.status != 200:
+                        err = await resp.text()
+                        LOGS.error(f"[Groq] API Error {resp.status}: {err[:300]}")
+                        return None, f"API Error {resp.status}: {err[:200]}"
+                    
+                    data = await resp.json()
+                    ans = data['choices'][0]['message']['content']
+                    usage = data.get('usage', {}).get('total_tokens', 0)
+                    return ans, usage
+        except Exception as e:
+            if attempt < max_retries - 1:
+                await asyncio.sleep(5)
+                continue
+            LOGS.exception(f"[Groq] Request failed: {e}")
+            return None, str(e)
+    
+    return None, "Rate Limit Exhausted after retries."
+
 
 # --------------------------------------------------------------------------
 # MAIN ENGINE ENTRY POINT
