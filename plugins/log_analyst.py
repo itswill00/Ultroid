@@ -257,3 +257,18 @@ async def _log_analyst(ult):
 
         LOGS.exception(e)
         await msg.edit(f"`[ERROR] {str(e)}`")
+from pyUltroid.dB._core import HELP
+
+HELP["log_analyst"] = HELP["analyze"] = """
+» **AOSP Log Analyst**
+
+• `{i}analyze` <reply_to_log>
+    Analyze AOSP/Kernel logs using AI.
+• `{i}analyze` <reply_to_log> <instruction>
+    Provide specific instructions (e.g., .analyze tolong jelaskan ...).
+• `{i}analise`
+    Alias for analyze.
+
+Supported formats: `.log`, `.txt`, `.gz`.
+Detects: Logcat, Dmesg, Build logs, Tombstones.
+"""
