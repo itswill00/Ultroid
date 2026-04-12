@@ -1,21 +1,23 @@
-# Ultroid Optimized (v3.0.0)
+# Ultroid Optimized
 
-Ultroid Optimized is a professional, lightweight Telegram automation framework. This project is focused on high-performance execution, security, and a minimalist user experience for headless environments like Termux, Linux, and Docker.
+A self-hosted Telegram userbot framework built for efficiency and low-resource environments.
+Runs on Termux (Android), Linux, VPS, and WSL.
 
 ---
 
-## Features
+## Requirements
 
-- **AI Research**: Powered by Groq (Llama 3.3) for rapid information synthesis. Use the `--search` flag for real-time web research and context-aware answers.
-- **Smart Sudo System**: Specialized permission architecture with a dedicated prefix (`!`). Command responses for sudoers are redirected to an Assistant Bot (@bot) to maintain the main account's privacy.
-- **Security Hardening**: Includes a "Session Guard" to monitor active logins and strict access control for sensitive system commands.
-- **Efficiency**: Optimized to run on low-RAM devices (Android/Termux and VPS), with a focus on non-blocking async execution.
+- Python 3.11+
+- A Telegram account
+- `API_ID` and `API_HASH` from [my.telegram.org](https://my.telegram.org)
+- A Telethon string session (generated via `python3 sessiongen.py`)
 
 ---
 
 ## Installation
 
-### 1. Termux (Android)
+### Termux (Android)
+
 ```bash
 pkg update && pkg upgrade
 pkg install git python -y
@@ -24,7 +26,8 @@ cd Ultroid
 bash termux_setup.sh
 ```
 
-### 2. Linux / VPS / WSL
+### Linux / VPS / WSL
+
 ```bash
 git clone https://github.com/itswill00/Ultroid
 cd Ultroid
@@ -32,7 +35,8 @@ pip3 install -r requirements.txt
 python3 -m pyUltroid
 ```
 
-### 3. Docker
+### Docker
+
 ```bash
 docker build -t ultroid .
 docker run --env-file .env ultroid
@@ -40,26 +44,116 @@ docker run --env-file .env ultroid
 
 ---
 
-## Configuration (.env)
+## Configuration
 
-The following environment variables are supported in the `.env` file:
+Create a `.env` file in the project root. All supported variables:
 
-| Variable | Description | Requirement |
+### Core (Required)
+
+| Variable | Description |
+|:---|:---|
+| `API_ID` | Telegram API ID from my.telegram.org |
+| `API_HASH` | Telegram API Hash from my.telegram.org |
+| `SESSION` | Telethon string session (required unless `RUNTIME_MODE=bot`) |
+| `BOT_TOKEN` | Bot token from @BotFather (required for `bot` and `dual` modes) |
+| `LOG_CHANNEL` | Telegram channel/chat ID for startup logs and alerts |
+
+### Runtime Mode
+
+| Variable | Values | Default |
 |:---|:---|:---|
-| `API_ID` | Your API ID from my.telegram.org | Required |
-| `API_HASH` | Your API Hash from my.telegram.org | Required |
-| `SESSION` | Telethon String Session | Required |
-| `BOT_TOKEN` | Token from @BotFather for Assistant Mode | Recommended |
-| `GROQ_API_KEY` | API Key from console.groq.com | Optional |
-| `LOG_CHANNEL` | ID for security alerts and crash logs | Recommended |
-| `SUDO_HNDLR` | Prefix for sudo users (Default: `!`) | Optional |
+| `RUNTIME_MODE` | `dual` / `user` / `bot` | `dual` |
+
+- **`dual`** — Both userbot and assistant bot are active. Commands handled by userbot (`.` prefix), inline/callback handled by bot.
+- **`user`** — Userbot only. No separate bot is started. All output goes to log channel. `BOT_TOKEN` optional.
+- **`bot`** — Bot only. No `SESSION` needed. All commands handled by bot (`BOT_TOKEN` required).
+
+### Optional
+
+| Variable | Description |
+|:---|:---|
+| `GROQ_API_KEY` | API key from console.groq.com for AI features |
+| `HNDLR` | Command prefix (default: `.`) |
+| `SUDO_HNDLR` | Prefix for sudo users (default: same as `HNDLR`) |
+| `ADDONS` | Set `true` to load plugins from `addons/` folder |
+| `REDIS_URI` | Redis connection URI (if using Redis as database) |
+| `MONGO_URI` | MongoDB connection URI (if using MongoDB) |
+
+---
+
+## Restart and Update
+
+```
+.restart           — Restart the bot in place
+.restart -u        — Pull latest commits, install new dependencies if any, then restart
+```
+
+The restart sequence:
+1. Saves context (timestamp, version) to database
+2. Fetches remote and applies changes if available
+3. Detects merge conflicts — aborts and notifies if found
+4. Disconnects both clients gracefully
+5. Replaces process in-place via `os.execl`
+
+After restart, the bot reports downtime duration and loaded plugin count.
+
+---
+
+## AI Features
+
+Powered by Groq (Llama 3.3). Set `GROQ_API_KEY` in `.env` to enable.
+
+```
+.ask <question>           — Ask anything
+.ask --search <query>     — Ask with real-time web search
+.summarize                — Summarize a replied message
+.tldr <count>             — Summarize last N messages in chat
+.search <query>           — Direct web search results
+.debug                    — Analyze bot logs for errors
+.aimodel                  — View or switch active AI model
+```
+
+---
+
+## System Monitoring
+
+```
+.sysmon          — CPU, RAM, disk, and network snapshot
+.sysmon live     — Live update every 5s for 30s
+.sysinfo         — Full system info (OS, Python, arch, uptime)
+.pingcheck       — One-shot Telegram latency check
+.pingwatch       — Monitor latency over time
+```
+
+---
+
+## Database Backup
+
+```
+.backup          — Export all database keys to Log Channel as JSON
+.restore         — Restore from a replied backup file (requires confirmation)
+.dbinfo          — Show all database keys and count
+```
+
+---
+
+## Session Security
+
+```
+.sessions        — List all active Telegram sessions on your account
+.revoke <n>      — Revoke session number N
+.revokeall       — Revoke all sessions except the current one
+.sessionguard on — Enable new login monitoring (alerts to LOG_CHANNEL)
+```
 
 ---
 
 ## Security Notes
-- Never share your `.env` file or `SESSION` string with anyone.
-- Be cautious when adding Sudo users; they can execute commands on your behalf.
-- The project follows a "Zero Gimmick" policy — keeping the interface technical and clutter-free.
+
+- Never share your `.env` file or `SESSION` string.
+- Sudo users can execute commands on your behalf — be selective.
+- Sensitive DB keys (`SESSION`, `BOT_TOKEN`) are excluded from `.backup` exports.
 
 ---
-*Ultroid Optimized v3.0.0 — Created by itswill00.*
+
+*Ultroid Optimized — [github.com/itswill00/Ultroid](https://github.com/itswill00/Ultroid)*
