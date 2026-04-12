@@ -513,81 +513,53 @@ async def ready():
         LOGS.warning("LOG_CHANNEL not set — skipping startup notification.")
         return
 
-    # ── Runtime Metrics ──────────────────────────────────────
-    boot_ts = datetime.now(dt_timezone.utc).strftime("%d %b %Y  %H:%M:%S UTC")
-    py_ver  = platform.python_version()
-    arch    = platform.machine() or "unknown"
-    hosted  = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
-
-    # Plugin count from registered LIST
-    plugin_count = sum(len(v) for v in LIST.values())
+    # ── Runtime data ──────────────────────────────────────────
+    boot_ts        = datetime.now(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    py_short       = platform.python_version()
+    arch           = platform.machine() or "unknown"
+    hosted         = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
+    plugin_count   = sum(len(v) for v in LIST.values())
     official_count = len(HELP.get("Official", []))
     addon_count    = len(HELP.get("Addons", []))
 
-    # Memory usage (optional)
-    mem_line = ""
-    try:
-        import psutil
-        mem_mb = psutil.Process().memory_info().rss / 1024 / 1024
-        mem_line = f"\n**Memory**    `{mem_mb:.1f} MB RSS`"
-    except ImportError:
-        pass
+    me          = ultroid_bot.me
+    asst_me     = asst.me
+    username    = f"@{me.username}" if me.username else me.first_name
+    asst_handle = f"@{asst_me.username}" if asst_me.username else "—"
 
-    # DB connectivity
-    try:
-        db_ok   = bool(udB.ping())
-        db_icon = "●" if db_ok else "○"
-    except Exception:
-        db_icon = "?"
-
-    # User identifiers
-    me           = ultroid_bot.me
-    asst_me      = asst.me
-    username     = f"@{me.username}" if me.username else f"{me.first_name} (no username)"
-    asst_handle  = f"@{asst_me.username}" if asst_me.username else "—"
-
-    SEP = "─" * 33
-
-    # ── Compose Boot Card ─────────────────────────────────────
-    CARD = (
-        f"{SEP}\n"
-        f"⚡ **ULTROID**\n"
-        f"{SEP}\n"
-        f"**Session**    {inline_mention(me)}\n"
-        f"**Assistant**  `{asst_handle}`\n"
-        f"{SEP}\n"
-        f"**Platform**   `{hosted} · {arch}`\n"
-        f"**Runtime**    `Python {py_ver} · Telethon {telever}`\n"
-        f"**Database**   `{db_icon} {udB.name}`"
-        f"{mem_line}\n"
-        f"{SEP}\n"
-        f"**Plugins**    `{official_count} official · {addon_count} addons · {plugin_count} commands`\n"
-        f"**Version**    `v{ult_ver}` · `pyUltroid {pyver}`\n"
-        f"**Boot**       `{boot_ts}`\n"
-        f"{SEP}"
+    # ── Build monospace block (guaranteed alignment) ──────────
+    # Field widths: label=6 chars, padded with spaces
+    block = (
+        f"[BOOT] {boot_ts}\n"
+        f"\n"
+        f"user   {username}\n"
+        f"bot    {asst_handle}\n"
+        f"\n"
+        f"sys    {hosted} · {arch}\n"
+        f"py     {py_short} · telethon {telever}\n"
+        f"db     {udB.name}\n"
+        f"\n"
+        f"cmd    {plugin_count} ({official_count} official, {addon_count} addons)\n"
+        f"ver    v{ult_ver}"
     )
 
-    # ── Inline Buttons ─────────────────────────────────────────
+    CARD = f"`{block}`"
+
+    # ── Buttons — minimal, no emoji ───────────────────────────
     has_update = False
     try:
         has_update = await updater()
     except Exception:
         pass
 
-    BTTS = [
-        [
-            Button.inline("⚡ Ping",   data="pkng"),
-            Button.inline("⏱ Uptime", data="upp"),
-        ],
-        [
-            Button.inline("📋 Help",   data="open"),
-            Button.inline("🔔 Update", data="updtavail"),
-        ],
-    ]
+    BTTS = [[
+        Button.inline("Ping",  data="pkng"),
+        Button.inline("Logs",  data="open"),
+    ]]
     if has_update:
-        BTTS.insert(0, [Button.inline("🔄 Update Available — Tap to Review", data="doupdate")])
+        BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
 
-    # ── Delete previous startup card (avoid log spam) ─────────
+    # ── Delete previous startup card ──────────────────────────
     prev_id = udB.get_key("LAST_UPDATE_LOG_SPAM")
     if prev_id:
         try:
@@ -601,7 +573,7 @@ async def ready():
         except Exception:
             pass
 
-    # ── 1. Assistant sends the boot card with inline buttons ──
+    # ── Send single card via assistant ────────────────────────
     card_sent = None
     try:
         card_sent = await asst.send_message(
@@ -610,10 +582,9 @@ async def ready():
             buttons=BTTS,
             link_preview=False,
         )
-        LOGS.info("Startup card sent via assistant bot.")
+        LOGS.info("Startup card sent.")
     except Exception as e:
         LOGS.warning(f"Assistant failed to send startup card: {e}")
-        # Fallback: userbot sends the card without buttons
         try:
             card_sent = await ultroid_bot.send_message(
                 chat_id, CARD, link_preview=False
@@ -621,27 +592,12 @@ async def ready():
         except Exception as e2:
             LOGS.error(f"Both clients failed to send startup card: {e2}")
 
-    # ── 2. Userbot sends a short "session active" reply ───────
-    user_sent = None
-    try:
-        await asyncio.sleep(0.5)   # small delay so card appears first
-        reply_to = card_sent.id if card_sent else None
-        user_sent = await ultroid_bot.send_message(
-            chat_id,
-            f"`✓ {username}` **userbot session is active.**",
-            reply_to=reply_to,
-        )
-        LOGS.info("Userbot online confirmation sent.")
-    except Exception as e:
-        LOGS.warning(f"Userbot confirmation failed: {e}")
-
-    # ── Persist message IDs for cleanup on next restart ───────
+    # ── Persist message ID for cleanup on next restart ────────
     if card_sent:
         udB.set_key("LAST_UPDATE_LOG_SPAM", card_sent.id)
-    if user_sent:
-        udB.set_key("LAST_UPDATE_USERBOT_MSG", user_sent.id)
+        udB.del_key("LAST_UPDATE_USERBOT_MSG")   # only one msg now
 
-    # ── Mark initial deploy ────────────────────────────────────
+    # ── Mark initial deploy ───────────────────────────────────
     if not udB.get_key("INIT_DEPLOY"):
         udB.set_key("INIT_DEPLOY", "Done")
 
@@ -651,6 +607,7 @@ async def ready():
             await ultroid_bot(JoinChannelRequest("TheUltroid"))
         except Exception:
             pass
+
 
 
 async def WasItRestart(udb):
