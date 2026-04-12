@@ -7,15 +7,19 @@
 
 from telethon.errors.rpcerrorlist import (
     BotInlineDisabledError,
+    BotInvalidError,
     BotMethodInvalidError,
     BotResponseTimeoutError,
 )
+
 from telethon.tl.custom import Button
 
 from pyUltroid.dB._core import HELP, LIST
 from pyUltroid.fns.tools import cmd_regex_replace
 
 from . import HNDLR, LOGS, OWNER_NAME, asst, get_string, inline_pic, udB, ultroid_cmd
+
+_HAS_BOT_AST = getattr(asst, "_bot", False)
 
 _main_help_menu = [
     [
@@ -26,11 +30,17 @@ _main_help_menu = [
         Button.inline("INLINE", data="inlone"),
         Button.inline("SYSTEM", data="ownr"),
     ],
-    [
+]
+
+# Settings URL only makes sense when asst is a real bot (has /start)
+if _HAS_BOT_AST:
+    _main_help_menu.append([
         Button.url("SETTINGS", url=f"https://t.me/{asst.me.username}?start=set"),
         Button.inline("CLOSE", data="close"),
-    ],
-]
+    ])
+else:
+    _main_help_menu.append([Button.inline("CLOSE", data="close")])
+
 
 
 @ultroid_cmd(pattern="help( (.*)|$)", fullsudo=True)
@@ -103,19 +113,20 @@ async def _help(ult):
             await ult.eor("Error 🤔 occured.")
     else:
         try:
+            # inline_query only works when asst is a real bot account
+            if not _HAS_BOT_AST:
+                raise BotInvalidError(None)
             results = await ult.client.inline_query(asst.me.username, "ultd")
-        except BotMethodInvalidError:
+        except (BotMethodInvalidError, BotInvalidError):
             z = []
             for x in LIST.values():
                 z.extend(x)
             cmd = len(z) + 10
-            if udB.get_key("MANAGER") and udB.get_key("DUAL_HNDLR") == "/":
-                _main_help_menu[2:3] = [[Button.inline("• Manager Help •", "mngbtn")]]
             return await ult.reply(
                 get_string("inline_4").format(
                     OWNER_NAME,
-                    len(HELP["Official"]),
-                    len(HELP["Addons"] if "Addons" in HELP else []),
+                    len(HELP.get("Official", {})),
+                    len(HELP.get("Addons", [])),
                     cmd,
                 ),
                 file=inline_pic(),
@@ -129,3 +140,4 @@ async def _help(ult):
             return await ult.eor(get_string("help_3"))
         await results[0].click(chat.id, reply_to=ult.reply_to_msg_id, hide_via=True)
         await ult.delete()
+
