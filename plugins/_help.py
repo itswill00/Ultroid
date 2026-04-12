@@ -122,16 +122,29 @@ async def _help(ult):
             for x in LIST.values():
                 z.extend(x)
             cmd = len(z) + 10
+
+            help_text = get_string("inline_4").format(
+                OWNER_NAME,
+                len(HELP.get("Official", {})),
+                len(HELP.get("Addons", [])),
+                cmd,
+            )
+
+            # In user mode: no inline bot → append a minimal mode indicator
+            # so the user knows this is expected, not a bug.
+            if not _HAS_BOT_AST:
+                help_text += (
+                    "\n\n`────────────────────`"
+                    "\n`mode  user-only`"
+                    "\n`note  set RUNTIME_MODE=dual for inline help`"
+                )
+
             return await ult.reply(
-                get_string("inline_4").format(
-                    OWNER_NAME,
-                    len(HELP.get("Official", {})),
-                    len(HELP.get("Addons", [])),
-                    cmd,
-                ),
+                help_text,
                 file=inline_pic(),
                 buttons=_main_help_menu,
             )
+
         except BotResponseTimeoutError:
             return await ult.eor(
                 get_string("help_2").format(HNDLR),
