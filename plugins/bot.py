@@ -206,90 +206,109 @@ heroku_api = Var.HEROKU_API
 async def restartbt(ult):
     import json as _json
     import time as _time
+    import asyncio as _asyncio
 
     match = ult.pattern_match.group(1).strip()
-    msg = await ult.eor("`[RESTART] Initiating restart sequence...`")
+    msg = await ult.eor("`[RESTART] Initiating...`")
 
-    # ── Persist restart context (JSON) so startup can report downtime ──
+    # ── Persist restart context ────────────────────────────────
     who = "bot" if ult.client._bot else "user"
     udB.set_key("_RESTART", _json.dumps({
         "who": who,
         "chat_id": ult.chat_id,
         "msg_id": msg.id,
-        "ts": _time.time(),          # used for downtime calculation
+        "ts": _time.time(),
         "version": ultroid_version,
     }))
 
-    # Heroku: delegate entirely to the platform helper
     if heroku_api:
         return await restart(msg)
 
-    # ── Optional: update from remote before restarting ─────────────────
+    # ── Helper: run shell command with hard timeout ────────────
+    async def _run(cmd, timeout=60, label="cmd"):
+        """Run a shell command. Returns (stdout, stderr) or (None, err_str) on timeout/error."""
+        try:
+            proc = await _asyncio.create_subprocess_shell(
+                cmd,
+                stdout=_asyncio.subprocess.PIPE,
+                stderr=_asyncio.subprocess.STDOUT,  # merge stderr into stdout
+            )
+            stdout, _ = await _asyncio.wait_for(proc.communicate(), timeout=timeout)
+            return (stdout or b"").decode(errors="replace").strip(), None
+        except _asyncio.TimeoutError:
+            LOGS.warning(f"[RESTART] {label} timed out after {timeout}s — killing.")
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            return None, f"timeout after {timeout}s"
+        except Exception as exc:
+            LOGS.warning(f"[RESTART] {label} error: {exc}")
+            return None, str(exc)
+
+    # ── Optional update step ───────────────────────────────────
     if match in ["-u", "--update", "-pull"]:
         try:
-            await msg.edit("`[RESTART] Fetching updates from remote...`")
-            await bash("git fetch --quiet 2>&1")
+            await msg.edit("`[RESTART] Fetching remote...`")
+            out, err = await _run("git fetch --quiet 2>&1", timeout=30, label="git fetch")
+            if err:
+                raise RuntimeError(f"git fetch: {err}")
 
-            stdout, _ = await bash("git rev-list --count HEAD..@{u}")
-            commits_behind = (stdout or "0").strip()
+            out, _ = await _run("git rev-list --count HEAD..@{u}", timeout=10, label="rev-list")
+            commits_behind = (out or "0").strip()
 
             if commits_behind != "0" or "-pull" in match:
-                await msg.edit(f"`[RESTART] Applying {commits_behind} new commit(s)...`")
+                await msg.edit(f"`[RESTART] Pulling {commits_behind} commit(s)...`")
 
-                # Snapshot requirements before pull
-                old_req = ""
-                if os.path.exists("requirements.txt"):
-                    with open("requirements.txt", "r") as f:
-                        old_req = f.read()
+                # Snapshot requirements
+                old_req = open("requirements.txt").read() if os.path.exists("requirements.txt") else ""
 
-                # Pull with conflict detection
-                pull_out, pull_err = await bash("git pull --rebase 2>&1")
-                combined = ((pull_out or "") + (pull_err or "")).lower()
+                pull_out, pull_err = await _run("git pull --rebase 2>&1", timeout=60, label="git pull")
 
+                if pull_err:
+                    raise RuntimeError(f"git pull: {pull_err}")
+
+                combined = (pull_out or "").lower()
                 if "conflict" in combined or "error:" in combined:
-                    # Abort the failed rebase and refuse to restart dirty
-                    await bash("git rebase --abort 2>&1")
-                    LOGS.error(f"[RESTART] git pull conflict detected:\n{pull_out[:400]}")
+                    await _run("git rebase --abort 2>&1", timeout=10, label="rebase --abort")
+                    LOGS.error(f"[RESTART] conflict:\n{pull_out[:300]}")
                     return await msg.edit(
-                        f"`[RESTART] Merge conflict detected — aborting.`\n"
-                        f"`Run 'git status' to inspect. Restart cancelled.`\n\n"
-                        f"`{pull_out[:300]}`"
+                        f"`[RESTART] Conflict detected — restart cancelled.`\n"
+                        f"`Run git status to inspect.\n{(pull_out or '')[:200]}`"
                     )
 
-                # Re-read requirements and install if changed
-                new_req = ""
-                if os.path.exists("requirements.txt"):
-                    with open("requirements.txt", "r") as f:
-                        new_req = f.read()
-
+                # Install deps if changed
+                new_req = open("requirements.txt").read() if os.path.exists("requirements.txt") else ""
                 if old_req != new_req:
-                    await msg.edit("`[RESTART] Dependencies changed — installing...`")
-                    pip_out, _ = await bash(
+                    await msg.edit("`[RESTART] Installing new dependencies...`")
+                    pip_out, pip_err = await _run(
                         "pip install -r requirements.txt --break-system-packages -q 2>&1",
+                        timeout=120,
+                        label="pip install",
                     )
-                    LOGS.info(f"[RESTART] pip output: {pip_out[:200]}")
+                    if pip_err:
+                        LOGS.warning(f"[RESTART] pip timeout/error: {pip_err}")
+                    else:
+                        LOGS.info(f"[RESTART] pip: {(pip_out or '')[:200]}")
             else:
-                await msg.edit("`[RESTART] Already up to date. Restarting...`")
+                await msg.edit("`[RESTART] Already up to date.`")
 
-        except Exception as e:
-            LOGS.exception(e)
-            await msg.edit(f"`[RESTART] Update step failed: {e} — restarting anyway...`")
+        except Exception as exc:
+            LOGS.exception(exc)
+            await msg.edit(f"`[RESTART] Update failed: {exc} — restarting anyway...`")
 
-    # ── Graceful shutdown ───────────────────────────────────────────────
-    # Give Telegram 600ms to deliver the edit before we kill the process.
-    await msg.edit("`[RESTART] Disconnecting clients...`")
-    import asyncio as _asyncio
-    await _asyncio.sleep(0.6)
+    # ── Graceful shutdown ──────────────────────────────────────
+    await msg.edit("`[RESTART] Restarting...`")
+    await _asyncio.sleep(0.5)
 
     try:
         from pyUltroid import ultroid_bot as _ubot, asst as _asst
-        # Disconnect both clients cleanly so pending writes are flushed
         await _ubot.disconnect()
         await _asst.disconnect()
     except Exception as _de:
-        LOGS.warning(f"[RESTART] Graceful disconnect warning: {_de}")
+        LOGS.warning(f"[RESTART] Disconnect warning: {_de}")
 
-    # ── In-place process replace (no fork, minimal memory footprint) ────
+    # ── In-place process replace ───────────────────────────────
     args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
     os.execl(sys.executable, *args)
 
