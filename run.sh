@@ -1,27 +1,17 @@
 #!/usr/bin/env bash
 # ============================================================
-#   Ultroid Optimized — Smart Runner Script
-#   Mendeteksi platform dan menjalankan bot dengan benar
+#   Ultroid Optimized — Runner Script
+#   Supports: Termux, WSL, VPS, Docker
 # ============================================================
 
 GREEN='\033[0;32m'
-CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-banner() {
-    echo -e "${CYAN}"
-    echo "  ██╗   ██╗██╗  ████████╗██████╗  ██████╗ ██╗██████╗ "
-    echo "  ██║   ██║██║  ╚══██╔══╝██╔══██╗██╔═══██╗██║██╔══██╗"
-    echo "  ██║   ██║██║     ██║   ██████╔╝██║   ██║██║██║  ██║"
-    echo "  ██║   ██║██║     ██║   ██╔══██╗██║   ██║██║██║  ██║"
-    echo "  ╚██████╔╝███████╗██║   ██║  ██║╚██████╔╝██║██████╔╝"
-    echo "   ╚═════╝ ╚══════╝╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝╚═════╝ "
-    echo -e "${NC}"
-    echo -e "${GREEN}        Ultroid Optimized — Smart Runner${NC}"
-    echo -e "─────────────────────────────────────────"
-}
+info()  { echo -e "${GREEN}[OK]${NC} $1"; }
+warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 # --- Detect environment ---
 detect_env() {
@@ -34,65 +24,83 @@ detect_env() {
     else
         ENV_TYPE="VPS/Linux"
     fi
-    echo -e "${YELLOW}Platform: ${ENV_TYPE}${NC}"
+    echo "Platform: ${ENV_TYPE}"
 }
 
 # --- Check .env file ---
 check_env_file() {
     if [ ! -f ".env" ]; then
-        echo -e "${RED}[ERROR] File .env tidak ditemukan!${NC}"
-        echo -e "Jalankan: ${CYAN}cp .env.sample .env${NC} lalu isi variabelnya."
-        exit 1
+        error ".env file not found. Run: cp .env.sample .env"
     fi
 
-    # Check required vars
-    source <(grep -v '^#' .env | grep -v '^\s*$')
-    if [ -z "$API_ID" ] || [ -z "$API_HASH" ] || [ -z "$SESSION" ]; then
-        echo -e "${RED}[ERROR] API_ID, API_HASH, atau SESSION belum diisi di .env!${NC}"
-        echo -e "Jalankan: ${CYAN}python3 ssgen.py${NC} untuk membuat SESSION."
-        exit 1
+    # Load env vars for validation
+    source <(grep -v '^#' .env | grep -v '^\s*$' | grep '=')
+
+    # Determine RUNTIME_MODE (default: dual)
+    MODE="${RUNTIME_MODE:-dual}"
+
+    # SESSION required for user and dual mode
+    if [ "$MODE" != "bot" ]; then
+        if [ -z "$SESSION" ]; then
+            error "SESSION is not set in .env (required for RUNTIME_MODE=${MODE})."$'\n'"       Run: python3 ssgen.py"
+        fi
     fi
-    echo -e "${GREEN}[OK] Konfigurasi .env valid.${NC}"
+
+    # BOT_TOKEN required for bot and dual mode
+    if [ "$MODE" = "bot" ] || [ "$MODE" = "dual" ]; then
+        if [ -z "$BOT_TOKEN" ]; then
+            warn "BOT_TOKEN is not set — required for RUNTIME_MODE=${MODE}."
+        fi
+    fi
+
+    # API_ID and API_HASH always required
+    if [ -z "$API_ID" ] || [ -z "$API_HASH" ]; then
+        error "API_ID or API_HASH is missing in .env."
+    fi
+
+    info ".env validated (RUNTIME_MODE=${MODE})"
 }
 
-# --- Activate venv if exists (WSL/VPS) ---
+# --- Activate venv if present ---
 activate_venv() {
     if [ -f "venv/bin/activate" ]; then
         source venv/bin/activate
-        echo -e "${GREEN}[OK] Virtual environment aktif.${NC}"
+        info "Virtual environment activated."
+    elif [ -f ".venv/bin/activate" ]; then
+        source .venv/bin/activate
+        info "Virtual environment activated (.venv)."
     fi
 }
 
 # --- Check Python version ---
 check_python() {
     PYTHON_CMD=""
-    for cmd in python3 python; do
-        if command -v $cmd &>/dev/null; then
-            VER=$($cmd -c "import sys; print(sys.version_info.minor)")
-            if [ "$VER" -ge 10 ]; then
-                PYTHON_CMD=$cmd
+    for cmd in python3.12 python3.11 python3.10 python3 python; do
+        if command -v "$cmd" &>/dev/null; then
+            VER=$("$cmd" -c "import sys; print(sys.version_info.minor)")
+            MAJ=$("$cmd" -c "import sys; print(sys.version_info.major)")
+            if [ "$MAJ" -ge 3 ] && [ "$VER" -ge 10 ]; then
+                PYTHON_CMD="$cmd"
                 break
             fi
         fi
     done
 
     if [ -z "$PYTHON_CMD" ]; then
-        echo -e "${RED}[ERROR] Python 3.10+ tidak ditemukan!${NC}"
-        exit 1
+        error "Python 3.10+ not found. Install it first."
     fi
-    echo -e "${GREEN}[OK] Python: $($PYTHON_CMD --version)${NC}"
+    info "Python: $($PYTHON_CMD --version)"
 }
 
 # --- Run bot ---
 run_bot() {
-    echo -e ""
-    echo -e "${GREEN}Menjalankan Ultroid...${NC}"
-    echo -e "─────────────────────────────────────────"
+    echo ""
+    echo "Starting Ultroid..."
+    echo "──────────────────────────────"
     $PYTHON_CMD -m pyUltroid
 }
 
 # ─── Main ───────────────────────────────────────────────────
-banner
 detect_env
 check_env_file
 activate_venv

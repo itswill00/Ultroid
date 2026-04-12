@@ -1,7 +1,6 @@
 {
-    "name": "Ultroid UserBot",
-    "description": "Pluggable telegram userbot, made in python using Telethon.",
-    "logo": "https://graph.org/file/031957757a4f6a5191040.jpg",
+    "name": "Ultroid Optimized",
+    "description": "Self-hosted Telegram userbot framework. Supports userbot, bot-only, and dual mode.",
     "keywords": [
         "Telethon",
         "telegram",
@@ -9,40 +8,58 @@
         "python",
         "ultroid"
     ],
-    "repository": "https://github.com/TeamUltroid/Ultroid",
-    "website": "https://ultroid.tech",
-    "success_url": "https://t.me/TeamUltroid",
+    "repository": "https://github.com/itswill00/Ultroid",
     "stack": "container",
     "env": {
         "API_ID": {
-            "description": "You api id, from my.telegram.org or @ScrapperRoBot.",
-            "value": "", 
-            "required": false
+            "description": "Telegram API ID from my.telegram.org",
+            "value": "",
+            "required": true
         },
         "API_HASH": {
-            "description": "You api hash, from my.telegram.org or @ScrapperRoBot.",
+            "description": "Telegram API Hash from my.telegram.org",
             "value": "",
-            "required": false
+            "required": true
         },
         "SESSION": {
-            "description": "Session String (telethon or pyrogram) for your telegram user account. The userbot will NOT work without a session string!!",
+            "description": "Telethon string session. Generate via python3 ssgen.py. Not required for RUNTIME_MODE=bot.",
+            "value": ""
+        },
+        "BOT_TOKEN": {
+            "description": "Bot token from @BotFather. Required for RUNTIME_MODE=bot or dual.",
+            "value": ""
+        },
+        "RUNTIME_MODE": {
+            "description": "dual (default) | user | bot. Controls which clients are started.",
+            "value": "dual"
+        },
+        "LOG_CHANNEL": {
+            "description": "Telegram channel ID for startup cards and alerts.",
+            "value": ""
+        },
+        "GROQ_API_KEY": {
+            "description": "API key from console.groq.com for AI features (.ask, .search).",
             "value": ""
         },
         "REDIS_URI": {
-            "description": "Redis endpoint URL, from redislabs.com",
+            "description": "Redis connection URI. Leave empty to use local JSON database.",
             "value": ""
         },
         "REDIS_PASSWORD": {
-            "description": "Redis endpoint password, from redislabs.com",
+            "description": "Redis password.",
+            "value": ""
+        },
+        "MONGO_URI": {
+            "description": "MongoDB connection URI. Alternative to Redis.",
             "value": ""
         },
         "HEROKU_API": {
-            "description": "Heroku API token. Mandatory for Heroku Deploy...",
+            "description": "Heroku API token. Required only for Heroku deployment.",
             "value": "",
             "required": false
         },
         "HEROKU_APP_NAME": {
-            "description": "Name of your Heroku app, given in the first blank on this page. To be added if deploying to heroku ONLY.",
+            "description": "Heroku app name. Required only for Heroku deployment.",
             "value": "",
             "required": false
         }
