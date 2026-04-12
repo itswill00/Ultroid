@@ -18,6 +18,7 @@ class _SudoManager:
         self._owner = None
         self._sudos = None
         self._fullsudos = None
+        self._scoped_sudos = None
         self._should_allow_sudo = None
 
     def _init_db(self):
@@ -37,6 +38,22 @@ class _SudoManager:
             sudos = [int(x) for x in sudos]
         self._sudos = sudos
         return self._sudos
+
+    def get_scoped_sudos(self):
+        if self._scoped_sudos is not None:
+            return self._scoped_sudos
+        db = self._init_db()
+        scoped = db.get_key("SUDO_SCOPE") or {}
+        # Ensure it's a dict {user_id: [cmds]}
+        if isinstance(scoped, str):
+            import json
+            try:
+                scoped = json.loads(scoped)
+            except Exception:
+                scoped = {}
+        # Ensure all keys are strings (for JSON compatibility) but we want ints in memory
+        self._scoped_sudos = {int(k): v for k, v in scoped.items()}
+        return self._scoped_sudos
 
     @property
     def should_allow_sudo(self):
@@ -83,9 +100,47 @@ class _SudoManager:
     def is_sudo(self, id_):
         return id_ in self.get_sudos()
 
+    def is_authorized(self, sender_id: int, pattern: str) -> bool:
+        """Determines if a user has permission to execute a specific command."""
+        # 1. Owner & Full Sudoers have absolute access
+        if sender_id in self.fullsudos:
+            return True
+
+        # 2. Check standard sudoers
+        if sender_id not in self.get_sudos():
+            return False
+
+        # 3. Check scope (Granular Control)
+        scopes = self.get_scoped_sudos()
+        if sender_id not in scopes:
+            # Standard sudoer with no scope = Global Sudo (historical behavior)
+            return True
+
+        # Extract cmd name from pattern
+        cmd_name = None
+        import re
+        p_str = pattern.pattern if hasattr(pattern, "pattern") else str(pattern)
+        # Match alphanumeric word (cmd name) after common prefix characters
+        match = re.search(r"[a-zA-Z0-9_]+", p_str.replace("\\", ""))
+        if match:
+            cmd_name = match.group(0).lower()
+
+        # If we can't extract a name, allow for safety or block? 
+        # Blocking is safer but might break weird patterns.
+        if not cmd_name:
+            return True
+
+        allowed = scopes[sender_id]
+        if isinstance(allowed, str):
+            allowed = [allowed]
+        
+        # Check against allowed list
+        return cmd_name in [c.lower() for c in allowed]
+
     def refresh(self):
         self._sudos = None
         self._fullsudos = None
+        self._scoped_sudos = None
         self._should_allow_sudo = None
         self._owner = None
 

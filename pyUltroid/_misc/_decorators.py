@@ -108,8 +108,10 @@ def ultroid_cmd(
             if not ult.out:
                 if fullsudo and only_devs:
                     return
-                if owner_only or ult.sender_id not in owner_and_sudos():
+                # Scoped Sudo & Authorization Check
+                if owner_only or not SUDO_M.is_authorized(ult.sender_id, pattern):
                     return
+
                 if ult.sender_id in _ignore_eval:
                     return await eod(ult, get_string("py_d1"))
                 if fullsudo and ult.sender_id not in SUDO_M.fullsudos:

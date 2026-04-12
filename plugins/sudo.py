@@ -30,20 +30,28 @@ from . import OWNER_NAME, get_string, inline_mention, udB, ultroid_bot, ultroid_
 @ultroid_cmd(pattern="addsudo( (.*)|$)", fullsudo=True)
 async def _(ult):
     inputs = ult.pattern_match.group(1).strip()
+    cmds = []
+    
     if ult.reply_to_msg_id:
         replied_to = await ult.get_reply_message()
         id = replied_to.sender_id
         name = await replied_to.get_sender()
+        if inputs:
+            cmds = inputs.split()
     elif inputs:
+        parts = inputs.split()
+        user_input = parts[0]
+        if len(parts) > 1:
+            cmds = parts[1:]
         try:
-            id = await ult.client.parse_id(inputs)
+            id = await ult.client.parse_id(user_input)
         except ValueError:
             try:
-                id = int(inputs)
+                id = int(user_input)
             except ValueError:
-                id = inputs
+                id = user_input
         try:
-            name = await ult.client.get_entity(int(id))
+            name = await ult.client.get_entity(id)
         except BaseException:
             name = None
     elif ult.is_private:
@@ -51,21 +59,42 @@ async def _(ult):
         name = await ult.get_chat()
     else:
         return await ult.eor(get_string("sudo_1"), time=5)
+
     if name and isinstance(name, User) and (name.bot or name.verified):
         return await ult.eor(get_string("sudo_4"))
+    
     name = inline_mention(name) if name else f"`{id}`"
     if id == ultroid_bot.uid:
-        mmm = get_string("sudo_2")
-    elif id in sudoers():
-        mmm = f"{name} `is already a SUDO User ...`"
+        return await ult.eor(get_string("sudo_2"), time=5)
+
+    # Database logic
+    udB.set_key("SUDO", "True")
+    sudos = sudoers()
+    if id not in sudos:
+        sudos.append(id)
+        udB.set_key("SUDOS", sudos)
+    
+    # Scope logic
+    scoped = SUDO_M.get_scoped_sudos()
+    if cmds:
+        current_scope = scoped.get(id, [])
+        for c in cmds:
+            if c not in current_scope:
+                current_scope.append(c)
+        scoped[id] = current_scope
+        udB.set_key("SUDO_SCOPE", scoped)
+        mmm = f"**Added** {name} **as Scoped SUDO User.**\n**Allowed**: `{', '.join(current_scope)}`"
     else:
-        udB.set_key("SUDO", "True")
-        key = sudoers()
-        key.append(id)
-        udB.set_key("SUDOS", key)
-        refresh_all()
-        mmm = f"**Added** {name} **as SUDO User**"
+        # If no commands provided, it's a "Global Sudo" (historical behavior)
+        # We ensure they are removed from scope if they were there
+        if id in scoped:
+            scoped.pop(id)
+            udB.set_key("SUDO_SCOPE", scoped)
+        mmm = f"**Added** {name} **as Global SUDO User.**"
+    
+    refresh_all()
     await ult.eor(mmm, time=5)
+
 
 
 @ultroid_cmd(pattern="addfullsudo( (.*)|$)", owner_only=True)
@@ -118,20 +147,28 @@ async def _(ult):
 @ultroid_cmd(pattern="delsudo( (.*)|$)", fullsudo=True)
 async def _(ult):
     inputs = ult.pattern_match.group(1).strip()
+    cmds_to_rem = []
+
     if ult.reply_to_msg_id:
         replied_to = await ult.get_reply_message()
         id = replied_to.sender_id
         name = await replied_to.get_sender()
+        if inputs:
+            cmds_to_rem = inputs.split()
     elif inputs:
+        parts = inputs.split()
+        user_input = parts[0]
+        if len(parts) > 1:
+            cmds_to_rem = parts[1:]
         try:
-            id = await ult.client.parse_id(inputs)
+            id = await ult.client.parse_id(user_input)
         except ValueError:
             try:
-                id = int(inputs)
+                id = int(user_input)
             except ValueError:
-                id = inputs
+                id = user_input
         try:
-            name = await ult.client.get_entity(int(id))
+            name = await ult.client.get_entity(id)
         except BaseException:
             name = None
     elif ult.is_private:
@@ -139,16 +176,36 @@ async def _(ult):
         name = await ult.get_chat()
     else:
         return await ult.eor(get_string("sudo_1"), time=5)
-    name = inline_mention(name) if name else f"`{id}`"
+
     if id not in sudoers():
-        mmm = f"{name} `wasn't a SUDO User ...`"
+        return await ult.eor(f"`User` {id} `is not in SUDO list.`", time=5)
+
+    name = inline_mention(name) if name else f"`{id}`"
+    scoped = SUDO_M.get_scoped_sudos()
+    
+    if cmds_to_rem and id in scoped:
+        current_scope = scoped[id]
+        new_scope = [repr for repr in current_scope if repr not in cmds_to_rem]
+        if not new_scope:
+            scoped.pop(id)
+        else:
+            scoped[id] = new_scope
+        udB.set_key("SUDO_SCOPE", scoped)
+        mmm = f"**Removed commands** `{', '.join(cmds_to_rem)}` **from** {name}."
     else:
-        key = sudoers()
-        key.remove(id)
-        udB.set_key("SUDOS", key)
-        refresh_all()
-        mmm = f"**Removed** {name} **from SUDO User(s)**"
+        # Full removal
+        sudos = sudoers()
+        if id in sudos:
+            sudos.remove(id)
+            udB.set_key("SUDOS", sudos)
+        if id in scoped:
+            scoped.pop(id)
+            udB.set_key("SUDO_SCOPE", scoped)
+        mmm = f"**Removed** {name} **completely from SUDO.**"
+    
+    refresh_all()
     await ult.eor(mmm, time=5)
+
 
 
 @ultroid_cmd(pattern="delfullsudo( (.*)|$)", owner_only=True)
@@ -218,6 +275,7 @@ async def _(ult):
         msg += f"• {n} ( `{i}` ) [ **FULL SUDO** ]\n"
 
     # Process Normal Sudoers
+    scoped = SUDO_M.get_scoped_sudos()
     for i in sudos:
         if i in fullsudos:
             continue
@@ -226,7 +284,13 @@ async def _(ult):
         except BaseException:
             name = None
         n = inline_mention(name) if name else f"`{i}`"
-        msg += f"• {n} ( `{i}` ) [ **SUDO** ]\n"
+        scope_text = ""
+        if i in scoped:
+            scope_text = f" [ **SCOPED**: `{', '.join(scoped[i])}` ]"
+        else:
+            scope_text = " [ **SUDO** ]"
+        msg += f"• {n} ( `{i}` ){scope_text}\n"
+
 
     m = udB.get_key("SUDO") or True
     return await ult.eor(
