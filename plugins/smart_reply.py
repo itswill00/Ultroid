@@ -1,10 +1,31 @@
 # Ultroid - Smart Reply Plugin (Refactored)
 # Powered by centralized AI Core Engine
+"""
+» Commands Available -
 
-import os
+• `{i}ask <question>`
+    Ask AI for any technical information.
+    Add `--search` to enable real-time web research.
+
+• `{i}summarize` (reply to message)
+    Get a concise summary of a replied text message.
+
+• `{i}tldr <count>`
+    Summarize the last N messages in the chat.
+
+• `{i}search <query>`
+    Direct web search results.
+
+• `{i}debug`
+    Autonomous log analysis and troubleshooting.
+
+• `{i}aimodel`
+    View or switch the active AI model.
+"""
 from . import udB, ultroid_cmd, LOGS, HNDLR
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.fns.ai_engine import run_ai_task, google_search
+import os
 
 @ultroid_cmd(pattern="ask( (.*)|$)")
 async def ask_ai(e):
@@ -142,13 +163,4 @@ async def ai_debug(e):
     # Use engine for debug analysis
     await run_ai_task(e, prompt, system_override="You are a professional Python Debugger and Systems Engineer.")
 
-__doc__ = """
-**Smart Reply & AI Assistant**
 
-• `.ask <question>` — Ask AI for any technical information.
-• `.ask --search <query>` — Enable real-time web research.
-• `.summarize` — Get a summary of a replied text message.
-• `.tldr <count>` — Summarize the last N messages in the chat.
-• `.search <query>` — Direct web search results.
-• `.debug` — Autonomous log analysis and troubleshooting.
-"""
