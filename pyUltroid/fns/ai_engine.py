@@ -79,30 +79,46 @@ async def google_search(query):
 # CORE API CALL
 # --------------------------------------------------------------------------
 
-async def _call_groq(messages):
-    """Internal helper to call Groq API and extract usage."""
+# Model khusus vision (support gambar)
+VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+
+async def _call_groq(messages, vision_model=None):
+    """Internal helper to call Groq API and extract usage.
+    
+    Args:
+        messages: List of message dicts.
+        vision_model: If set, overrides model with a vision-capable one.
+    """
     import aiohttp
     api_key = udB.get_key("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
-    model = udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
+    
+    # Gunakan vision model jika ada gambar, sinon pakai model default
+    if vision_model:
+        model = vision_model
+    else:
+        model = udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
     
     if not api_key:
         return None, "API Key Missing."
 
+    LOGS.info(f"[Groq] Using model: {model}")
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {"model": model, "messages": messages, "temperature": 0.2}
     
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=30) as resp:
+            async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
                 if resp.status != 200:
                     err = await resp.text()
-                    return None, f"API Error: {resp.status}"
+                    LOGS.error(f"[Groq] API Error {resp.status}: {err[:300]}")
+                    return None, f"API Error {resp.status}: {err[:200]}"
                 data = await resp.json()
                 ans = data['choices'][0]['message']['content']
                 usage = data.get('usage', {}).get('total_tokens', 0)
                 return ans, usage
     except Exception as e:
+        LOGS.exception(f"[Groq] Request failed: {e}")
         return None, str(e)
 
 # --------------------------------------------------------------------------
@@ -166,18 +182,23 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
             messages.append(past_msg)
         
         content = []
+        # Jika ada gambar tapi tidak ada teks, pakai prompt default DULU
+        if not query and image_b64:
+            query = "Describe this image technically. Provide details about what you see."
         if query:
             content.append({"type": "text", "text": query})
         if image_b64:
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
-            if not query:
-                content[0]["text"] = "Describe this image technically."
                 
         messages.append({"role": "user", "content": content})
         
         # 5. Execution (Timing)
+        # Otomatis pakai vision model jika ada gambar
         start_time = time.time()
-        ans, usage_or_err = await _call_groq(messages)
+        ans, usage_or_err = await _call_groq(
+            messages,
+            vision_model=VISION_MODEL if image_b64 else None
+        )
         duration = round(time.time() - start_time, 2)
         
         if not ans:
