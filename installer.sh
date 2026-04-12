@@ -1,29 +1,37 @@
 #!/usr/bin/env bash
 # ============================================================
-#   Ultroid Optimized — Smart Installer
+#   Ultroid Optimized — Smart Installer v2
 #   Platform-aware: Termux, Linux/VPS, WSL, Docker
-#   Features:
-#     - Skip packages already installed
-#     - Termux: prefer pkg over pip for heavy C-extension libs
-#     - Per-package install with failure isolation
-#     - DB driver install only if configured in .env
-#     - Internet connectivity check before downloading
-#     - Resume support via .setup_state
+#
+#   Key behaviors:
+#     - Skip packages that are already importable
+#     - Termux: use pkg for C/Rust-heavy packages (pre-compiled ARM)
+#     - Termux: use community pre-built wheels for pydantic-core
+#     - Per-package install with failure isolation (one fail ≠ abort)
+#     - Install DB drivers only if configured in .env
+#     - Internet check before downloading
+#     - Resume via .setup_state (re-run skips done steps)
+#     - pkg update throttled to once per 24h
 # ============================================================
 
-set -euo pipefail
+set -uo pipefail   # Note: no -e, we handle errors per step
 
 STATE_FILE=".setup_state"
 REQ_FILE="requirements.txt"
+OFFLINE=0
 
 # ── Colors ────────────────────────────────────────────────────
 G='\033[0;32m'; Y='\033[1;33m'; R='\033[0;31m'; C='\033[0;36m'; N='\033[0m'
-ok()   { echo -e "${G}[OK]${N} $1"; }
-info() { echo -e "${C}[..] $1${N}"; }
-warn() { echo -e "${Y}[!]${N} $1"; }
+ok()   { echo -e "${G}[OK]${N}   $1"; }
+info() { echo -e "${C}[..]${N}   $1"; }
+warn() { echo -e "${Y}[!]${N}    $1"; }
 fail() { echo -e "${R}[FAIL]${N} $1"; }
 done_step() { grep -qx "$1" "$STATE_FILE" 2>/dev/null; }
 mark_done() { echo "$1" >> "$STATE_FILE"; }
+
+echo ""
+echo "Ultroid Optimized — Setup"
+echo "──────────────────────────────────────────────────"
 
 # ── Platform Detection ────────────────────────────────────────
 detect_platform() {
@@ -33,7 +41,7 @@ detect_platform() {
         PLATFORM="docker"
     elif [ -f "/proc/sys/fs/binfmt_misc/WSLInterop" ]; then
         PLATFORM="wsl"
-    elif uname -s | grep -qi darwin; then
+    elif uname -s 2>/dev/null | grep -qi darwin; then
         PLATFORM="macos"
     else
         PLATFORM="linux"
@@ -43,17 +51,16 @@ detect_platform() {
 
 # ── Internet Check ────────────────────────────────────────────
 check_internet() {
-    info "Checking internet connectivity..."
-    if curl -s --max-time 5 https://pypi.org > /dev/null 2>&1; then
-        ok "Internet: connected"
+    info "Checking internet..."
+    if curl -s --max-time 6 https://pypi.org > /dev/null 2>&1; then
+        ok "Internet: online"
     else
-        warn "Internet: unreachable. Proceeding with cached/local packages only."
+        warn "Internet: offline or slow — using cached packages only"
         OFFLINE=1
     fi
-    OFFLINE=${OFFLINE:-0}
 }
 
-# ── Python Version Check ──────────────────────────────────────
+# ── Python Check ──────────────────────────────────────────────
 check_python() {
     PYTHON=""
     for cmd in python3.12 python3.11 python3.10 python3 python; do
@@ -66,103 +73,136 @@ check_python() {
             fi
         fi
     done
-
     if [ -z "$PYTHON" ]; then
-        fail "Python 3.10+ not found. Cannot continue."
-        echo "  Install it first:"
-        echo "    Termux: pkg install python"
-        echo "    Linux:  sudo apt install python3.11"
+        fail "Python 3.10+ not found."
+        echo "  Termux:  pkg install python"
+        echo "  Linux:   sudo apt install python3.11"
         exit 1
     fi
     ok "Python: $($PYTHON --version)"
 }
 
-# ── Virtual Environment (non-Termux) ─────────────────────────
+# ── Virtual Environment (non-Termux only) ─────────────────────
 setup_venv() {
-    [ "$PLATFORM" = "termux" ] && return  # Termux has no venv issues
+    [ "$PLATFORM" = "termux" ] && return
 
     if done_step "venv"; then
-        ok "venv: already set up (skipping)"
-        source venv/bin/activate 2>/dev/null || true
+        # Just activate — don't skip silently
+        if [ -f "venv/bin/activate" ]; then
+            source venv/bin/activate 2>/dev/null || true
+        fi
+        ok "venv: already set up"
         return
     fi
 
-    if [ -d "venv" ]; then
-        ok "venv: found existing environment"
-    else
+    if [ ! -d "venv" ]; then
         info "Creating virtual environment..."
-        "$PYTHON" -m venv venv
-        ok "venv: created"
+        "$PYTHON" -m venv venv || { fail "venv creation failed"; return; }
     fi
-
     source venv/bin/activate
-    # Upgrade pip silently
-    pip install --quiet --upgrade pip
+    pip install --quiet --upgrade pip 2>/dev/null
+    ok "venv: ready"
     mark_done "venv"
 }
 
-# ── System Dependencies ───────────────────────────────────────
-install_system_deps() {
-    done_step "sys_deps" && { ok "System deps: already installed (skipping)"; return; }
+# ── System Package Update (Termux, throttled) ─────────────────
+termux_pkg_update() {
+    [ "$PLATFORM" != "termux" ] && return
+    done_step "pkg_update" && { ok "pkg: already updated recently"; return; }
 
-    info "Installing system dependencies..."
+    # Rate-limit: only update if stamp is older than 24h
+    if [ -f ".pkg_updated" ] && [ "$(find .pkg_updated -mmin +1440 2>/dev/null | wc -l)" -eq 0 ]; then
+        ok "pkg: update is fresh (< 24h), skipping"
+        return
+    fi
+
+    info "Updating pkg (once every 24h)..."
+    pkg update -y 2>/dev/null || warn "pkg update had warnings, continuing"
+    touch .pkg_updated
+    mark_done "pkg_update"
+}
+
+# ── System Libs & Build Tools ─────────────────────────────────
+install_system_deps() {
+    done_step "sys_deps" && { ok "System deps: done"; return; }
+    info "Checking system dependencies..."
 
     if [ "$PLATFORM" = "termux" ]; then
-        # Only update if not done recently (check stamp file)
-        if [ ! -f ".pkg_updated" ] || [ "$(find .pkg_updated -mmin +1440 2>/dev/null | wc -l)" -gt 0 ]; then
-            info "Updating pkg (this may take a moment)..."
-            pkg update -y 2>/dev/null && pkg upgrade -y 2>/dev/null || warn "pkg update had errors, continuing..."
-            touch .pkg_updated
-        fi
-
-        # Required system libs
-        for dep in git ffmpeg; do
-            if ! command -v "$dep" &>/dev/null; then
-                info "Installing $dep..."
-                pkg install "$dep" -y 2>/dev/null || warn "Failed to install $dep"
-            else
-                ok "$dep: already installed"
-            fi
+        # Build tools (needed as fallback if some pkg fails)
+        for dep in git clang make pkg-config; do
+            command -v "$dep" &>/dev/null || pkg install "$dep" -y 2>/dev/null || true
         done
 
-        # mediainfo is optional
-        if ! command -v mediainfo &>/dev/null; then
-            pkg install mediainfo -y 2>/dev/null || warn "mediainfo not installed (some features disabled)"
-        fi
+        # ffmpeg — required for audio/video features
+        command -v ffmpeg &>/dev/null && ok "ffmpeg: present" \
+            || { info "Installing ffmpeg..."; pkg install ffmpeg -y 2>/dev/null || warn "ffmpeg: failed (video features may not work)"; }
+
+        # mediainfo — optional
+        command -v mediainfo &>/dev/null && ok "mediainfo: present" \
+            || pkg install mediainfo -y 2>/dev/null || true
+
+        # Headers required for some pip C extensions as fallback
+        for lib in libxml2 libxslt openssl; do
+            pkg install "$lib" -y 2>/dev/null || true
+        done
 
     elif command -v apt-get &>/dev/null; then
-        sudo apt-get update -qq 2>/dev/null || warn "apt update failed"
-        for dep in git ffmpeg mediainfo python3-pip python3-venv; do
-            if ! dpkg -l "$dep" 2>/dev/null | grep -q "^ii"; then
-                sudo apt-get install -y "$dep" 2>/dev/null || warn "Failed to install $dep"
-            else
-                ok "$dep: already installed"
-            fi
+        NEEDED=""
+        for dep in git ffmpeg mediainfo python3-pip python3-venv \
+                   libxml2-dev libxslt1-dev libjpeg-dev zlib1g-dev \
+                   libffi-dev libssl-dev; do
+            dpkg -l "$dep" 2>/dev/null | grep -q "^ii" || NEEDED="$NEEDED $dep"
         done
+        if [ -n "$NEEDED" ]; then
+            info "apt-get install:$NEEDED"
+            sudo apt-get install -y $NEEDED 2>/dev/null || warn "Some apt deps failed"
+        else
+            ok "System libs: all present"
+        fi
     fi
 
     mark_done "sys_deps"
 }
 
-# ── Termux: Pre-compiled Packages via pkg ────────────────────
+# ── Termux: Pre-built Packages via pkg ───────────────────────
 #
-# These packages require heavy C compilation if installed via pip.
-# On Termux (ARM), pkg provides pre-built binaries — use them.
-# Mapping: pip-name -> pkg-name -> import-name
+# These packages require heavy C or Rust compilation when built
+# from PyPI source. Termux provides pre-compiled ARM64 binaries.
+# Always try pkg FIRST for these, before falling back to pip.
+#
+# Format: "pip_package_name:pkg_package_name:python_import_name"
 #
 TERMUX_PKG_MAP=(
+    # Requires libxml2 + libxslt + compile time
     "lxml:python-lxml:lxml"
+
+    # Requires libjpeg, libpng, zlib — very heavy to compile
     "Pillow:python-pillow:PIL"
+
+    # Requires BLAS/LAPACK — huge compile, often OOM on phone
     "numpy:python-numpy:numpy"
+
+    # Newer versions require Rust (rustls/ring crates)
     "cryptography:python-cryptography:cryptography"
+
+    # C extension (libsodium) — used internally by telethon
+    "PyNaCl:python-pynacl:nacl"
+
+    # C extensions (multidict, yarl, frozenlist) — aiohttp deps
+    # Try pkg version if available; otherwise pip may work via wheel
+    "aiohttp:python-aiohttp:aiohttp"
+
+    # C extension — Redis speedup
+    "hiredis:python-hiredis:hiredis"
+
+    # C extension — psutil for system monitoring plugin
+    "psutil:python-psutil:psutil"
 )
 
 install_termux_prebuilt() {
     [ "$PLATFORM" != "termux" ] && return
-
-    done_step "termux_prebuilt" && { ok "Termux pre-built packages: done (skipping)"; return; }
-
-    info "Installing pre-built packages via pkg (avoids heavy compilation)..."
+    done_step "termux_prebuilt" && { ok "Termux pre-built packages: done"; return; }
+    info "Installing pre-compiled packages via pkg..."
 
     for entry in "${TERMUX_PKG_MAP[@]}"; do
         pip_name="${entry%%:*}"
@@ -170,27 +210,82 @@ install_termux_prebuilt() {
         pkg_name="${rest%%:*}"
         import_name="${rest##*:}"
 
-        # Check if already importable
         if "$PYTHON" -c "import $import_name" 2>/dev/null; then
-            ok "$pip_name: already importable (skip)"
+            ok "$pip_name: already importable"
             continue
         fi
 
-        info "Installing $pip_name via pkg ($pkg_name)..."
+        info "pkg install $pkg_name (pre-compiled)..."
         if pkg install "$pkg_name" -y 2>/dev/null; then
             ok "$pip_name: installed via pkg"
         else
-            warn "$pip_name: pkg install failed, will try pip later"
+            warn "$pip_name: pkg not available — will attempt pip later"
         fi
     done
 
     mark_done "termux_prebuilt"
 }
 
-# ── Per-Package pip Install (with skip + retry logic) ─────────
+# ── Termux: pydantic-core (Rust-based, needs special treatment) ─
 #
-# Map from requirements.txt name to Python import name.
-# If import succeeds → skip. If pip fails → warn and continue.
+# pydantic v2 requires pydantic-core which is written in Rust.
+# Building Rust on Termux fails 99% of the time:
+#   - Android uses Bionic libc (not glibc) → linker errors
+#   - OOM during Rust compilation on 3-4GB RAM phones
+#   - rustc/cargo version mismatches with maturin
+#
+# Solution: use community pre-compiled wheel for aarch64-android
+# Source: https://github.com/Eutalix/android-pydantic-core
+#
+install_termux_pydantic() {
+    [ "$PLATFORM" != "termux" ] && return
+    done_step "termux_pydantic" && { ok "pydantic-core: done"; return; }
+
+    # Check if pydantic-core is already installed and working
+    if "$PYTHON" -c "import pydantic_core" 2>/dev/null; then
+        ok "pydantic-core: already installed"
+        mark_done "termux_pydantic"
+        return
+    fi
+
+    [ $OFFLINE -eq 1 ] && { warn "pydantic-core: offline, skipping"; return; }
+
+    info "Installing pydantic-core via community ARM64 wheel..."
+    info "(Standard pip build requires Rust — fails on Android)"
+
+    # Try the Eutalix pre-compiled index first
+    if pip install pydantic-core \
+        --extra-index-url https://eutalix.github.io/android-pydantic-core/ \
+        --quiet 2>/dev/null; then
+        ok "pydantic-core: installed via ARM64 index"
+        mark_done "termux_pydantic"
+        return
+    fi
+
+    # Fallback: try the direct installer script
+    warn "ARM64 index failed — trying direct installer..."
+    if curl -sL https://raw.githubusercontent.com/Eutalix/android-pydantic-core/main/install_pydantic_core.sh \
+        | bash 2>/dev/null; then
+        ok "pydantic-core: installed via installer script"
+        mark_done "termux_pydantic"
+        return
+    fi
+
+    # Nothing worked — use pydantic v1 instead (no Rust required)
+    warn "pydantic-core: all methods failed — pinning to pydantic v1 (no Rust required)"
+    warn "Note: groq uses pydantic >=1.9 so v1 is compatible."
+    pip install "pydantic>=1.10,<2" --quiet 2>/dev/null \
+        && ok "pydantic v1: installed as fallback" \
+        || fail "pydantic: could not install any version"
+
+    mark_done "termux_pydantic"
+}
+
+# ── pip Package Install (with skip + per-package error isolation) ─
+#
+# Packages that are known to have Termux compilation issues are
+# handled via TERMUX_PKG_MAP above — so by the time we get here,
+# they are either already installed or we pip-install as last resort.
 #
 declare -A IMPORT_MAP=(
     ["groq"]="groq"
@@ -209,220 +304,222 @@ declare -A IMPORT_MAP=(
     ["cloudscraper"]="cloudscraper"
     ["google-api-python-client"]="googleapiclient"
     ["oauth2client"]="oauth2client"
+    ["Pillow"]="PIL"
+    ["numpy"]="numpy"
+    ["cryptography"]="cryptography"
+    ["PyNaCl"]="nacl"
+    ["psutil"]="psutil"
+    ["hiredis"]="hiredis"
+)
+
+# Packages to SKIP entirely on Termux (too heavy, no pkg equivalent)
+# These will be noted as disabled features only.
+SKIP_ON_TERMUX=(
+    "torch"
+    "torchvision"
+    "tensorflow"
+    "opencv-python"
+    "scipy"
+    "pandas"
 )
 
 install_pip_packages() {
-    done_step "pip_packages" && { ok "pip packages: already installed (skipping)"; return; }
+    done_step "pip_packages" && { ok "pip packages: done"; return; }
+    [ -f "$REQ_FILE" ] || { warn "$REQ_FILE not found"; return; }
 
-    [ -f "$REQ_FILE" ] || { warn "$REQ_FILE not found, skipping pip installs"; return; }
-
-    info "Checking and installing Python packages..."
-
-    local failed_pkgs=()
+    info "Installing Python packages (skipping already-installed)..."
+    local failed=()
 
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and blank lines
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
 
-        # Handle GitHub URLs separately
         if [[ "$line" == http* ]]; then
             _install_url_dep "$line"
             continue
         fi
 
-        # Strip version specifiers to get package name
-        pkg_name=$(echo "$line" | sed 's/[>=<!].*//' | tr -d '[:space:]')
+        pkg_name=$(echo "$line" | sed 's/[>=<!;\[].*//' | tr -d '[:space:]')
         [ -z "$pkg_name" ] && continue
 
-        import_name="${IMPORT_MAP[$pkg_name]:-}"
-
-        # If we know the import name, check if already importable
-        if [ -n "$import_name" ]; then
-            if "$PYTHON" -c "import $import_name" 2>/dev/null; then
-                ok "$pkg_name: already installed (skip)"
+        # Skip on Termux if in the heavy-skip list
+        if [ "$PLATFORM" = "termux" ]; then
+            local skip=0
+            for s in "${SKIP_ON_TERMUX[@]}"; do
+                [ "$s" = "$pkg_name" ] && skip=1 && break
+            done
+            if [ $skip -eq 1 ]; then
+                warn "$pkg_name: skipped on Termux (too heavy, feature disabled)"
                 continue
             fi
         fi
 
-        # Attempt to install
+        import_name="${IMPORT_MAP[$pkg_name]:-}"
+
+        if [ -n "$import_name" ] && "$PYTHON" -c "import $import_name" 2>/dev/null; then
+            ok "$pkg_name: installed (skip)"
+            continue
+        fi
+
         info "Installing $pkg_name..."
-        if _try_pip_install "$pkg_name"; then
+        if _try_pip_install "$line"; then   # pass full line to preserve version pins
             ok "$pkg_name: installed"
         else
-            failed_pkgs+=("$pkg_name")
-            fail "$pkg_name: installation failed (non-fatal, some features may be disabled)"
+            failed+=("$pkg_name")
+            fail "$pkg_name: failed — some features may not work"
         fi
 
     done < "$REQ_FILE"
 
-    if [ ${#failed_pkgs[@]} -gt 0 ]; then
-        warn "The following packages failed to install:"
-        for p in "${failed_pkgs[@]}"; do echo "  - $p"; done
-        warn "Bot may still work. Check logs for missing import errors."
+    if [ ${#failed[@]} -gt 0 ]; then
+        echo ""
+        warn "Failed packages (non-fatal):"
+        for p in "${failed[@]}"; do echo "    - $p"; done
+        warn "The bot will start. Some features using these may error."
     fi
 
     mark_done "pip_packages"
 }
 
-# Install a single pip package — with Termux-specific flags
+# Install package — Termux-aware flags
 _try_pip_install() {
-    local pkg="$1"
+    local spec="$1"
     if [ "$PLATFORM" = "termux" ]; then
-        # --break-system-packages needed on Termux with newer pip
-        pip install --quiet "$pkg" 2>/dev/null || \
-        pip install --quiet --break-system-packages "$pkg" 2>/dev/null || \
-        return 1
+        pip install --quiet "$spec" 2>/dev/null \
+        || pip install --quiet --break-system-packages "$spec" 2>/dev/null \
+        || pip install --quiet --no-build-isolation "$spec" 2>/dev/null \
+        || return 1
     else
-        pip install --quiet "$pkg" 2>/dev/null || return 1
+        pip install --quiet "$spec" 2>/dev/null || return 1
     fi
 }
 
-# Install from a URL (e.g. GitHub zip)
+# Install from URL (e.g. GitHub zip)
 _install_url_dep() {
     local url="$1"
 
-    # Special case: Telethon-Patch — check if already patched
+    # Telethon-Patch — check by module name
     if echo "$url" | grep -q "Telethon-Patch"; then
         if "$PYTHON" -c "import telethonpatch" 2>/dev/null; then
-            ok "Telethon-Patch: already installed (skip)"
+            ok "Telethon-Patch: installed (skip)"
             return
         fi
+        [ $OFFLINE -eq 1 ] && { warn "Telethon-Patch: offline, skipping"; return; }
     fi
 
-    info "Installing from URL: $url"
-    if _try_pip_install "$url"; then
-        ok "URL package installed"
-    else
-        fail "URL package failed: $url"
-    fi
+    info "URL dep: $(echo "$url" | sed 's|.*/\(.*\)/archive.*|\1|')"
+    _try_pip_install "$url" && ok "URL dep: installed" || fail "URL dep: failed — $url"
 }
 
-# ── Optional DB Drivers (based on .env) ──────────────────────
+# ── Optional DB Drivers (based on .env config) ───────────────
 install_db_drivers() {
-    done_step "db_drivers" && { ok "DB drivers: done (skipping)"; return; }
+    done_step "db_drivers" && { ok "DB drivers: done"; return; }
+    [ -f ".env" ] || { ok "No .env — using LocalDB, no extra drivers needed"; mark_done "db_drivers"; return; }
 
-    [ -f ".env" ] || { info "No .env found — skipping optional DB drivers"; return; }
+    source <(grep -v '^#' .env | grep -v '^\s*$' | grep '=' | head -50) 2>/dev/null || true
 
-    # Load env vars silently
-    source <(grep -v '^#' .env | grep -v '^\s*$' | grep '=') 2>/dev/null || true
+    local any=0
 
-    local installed=0
-
-    if [ -n "${REDIS_URI:-}" ] || [ -n "${REDIS_URL:-}" ]; then
-        if ! "$PYTHON" -c "import redis" 2>/dev/null; then
-            info "Redis URI detected — installing redis driver..."
-            _try_pip_install "redis" && _try_pip_install "hiredis" || warn "redis driver install failed"
-        else
-            ok "redis: already installed"
-        fi
-        installed=1
+    if [ -n "${REDIS_URI:-}${REDIS_URL:-}" ]; then
+        "$PYTHON" -c "import redis" 2>/dev/null && ok "redis: installed" || {
+            info "REDIS_URI found — installing redis + hiredis..."
+            _try_pip_install "redis" && ok "redis: done" || warn "redis: failed"
+            _try_pip_install "hiredis" 2>/dev/null || true   # optional speedup
+        }
+        any=1
     fi
 
     if [ -n "${MONGO_URI:-}" ]; then
-        if ! "$PYTHON" -c "import pymongo" 2>/dev/null; then
-            info "MONGO_URI detected — installing pymongo..."
-            _try_pip_install "pymongo[srv]" || warn "pymongo install failed"
-        else
-            ok "pymongo: already installed"
-        fi
-        installed=1
+        "$PYTHON" -c "import pymongo" 2>/dev/null && ok "pymongo: installed" || {
+            info "MONGO_URI found — installing pymongo..."
+            _try_pip_install "pymongo[srv]" && ok "pymongo: done" || warn "pymongo: failed"
+        }
+        any=1
     fi
 
     if [ -n "${DATABASE_URL:-}" ]; then
-        if ! "$PYTHON" -c "import psycopg2" 2>/dev/null; then
-            info "DATABASE_URL detected — installing psycopg2..."
-            _try_pip_install "psycopg2-binary" || warn "psycopg2 install failed"
-        else
-            ok "psycopg2: already installed"
-        fi
-        installed=1
+        "$PYTHON" -c "import psycopg2" 2>/dev/null && ok "psycopg2: installed" || {
+            info "DATABASE_URL found — installing psycopg2..."
+            _try_pip_install "psycopg2-binary" && ok "psycopg2: done" || warn "psycopg2: failed"
+        }
+        any=1
     fi
 
-    [ $installed -eq 0 ] && ok "LocalDB mode — no extra DB drivers needed"
-
+    [ $any -eq 0 ] && ok "LocalDB mode — no extra drivers needed"
     mark_done "db_drivers"
 }
 
 # ── .env Setup ────────────────────────────────────────────────
 setup_env() {
     if [ -f ".env" ]; then
-        ok ".env: already exists (skipping creation)"
+        ok ".env: exists"
         return
     fi
-
-    if [ ! -f ".env.sample" ]; then
-        warn ".env.sample not found — cannot auto-create .env"
-        return
-    fi
+    [ -f ".env.sample" ] || { warn ".env.sample missing"; return; }
 
     cp .env.sample .env
-
-    # Termux: set platform defaults
-    if [ "$PLATFORM" = "termux" ]; then
-        grep -q "LITE_DEPLOY" .env || echo "LITE_DEPLOY=True" >> .env
-        grep -q "HOSTED_ON" .env || echo "HOSTED_ON=termux" >> .env
-    fi
-
-    ok ".env created from sample"
-    echo ""
-    warn "Open .env and fill in at minimum: API_ID, API_HASH, SESSION (or BOT_TOKEN)"
+    [ "$PLATFORM" = "termux" ] && {
+        grep -q "^LITE_DEPLOY" .env || echo "LITE_DEPLOY=True" >> .env
+        grep -q "^HOSTED_ON"   .env || echo "HOSTED_ON=termux"  >> .env
+    }
+    ok ".env: created from sample"
+    warn "Fill in API_ID, API_HASH, SESSION (or BOT_TOKEN) before starting"
     echo "    nano .env"
 }
 
 # ── Session Check ─────────────────────────────────────────────
 check_session() {
     [ -f ".env" ] || return
-
-    source <(grep -v '^#' .env | grep -v '^\s*$' | grep '=') 2>/dev/null || true
+    source <(grep -v '^#' .env | grep -v '^\s*$' | grep '=' | head -50) 2>/dev/null || true
 
     MODE="${RUNTIME_MODE:-dual}"
 
     if [ "$MODE" = "bot" ]; then
-        [ -n "${BOT_TOKEN:-}" ] && ok "BOT_TOKEN: present" || warn "BOT_TOKEN is empty (required for RUNTIME_MODE=bot)"
+        [ -n "${BOT_TOKEN:-}" ] && ok "BOT_TOKEN: present" \
+            || warn "BOT_TOKEN is empty (required for RUNTIME_MODE=bot)"
         return
     fi
 
     if [ -z "${SESSION:-}" ]; then
         echo ""
-        warn "SESSION is not set in .env"
-        echo "  Generate one with: python3 ssgen.py"
+        warn "SESSION is not set"
         if [ -f "ssgen.py" ]; then
-            read -r -p "  Run session generator now? [y/N] " ans
+            read -r -p "  Generate session now? [y/N] " ans 2>/dev/null || ans="n"
             [[ "${ans,,}" = "y" ]] && "$PYTHON" ssgen.py
+        else
+            echo "  Run: python3 ssgen.py"
         fi
     else
         ok "SESSION: present"
     fi
+
+    [ "$MODE" = "dual" ] && [ -z "${BOT_TOKEN:-}" ] && \
+        warn "BOT_TOKEN not set — assistant bot and inline help won't work"
 }
 
 # ── Summary ───────────────────────────────────────────────────
 print_summary() {
     echo ""
-    echo "──────────────────────────────────────"
+    echo "──────────────────────────────────────────────────"
     ok "Setup complete."
     echo ""
-    echo "  Start the bot:"
-    [ "$PLATFORM" != "termux" ] && echo "    source venv/bin/activate"
-    echo "    bash run.sh"
-    echo "    # or: python3 -m pyUltroid"
+    echo "  Start:  bash run.sh"
+    echo "  Or:     python3 -m pyUltroid"
+    [ "$PLATFORM" != "termux" ] && echo "  (activate venv first: source venv/bin/activate)"
     echo ""
-    echo "  Update the bot:"
-    echo "    git pull && bash installer.sh"
-    echo "──────────────────────────────────────"
+    echo "  Update: git pull && bash installer.sh"
+    echo "──────────────────────────────────────────────────"
 }
 
-# ── Main ──────────────────────────────────────────────────────
-echo ""
-echo "Ultroid Optimized — Setup"
-echo "──────────────────────────────────────"
-
+# ── Main Execution ────────────────────────────────────────────
 detect_platform
 check_internet
 check_python
+termux_pkg_update
 install_system_deps
 setup_venv
 install_termux_prebuilt
+install_termux_pydantic
 install_pip_packages
 install_db_drivers
 setup_env
