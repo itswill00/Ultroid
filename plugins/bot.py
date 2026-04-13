@@ -241,14 +241,11 @@ async def restartbt(ult):
     await msg.edit("`[RESTART] Re-launching process...`")
     await _asyncio.sleep(1) # Final sync buffer
 
-    # Ensure 'pyUltroid' is in argv to satisfy 'run_as_module' check
-    new_argv = ["pyUltroid"]
-    for arg in sys.argv[1:]:
-        if arg not in new_argv:
-            new_argv.append(arg)
+    # Absolute process replacement using standard module pattern
+    # We pass sys.argv[1:] directly to avoid shifting arguments and breaking
+    # the integer parsing logic in configs.py.
+    os.execl(sys.executable, sys.executable, "-m", "pyUltroid", *sys.argv[1:])
 
-    # Absolute process replacement
-    os.execl(sys.executable, sys.executable, "-m", "pyUltroid", *new_argv)
 
 
 
