@@ -204,16 +204,16 @@ heroku_api = Var.HEROKU_API
     owner_only=True,
 )
 async def restartbt(ult):
+
     import json as _json
     import time as _time
     import asyncio as _asyncio
-    import sys as _sys
-    import os as _os
 
-    match = ult.pattern_match.group(2).strip() if ult.pattern_match.group(2) else ""
-    msg = await ult.eor("`[RESTART] Initiating Atomic Sequence...`")
+    # Reverting to stable pattern (group 1 contains the matched flags)
+    match = ult.pattern_match.group(1).strip()
+    msg = await ult.eor("`[RESTART] Initiating Restart...`")
 
-    # 1. Persist restart context immediately (State Resilience)
+    # 1. State Resilience
     who = "bot" if ult.client._bot else "user"
     udB.set_key("_RESTART", _json.dumps({
         "who": who,
@@ -226,73 +226,31 @@ async def restartbt(ult):
     if heroku_api:
         return await restart(msg)
 
-    # 2. Update logic (Defensive Git/Pip)
-    if any(x in match for x in ["-u", "--update", "-pull"]):
+    # 2. Update logic (Simple Pull)
+    if any(x in match for x in ["-u", "--update"]):
         try:
-            await msg.edit("`[RESTART] Checking for updates...`")
-            # Using bash helper for simplicity in updates
-            await bash("git fetch --all -q")
-            status = await bash("git rev-list --count HEAD..@{u}")
-            commits = status[0].strip() if status else "0"
-
-            if commits != "0" or "-pull" in match:
-                await msg.edit(f"`[RESTART] Pulling {commits} commit(s)...`")
-                old_req = open("requirements.txt").read() if _os.path.exists("requirements.txt") else ""
-                
-                # Force pull to avoid local conflict issues during auto-restart
-                await bash("git reset --hard @{u} && git pull -f")
-                
-                new_req = open("requirements.txt").read() if _os.path.exists("requirements.txt") else ""
-                if old_req != new_req:
-                    await msg.edit("`[RESTART] Environmental update (Pip)...`")
-                    await bash("pip install -r requirements.txt --break-system-packages -q")
-            else:
-                await msg.edit("`[RESTART] Repository is up-to-date.`")
-        except Exception as e:
-            LOGS.error(f"[RESTART] Update error: {e}")
-            await msg.edit(f"`[RESTART] Update failed ({e}). Proceeding to restart...`")
-
-    # 3. Shutdown Sequence (Atomic Cleanup)
-    await msg.edit("`[RESTART] Disconnecting clients...`")
-    
-    # Cancel all background tasks to prevent hang
-    current_task = _asyncio.current_task()
-    all_tasks = [t for t in _asyncio.all_tasks() if t is not current_task]
-    for task in all_tasks:
-        task.cancel()
-    
-    if all_tasks:
-        LOGS.info(f"[RESTART] Cancelled {len(all_tasks)} pending tasks.")
-
-    async def _safe_shutdown():
-        try:
-            from pyUltroid import ultroid_bot as _ubot, asst as _asst
-            # Attempt graceful disconnect
-            if _ubot.is_connected():
-                await _ubot.disconnect()
-            if _asst.is_connected():
-                await _asst.disconnect()
+            await msg.edit("`[RESTART] Running update...`")
+            await bash("git pull -f && pip install -r requirements.txt --break-system-packages -q")
         except Exception:
             pass
 
-    try:
-        # Hard timeout for disconnect (avoiding the 'stuck' state)
-        await _asyncio.wait_for(_safe_shutdown(), timeout=5)
-    except _asyncio.TimeoutError:
-        LOGS.warning("[RESTART] Disconnect timed out. Forcing process replacement.")
-    except Exception as e:
-        LOGS.error(f"[RESTART] Cleanup error: {e}")
+    # 3. Clean Restart
+    await msg.edit("`[RESTART] Restarting bot...`")
+    await _asyncio.sleep(1) # Small buffer for DB sync
 
-    # 4. Process Replacement
-    LOGS.info("[RESTART] Executing in-place process replacement.")
-    # Ensure 'pyUltroid' is in argv to satisfy 'run_as_module' check in __init__.py
-    new_argv = ["pyUltroid"]
-    for arg in _sys.argv[1:]:
-        if arg not in new_argv:
-            new_argv.append(arg)
-            
-    args = [_sys.executable, "-m", "pyUltroid"] + new_argv
-    _os.execl(_sys.executable, *[_sys.executable] + args[1:])
+    try:
+        from pyUltroid import ultroid_bot as _ubot, asst as _asst
+        if _ubot.is_connected():
+            await _ubot.disconnect()
+        if _asst.is_connected():
+            await _asst.disconnect()
+    except Exception:
+        pass
+
+    # Standard restart pattern known to work 2 days ago
+    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
+    os.execl(sys.executable, *args)
+
 
 
 
