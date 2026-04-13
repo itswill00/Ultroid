@@ -234,22 +234,22 @@ async def restartbt(ult):
         except Exception:
             pass
 
-    # 3. Clean Restart
-    await msg.edit("`[RESTART] Restarting bot...`")
-    await _asyncio.sleep(1) # Small buffer for DB sync
+    # 3. Direct Process Replacement (Most Robust)
+    # We skip explicit disconnect() because os.execl is an atomic OS-level 
+    # replacement. The OS will automatically close handles and release DB locks.
+    # This prevents 'zombie' hangs during graceful shutdown attempts.
+    await msg.edit("`[RESTART] Re-launching process...`")
+    await _asyncio.sleep(1) # Final sync buffer
 
-    try:
-        from pyUltroid import ultroid_bot as _ubot, asst as _asst
-        if _ubot.is_connected():
-            await _ubot.disconnect()
-        if _asst.is_connected():
-            await _asst.disconnect()
-    except Exception:
-        pass
+    # Ensure 'pyUltroid' is in argv to satisfy 'run_as_module' check
+    new_argv = ["pyUltroid"]
+    for arg in sys.argv[1:]:
+        if arg not in new_argv:
+            new_argv.append(arg)
 
-    # Standard restart pattern known to work 2 days ago
-    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
-    os.execl(sys.executable, *args)
+    # Absolute process replacement
+    os.execl(sys.executable, sys.executable, "-m", "pyUltroid", *new_argv)
+
 
 
 
