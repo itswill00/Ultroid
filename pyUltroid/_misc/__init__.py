@@ -33,11 +33,18 @@ class _SudoManager:
         db = self._init_db()
         sudos = db.get_key("SUDOS") or []
         if isinstance(sudos, str):
-            sudos = [int(x) for x in sudos.split()]
-        elif isinstance(sudos, list):
-            sudos = [int(x) for x in sudos]
-        self._sudos = sudos
+            sudos = [x for x in sudos.split()]
+        
+        # Robust integer casting
+        cleaned = []
+        for x in sudos:
+            try:
+                cleaned.append(int(x))
+            except (ValueError, TypeError):
+                continue
+        self._sudos = cleaned
         return self._sudos
+
 
     def get_scoped_sudos(self):
         if self._scoped_sudos is not None:
@@ -69,33 +76,33 @@ class _SudoManager:
         return self._should_allow_sudo
 
     def owner_and_sudos(self):
-        if not self._owner:
-            db = self._init_db()
-            oid = db.get_key("OWNER_ID")
-            self._owner = int(oid) if oid else None
-        return [self._owner, *self.get_sudos()]
+        return [self.owner, *self.get_sudos()] if self.owner else self.get_sudos()
+
 
     @property
     def fullsudos(self):
         if self._fullsudos is not None:
             return self._fullsudos
         db = self._init_db()
-        fsudos = db.get_key("FULLSUDO")
-        if not self._owner:
-            self._owner = db.get_key("OWNER_ID")
-        if not fsudos:
-            self._fullsudos = [self._owner]
-            return self._fullsudos
+        fsudos = db.get_key("FULLSUDO") or []
         if isinstance(fsudos, str):
-            fsudos = [int(_) for _ in fsudos.split()]
-        elif isinstance(fsudos, list):
-            fsudos = [int(_) for _ in fsudos]
-        else:
-            fsudos = []
-        if self._owner and self._owner not in fsudos:
-            fsudos.append(self._owner)
-        self._fullsudos = fsudos
+            fsudos = fsudos.split()
+        
+        # Ensure all IDs are integers
+        cleaned_fs = []
+        for x in fsudos:
+            try:
+                cleaned_fs.append(int(x))
+            except (ValueError, TypeError):
+                continue
+        
+        # Combine with owner
+        if self.owner and self.owner not in cleaned_fs:
+            cleaned_fs.append(self.owner)
+            
+        self._fullsudos = cleaned_fs
         return self._fullsudos
+
 
     def is_sudo(self, id_):
         return id_ in self.get_sudos()
