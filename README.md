@@ -35,13 +35,6 @@ pip3 install -r requirements.txt
 python3 -m pyUltroid
 ```
 
-### Docker
-
-```bash
-docker build -t ultroid .
-docker run --env-file .env ultroid
-```
-
 ---
 
 ## Configuration
@@ -64,54 +57,61 @@ Create a `.env` file in the project root. All supported variables:
 |:---|:---|:---|
 | `RUNTIME_MODE` | `dual` / `user` / `bot` | `dual` |
 
-- **`dual`** — Both userbot and assistant bot are active. Commands handled by userbot (`.` prefix), inline/callback handled by bot.
-- **`user`** — Userbot only. No separate bot is started. All output goes to log channel. `BOT_TOKEN` optional.
-- **`bot`** — Bot only. No `SESSION` needed. All commands handled by bot (`BOT_TOKEN` required).
+- **`dual`** — Both userbot and assistant bot are active.
+- **`user`** — Userbot only.
+- **`bot`** — Assistant bot only.
 
-### Optional
+### AI & Advanced
 
 | Variable | Description |
 |:---|:---|
-| `GROQ_API_KEY` | API key from console.groq.com for AI features |
+| `GROQ_API_KEY` | Supports multiple keys (space-separated) for automatic rotation |
+| `GEMINI_API_KEY` | Secondary AI failover provider (used if Groq is exhausted) |
 | `HNDLR` | Command prefix (default: `.`) |
-| `SUDO_HNDLR` | Prefix for sudo users (default: same as `HNDLR`) |
-| `ADDONS` | Set `true` to load plugins from `addons/` folder |
-| `REDIS_URI` | Redis connection URI (if using Redis as database) |
-| `MONGO_URI` | MongoDB connection URI (if using MongoDB) |
+| `SUDO_SCOPE` | LocalDB key for command-level sudo authorization |
 
 ---
 
 ## Restart and Update
 
 ```
-.restart           — Restart the bot in place
-.restart -u        — Pull latest commits, install new dependencies if any, then restart
+.restart           — Atomic process replacement
+.restart -u        — Pull latest commits and dependencies, then restart
 ```
 
-The restart sequence:
-1. Saves context (timestamp, version) to database
-2. Fetches remote and applies changes if available
-3. Detects merge conflicts — aborts and notifies if found
-4. Disconnects both clients gracefully
-5. Replaces process in-place via `os.execl`
-
-After restart, the bot reports downtime duration and loaded plugin count.
+**Restart Sequence:**
+1. Saves runtime context and downtime marker to LocalDB.
+2. Performs repository synchronization (if `-u` is used).
+3. **Automatic Cleanup**: Deletes the old "Initiating" message to keep logs clean.
+4. **Direct Execution**: Replaces the process immediately via `os.execl` to prevent hangs.
+5. Sends a unified **Startup Card** with downtime metrics and version info.
 
 ---
 
 ## AI Features
 
-Powered by Groq (Llama 3.3). Set `GROQ_API_KEY` in `.env` to enable.
+Powered by Llama 3.3 (Groq) with seamless failover to Google Gemini.
 
 ```
-.ask <question>           — Ask anything
+.ask <query>              — Standard AI query
 .ask --search <query>     — Ask with real-time web search
-.summarize                — Summarize a replied message
 .tldr <count>             — Summarize last N messages in chat
-.search <query>           — Direct web search results
-.debug                    — Analyze bot logs for errors
+.summarize                — Summarize a replied message
+.analyze                  — Analyze AOSP/Kernel logs (replied file)
 .aimodel                  — View or switch active AI model
 ```
+
+---
+
+## AOSP Log Analysis
+
+Professional diagnostic tools for Android developers. Supports `.log`, `.txt`, and `.gz` formats.
+
+```
+.analyze                  — Automatically detects Logcat, Dmesg, and Build logs
+.analyze <instruction>    — Analyze with specific prompts (e.g., "cari penyebab lmk")
+```
+*Outputs are rendered as professional Markdown reports on Telegraph.*
 
 ---
 
@@ -119,20 +119,10 @@ Powered by Groq (Llama 3.3). Set `GROQ_API_KEY` in `.env` to enable.
 
 ```
 .sysmon          — CPU, RAM, disk, and network snapshot
-.sysmon live     — Live update every 5s for 30s
-.sysinfo         — Full system info (OS, Python, arch, uptime)
-.pingcheck       — One-shot Telegram latency check
-.pingwatch       — Monitor latency over time
-```
-
----
-
-## Database Backup
-
-```
-.backup          — Export all database keys to Log Channel as JSON
-.restore         — Restore from a replied backup file (requires confirmation)
-.dbinfo          — Show all database keys and count
+.sysmon live     # Live monitor mode (30s)
+.sysinfo         — Full OS/Python/Architecture info
+.pingcheck       — One-shot latency check
+.pingwatch       — Real-time latency tracking
 ```
 
 ---
@@ -140,19 +130,18 @@ Powered by Groq (Llama 3.3). Set `GROQ_API_KEY` in `.env` to enable.
 ## Session Security
 
 ```
-.sessions        — List all active Telegram sessions on your account
-.revoke <n>      — Revoke session number N
-.revokeall       — Revoke all sessions except the current one
-.sessionguard on — Enable new login monitoring (alerts to LOG_CHANNEL)
+.sessions        — List all active Telegram sessions
+.revoke <n>      — Revoke a specific session
+.revokeall       — Terminate all other sessions
+.sessionguard on — Enable login monitoring alerts
 ```
 
 ---
 
 ## Security Notes
 
-- Never share your `.env` file or `SESSION` string.
-- Sudo users can execute commands on your behalf — be selective.
-- Sensitive DB keys (`SESSION`, `BOT_TOKEN`) are excluded from `.backup` exports.
+- Sudo users now support **Scoped Access**. You can authorize standard sudoers to use only specific commands (e.g., `.addsudo @user analyze`).
+- Database backups (`.backup`) automatically exclude sensitive tokens and sessions.
 
 ---
 
