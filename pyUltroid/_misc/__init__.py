@@ -63,7 +63,20 @@ class _SudoManager:
         return self._scoped_sudos
 
     @property
+    def owner(self):
+        if self._owner is not None:
+            return self._owner
+        db = self._init_db()
+        oid = db.get_key("OWNER_ID")
+        try:
+            self._owner = int(oid) if oid else None
+        except (ValueError, TypeError):
+            self._owner = None
+        return self._owner
+
+    @property
     def should_allow_sudo(self):
+
         if self._should_allow_sudo is not None:
             return self._should_allow_sudo
         db = self._init_db()
