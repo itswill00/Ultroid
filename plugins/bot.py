@@ -285,8 +285,15 @@ async def restartbt(ult):
 
     # 4. Process Replacement
     LOGS.info("[RESTART] Executing in-place process replacement.")
-    args = [_sys.executable, "-m", "pyUltroid"] + _sys.argv[1:]
-    _os.execl(_sys.executable, *args)
+    # Ensure 'pyUltroid' is in argv to satisfy 'run_as_module' check in __init__.py
+    new_argv = ["pyUltroid"]
+    for arg in _sys.argv[1:]:
+        if arg not in new_argv:
+            new_argv.append(arg)
+            
+    args = [_sys.executable, "-m", "pyUltroid"] + new_argv
+    _os.execl(_sys.executable, *[_sys.executable] + args[1:])
+
 
 
 
