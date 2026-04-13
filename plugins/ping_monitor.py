@@ -42,12 +42,12 @@ def _latency_bar(ms: float) -> str:
 @ultroid_cmd(pattern="pingcheck$")
 async def ping_check(e):
     t1 = time.perf_counter()
-    msg = await e.eor("`[PING] Measuring latency...`")
+    msg = await e.eor("`Ping | Measuring latency...`")
     t2 = time.perf_counter()
     ms = round((t2 - t1) * 1000, 2)
     icon = _latency_bar(ms)
     await msg.edit(
-        f"`[PING]` {icon} **{ms} ms**\n"
+        f"`Ping |` {icon} **{ms} ms**\n"
         f"`{datetime.now().strftime('%d %b %Y %H:%M:%S')}`"
     )
 
@@ -58,7 +58,7 @@ async def ping_watch(e):
 
     if _watch_task and not _watch_task.done():
         return await e.eor(
-            "`[PING] A watch session is already active. Use .pingstop to stop it.`"
+            "`Ping | A watch session is already active. Use .pingstop to stop it.`"
         )
 
     match = e.pattern_match.group(1).strip().split()
@@ -69,7 +69,7 @@ async def ping_watch(e):
         interval, limit = 10, 6
 
     msg = await e.eor(
-        f"`[PING] Starting watch: {limit} pings every {interval}s...`"
+        f"`Ping | Starting watch: {limit} pings every {interval}s...`"
     )
     results = []
 
@@ -121,6 +121,6 @@ async def ping_stop(e):
     if _watch_task and not _watch_task.done():
         _watch_task.cancel()
         _watch_task = None
-        await e.eor("`[PING] Watch session stopped.`")
+        await e.eor("`Ping | Watch session stopped.`")
     else:
-        await e.eor("`[PING] No active watch session.`")
+        await e.eor("`Ping | No active watch session.`")

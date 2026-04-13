@@ -223,7 +223,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         context = ""
         sources = []
         if use_search and query:
-            msg = await eor(event, "`[SEARCH] Researching web...`")
+            msg = await eor(event, "`Search | Researching web...`")
             results = await google_search(query)
             if results:
                 context = "Here is some real-time context from the web:\n"
@@ -232,7 +232,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
                     sources.append(r['link'])
                 query = f"CONTEXT:\n{context}\n\nUSER QUESTION: {query}"
             else:
-                await msg.edit("`[SEARCH] No results. Using core knowledge...`")
+                await msg.edit("`Search | No results. Using core knowledge...`")
         else:
             msg = await eor(event, "`[AI] Analyzing...`")
 

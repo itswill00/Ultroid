@@ -28,7 +28,7 @@ help_exportnotes = __doc__
 @ultroid_cmd(pattern="exportnotes$")
 async def export_notes(e):
     """Export all saved notes to a text file."""
-    xx = await e.eor("`[EXPORT] Fetching all notes...`")
+    xx = await e.eor("`Export | Fetching all notes...`")
     try:
         from pyUltroid.dB.notes_db import get_all_notes
         notes = get_all_notes(e.chat_id)
@@ -36,7 +36,7 @@ async def export_notes(e):
         notes = None
 
     if not notes:
-        return await xx.edit("`[EXPORT] No notes found in this chat.`")
+        return await xx.edit("`Export | No notes found in this chat.`")
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"notes_export_{ts}.txt"
@@ -53,13 +53,13 @@ async def export_notes(e):
         await e.client.send_file(
             e.chat_id,
             filename,
-            caption=f"`[EXPORT] {len(notes)} note(s) exported successfully.`",
+            caption=f"`Export | {len(notes)} note(s) exported successfully.`",
             reply_to=e.id,
         )
         await xx.delete()
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[EXPORT] Failed: {err}`")
+        await xx.edit(f"`Export | Failed: {err}`")
     finally:
         if os.path.exists(filename):
             os.remove(filename)
@@ -75,7 +75,7 @@ async def export_messages(e):
     except Exception:
         limit = 50
 
-    xx = await e.eor(f"`[EXPORT] Fetching last {limit} messages...`")
+    xx = await e.eor(f"`Export | Fetching last {limit} messages...`")
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"messages_export_{ts}.txt"
     count = 0
@@ -93,18 +93,18 @@ async def export_messages(e):
                 count += 1
 
         if count == 0:
-            await xx.edit("`[EXPORT] No text messages found to export.`")
+            await xx.edit("`Export | No text messages found to export.`")
         else:
             await e.client.send_file(
                 e.chat_id,
                 filename,
-                caption=f"`[EXPORT] {count} message(s) exported successfully.`",
+                caption=f"`Export | {count} message(s) exported successfully.`",
                 reply_to=e.id,
             )
             await xx.delete()
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[EXPORT] Failed: {err}`")
+        await xx.edit(f"`Export | Failed: {err}`")
     finally:
         if os.path.exists(filename):
             os.remove(filename)
@@ -113,7 +113,7 @@ async def export_messages(e):
 @ultroid_cmd(pattern="exportmd$")
 async def export_md(e):
     """Export all notes from database in Markdown format."""
-    xx = await e.eor("`[EXPORT] Preparing Markdown export...`")
+    xx = await e.eor("`Export | Preparing Markdown export...`")
     try:
         from pyUltroid.dB.notes_db import get_all_notes
         notes = get_all_notes(e.chat_id)
@@ -121,7 +121,7 @@ async def export_md(e):
         notes = None
 
     if not notes:
-        return await xx.edit("`[EXPORT] No notes found.`")
+        return await xx.edit("`Export | No notes found.`")
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"notes_export_{ts}.md"

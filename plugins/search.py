@@ -69,7 +69,7 @@ async def gitsearch(event):
     except BaseException:
         return await event.eor(get_string("srch_2"))
     fullusr = f"""
-**[GITHUB]({ulink})**
+**Github |({ulink})**
 **Name** - {uacc}
 **UserName** - {uname}
 **ID** - {uid}

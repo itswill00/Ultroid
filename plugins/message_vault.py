@@ -58,7 +58,7 @@ async def vault_save(e):
     label = e.pattern_match.group(1).strip()
     if not label:
         return await e.eor(
-            "`[VAULT] Example: .vault wifi-password`\n"
+            "`Vault | Example: .vault wifi-password`\n"
             "`(Reply to the message you want to save)`"
         )
 
@@ -67,7 +67,7 @@ async def vault_save(e):
 
     reply = await e.get_reply_message()
     if not reply:
-        return await e.eor("`[VAULT] Reply to the message you want to save.`")
+        return await e.eor("`Vault | Reply to the message you want to save.`")
 
     content = reply.text or ""
     media_id = None
@@ -81,7 +81,7 @@ async def vault_save(e):
             media_id = None
 
     if not content and not media_id:
-        return await e.eor("`[VAULT] Message has no storable content.`")
+        return await e.eor("`Vault | Message has no storable content.`")
 
     vault = _get_vault()
     vault[label] = {
@@ -92,25 +92,25 @@ async def vault_save(e):
         "msg_id": reply.id,
     }
     _save_vault(vault)
-    await e.eor(f"`[VAULT] Saved under label: '{label}'`")
+    await e.eor(f"`Vault | Saved under label: '{label}'`")
 
 
 @ultroid_cmd(pattern="vaultget( (.*)|$)")
 async def vault_get(e):
     label = e.pattern_match.group(1).strip().lower().replace(" ", "-")
     if not label:
-        return await e.eor("`[VAULT] Example: .vaultget wifi-password`")
+        return await e.eor("`Vault | Example: .vaultget wifi-password`")
 
     vault = _get_vault()
     if label not in vault:
-        return await e.eor(f"`[VAULT] Label '{label}' not found.`")
+        return await e.eor(f"`Vault | Label '{label}' not found.`")
 
     entry = vault[label]
     text = entry.get("text", "")
     media = entry.get("media")
     saved_at = entry.get("saved_at", "?")
 
-    header = f"**[VAULT] {label}**\nSaved: `{saved_at}`\n\n"
+    header = f"**Vault | {label}**\nSaved: `{saved_at}`\n\n"
     try:
         if media:
             await e.client.send_file(
@@ -124,29 +124,29 @@ async def vault_get(e):
             await e.eor(header + text)
     except Exception as err:
         LOGS.exception(err)
-        await e.eor(f"`[VAULT] Failed to retrieve entry: {err}`")
+        await e.eor(f"`Vault | Failed to retrieve entry: {err}`")
 
 
 @ultroid_cmd(pattern="vaultdel( (.*)|$)")
 async def vault_del(e):
     label = e.pattern_match.group(1).strip().lower().replace(" ", "-")
     if not label:
-        return await e.eor("`[VAULT] Example: .vaultdel wifi-password`")
+        return await e.eor("`Vault | Example: .vaultdel wifi-password`")
 
     vault = _get_vault()
     if label not in vault:
-        return await e.eor(f"`[VAULT] Label '{label}' not found.`")
+        return await e.eor(f"`Vault | Label '{label}' not found.`")
 
     del vault[label]
     _save_vault(vault)
-    await e.eor(f"`[VAULT] Label '{label}' deleted from vault.`")
+    await e.eor(f"`Vault | Label '{label}' deleted from vault.`")
 
 
 @ultroid_cmd(pattern="vaultlist$")
 async def vault_list(e):
     vault = _get_vault()
     if not vault:
-        return await e.eor("`[VAULT] Vault is empty.`")
+        return await e.eor("`Vault | Vault is empty.`")
 
     lines = [f"**Vault — {len(vault)} entry/entries:**\n"]
     for i, (label, entry) in enumerate(sorted(vault.items()), 1):
@@ -162,13 +162,13 @@ async def vault_clear(e):
     confirm = e.pattern_match.group(1).strip()
     vault = _get_vault()
     if not vault:
-        return await e.eor("`[VAULT] Vault is already empty.`")
+        return await e.eor("`Vault | Vault is already empty.`")
 
     if confirm.lower() != "confirm":
         return await e.eor(
-            f"`[VAULT] Vault has {len(vault)} entry/entries.`\n"
+            f"`Vault | Vault has {len(vault)} entry/entries.`\n"
             "`Type .vaultclear confirm to delete all.`"
         )
 
     udB.del_key(_VAULT_KEY)
-    await e.eor("`[VAULT] All vault entries deleted.`")
+    await e.eor("`Vault | All vault entries deleted.`")

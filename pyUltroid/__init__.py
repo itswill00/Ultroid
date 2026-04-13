@@ -66,7 +66,7 @@ if run_as_module:
     USER_MODE = (RUNTIME_MODE == "user")
     BOT_MODE  = (RUNTIME_MODE == "bot")
     DUAL_MODE = (RUNTIME_MODE == "dual")
-    LOGS.info(f"[MODE] Runtime: {RUNTIME_MODE.upper()}")
+    LOGS.info(f"Mode | Runtime: {RUNTIME_MODE.upper()}")
 
     # ── Client Initialization ───────────────────────────────────────────
     if RUNTIME_MODE in ("user", "dual"):
@@ -86,7 +86,7 @@ if run_as_module:
         # No separate assistant bot — userbot handles everything
         if not (Var.BOT_TOKEN or udB.get_key("BOT_TOKEN")):
             LOGS.warning(
-                "[MODE] RUNTIME_MODE=user: BOT_TOKEN not set — "
+                "Mode | RUNTIME_MODE=user: BOT_TOKEN not set — "
                 "inline help menu will be unavailable."
             )
         asst = ultroid_bot  # alias — same client
@@ -108,7 +108,7 @@ if run_as_module:
         _token = udB.get_key("BOT_TOKEN") or Var.BOT_TOKEN
         if not _token:
             LOGS.warning(
-                "[MODE] RUNTIME_MODE=dual: BOT_TOKEN not set — "
+                "Mode | RUNTIME_MODE=dual: BOT_TOKEN not set — "
                 "assistant bot features unavailable."
             )
         asst = UltroidClient("asst", bot_token=_token, udB=udB)

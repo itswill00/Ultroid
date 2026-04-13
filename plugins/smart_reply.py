@@ -123,13 +123,13 @@ async def set_ai_model(e):
 async def web_search_cmd(e):
     query = e.pattern_match.group(1).strip()
     if not query:
-        return await e.eor("`[SEARCH] Provide a query. Example: .search Space X Launch`")
+        return await e.eor("`Search | Provide a query. Example: .search Space X Launch`")
 
-    xx = await e.eor("`[SEARCH] Researching...`")
+    xx = await e.eor("`Search | Researching...`")
     results = await google_search(query)
     
     if not results:
-        return await xx.edit("`[SEARCH] No results found for your query.`")
+        return await xx.edit("`Search | No results found for your query.`")
     
     output = f"🖥 **Web Search Results**\n`Query: {query}`\n\n"
     for i, r in enumerate(results[:5], 1):
@@ -144,14 +144,14 @@ async def ai_debug(e):
     xx = await e.eor("`[AI] Analyzing system logs...`")
     log_file = "ultroid.log"
     if not os.path.exists(log_file):
-        return await xx.edit("`[DEBUG] log file (ultroid.log) not found.`")
+        return await xx.edit("`Debug | log file (ultroid.log) not found.`")
 
     try:
         with open(log_file, "r") as f:
             lines = f.readlines()
             logs = "".join(lines[-50:])
     except Exception as err:
-        return await xx.edit(f"`[DEBUG] Error reading logs: {err}`")
+        return await xx.edit(f"`Debug | Error reading logs: {err}`")
 
     prompt = (
         "The following are the last 50 lines of a Telegram userbot's logs. "

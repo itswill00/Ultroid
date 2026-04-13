@@ -329,7 +329,7 @@ async def _(e):
                 if chats % 20 == 0:
                     await asyncio.sleep(5.0)
             except FloodWaitError as fw:
-                LOGS.info(f"[FLOOD_WAIT_ERROR] : on Ungban\nSleeping for {fw.seconds+10}")
+                LOGS.info(f"Flood Wait Error | : on Ungban\nSleeping for {fw.seconds+10}")
                 await asyncio.sleep(fw.seconds + 10)
                 try:
                     await e.client.edit_permissions(ggban.id, userid, view_messages=True)
@@ -408,7 +408,7 @@ async def _(e):
                 if chats % 20 == 0:
                     await asyncio.sleep(5.0)
             except FloodWaitError as fw:
-                LOGS.info(f"[FLOOD_WAIT_ERROR] : on GBAN Command\nSleeping for {fw.seconds+10}")
+                LOGS.info(f"Flood Wait Error | : on GBAN Command\nSleeping for {fw.seconds+10}")
                 await asyncio.sleep(fw.seconds + 10)
                 try:
                     await e.client.edit_permissions(ggban.id, userid, view_messages=False)

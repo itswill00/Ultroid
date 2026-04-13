@@ -541,9 +541,10 @@ async def ready():
     asst_handle = f"@{asst_me.username}" if asst_me.username else "—"
 
     # ── Build monospace block ─────────────────────────────────
-    header = "[BOOT]" if not rs_info else "[RESTART COMPLETED]"
+    header = "Boot |" if not rs_info else "Restart complete"
     block = (
         f"{header} {boot_ts}\n\n"
+
         f"user   {username}\n"
         f"bot    {asst_handle}\n\n"
         f"sys    {hosted} | {arch}\n"

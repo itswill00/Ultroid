@@ -97,7 +97,7 @@ async def all_messages_catcher(e):
     except (PeerIdInvalidError, ValueError) as er:
         LOGS.exception(er)
         try:
-            CACHE_SPAM[NEEDTOLOG]
+            CACHE_SPAMNeedtolog |
         except KeyError:
             await asst.send_message(
                 udB.get_key("LOG_CHANNEL"), get_string("userlogs_1")
@@ -110,7 +110,7 @@ async def all_messages_catcher(e):
         except UserNotParticipantError:
             MSG = get_string("userlogs_2")
         try:
-            CACHE_SPAM[NEEDTOLOG]
+            CACHE_SPAMNeedtolog |
         except KeyError:
             await asst.send_message(LOG_CHANNEL, MSG)
             CACHE_SPAM.update({NEEDTOLOG: True})
@@ -266,7 +266,7 @@ async def leave_ch_at(event):
         pass
     except ChannelPrivateError:
         return await event.edit(
-            "`[CANT_ACCESS_CHAT]` `Maybe already left or got banned.`"
+            "`Cant Access Chat |` `Maybe already left or got banned.`"
         )
     except Exception as er:
         LOGS.exception(er)

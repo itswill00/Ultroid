@@ -87,9 +87,9 @@ async def log_watch(e):
 
     if action == "start":
         if _watch_task and not _watch_task.done():
-            return await e.eor("`[LOGWATCH] Already running. Use .logwatch stop to stop it.`")
+            return await e.eor("`Logwatch | Already running. Use .logwatch stop to stop it.`")
         if not log_ch:
-            return await e.eor("`[LOGWATCH] LOG_CHANNEL is not set.`")
+            return await e.eor("`Logwatch | LOG_CHANNEL is not set.`")
 
         _last_size = os.path.getsize(_LOG_FILE) if os.path.exists(_LOG_FILE) else 0
         _seen_errors.clear()
@@ -120,22 +120,22 @@ async def log_watch(e):
                                 f"```\n{truncated}\n```",
                             )
                         except Exception as send_err:
-                            LOGS.warning(f"[LOGWATCH] Failed to send error: {send_err}")
+                            LOGS.warning(f"Logwatch | Failed to send error: {send_err}")
                 except Exception:
                     pass
 
         _watch_task = asyncio.get_event_loop().create_task(_watcher())
         await e.eor(
-            f"`[LOGWATCH] Active — scanning for errors every {_WATCH_INTERVAL}s.`"
+            f"`Logwatch | Active — scanning for errors every {_WATCH_INTERVAL}s.`"
         )
 
     elif action == "stop":
         if _watch_task and not _watch_task.done():
             _watch_task.cancel()
             _watch_task = None
-            await e.eor("`[LOGWATCH] Monitoring stopped.`")
+            await e.eor("`Logwatch | Monitoring stopped.`")
         else:
-            await e.eor("`[LOGWATCH] No active monitoring task.`")
+            await e.eor("`Logwatch | No active monitoring task.`")
 
     elif action == "status":
         is_active = bool(_watch_task and not _watch_task.done())
@@ -148,21 +148,21 @@ async def log_watch(e):
             f"Interval: `{_WATCH_INTERVAL}s`"
         )
     else:
-        await e.eor("`[LOGWATCH] Usage: .logwatch start | stop | status`")
+        await e.eor("`Logwatch | Usage: .logwatch start | stop | status`")
 
 
 @ultroid_cmd(pattern="sendlog$")
 async def send_log(e):
     log_ch = udB.get_key("LOG_CHANNEL")
     if not log_ch:
-        return await e.eor("`[LOG] LOG_CHANNEL is not set.`")
+        return await e.eor("`Log | LOG_CHANNEL is not set.`")
     if not os.path.exists(_LOG_FILE):
-        return await e.eor(f"`[LOG] File {_LOG_FILE} not found.`")
+        return await e.eor(f"`Log | File {_LOG_FILE} not found.`")
 
-    xx = await e.eor("`[LOG] Sending log...`")
+    xx = await e.eor("`Log | Sending log...`")
     content = _read_tail(_LOG_FILE, _TAIL_LINES)
     if not content:
-        return await xx.edit("`[LOG] Log file is empty.`")
+        return await xx.edit("`Log | Log file is empty.`")
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     tmp = f"ultroid_log_{ts}.txt"
@@ -172,12 +172,12 @@ async def send_log(e):
         await ultroid_bot.send_file(
             log_ch,
             tmp,
-            caption=f"`[LOG] Last {_TAIL_LINES} lines — {datetime.now().strftime('%d %b %Y %H:%M:%S')}`",
+            caption=f"`Log | Last {_TAIL_LINES} lines — {datetime.now().strftime('%d %b %Y %H:%M:%S')}`",
         )
-        await xx.edit("`[LOG] Log sent to LOG_CHANNEL.`")
+        await xx.edit("`Log | Log sent to LOG_CHANNEL.`")
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[LOG] Failed: {err}`")
+        await xx.edit(f"`Log | Failed: {err}`")
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
@@ -186,9 +186,9 @@ async def send_log(e):
 @ultroid_cmd(pattern="clearlog$")
 async def clear_log(e):
     if not os.path.exists(_LOG_FILE):
-        return await e.eor(f"`[LOG] File {_LOG_FILE} not found.`")
+        return await e.eor(f"`Log | File {_LOG_FILE} not found.`")
     try:
         open(_LOG_FILE, "w").close()
-        await e.eor("`[LOG] ultroid.log cleared successfully.`")
+        await e.eor("`Log | ultroid.log cleared successfully.`")
     except Exception as err:
-        await e.eor(f"`[LOG] Failed: {err}`")
+        await e.eor(f"`Log | Failed: {err}`")

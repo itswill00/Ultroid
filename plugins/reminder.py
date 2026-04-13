@@ -56,14 +56,14 @@ async def set_reminder(e):
     match = e.pattern_match.group(1).strip()
     if not match:
         return await e.eor(
-            "`[REMIND] Usage: .remind <time> <message>`\n"
+            "`Remind | Usage: .remind <time> <message>`\n"
             "`Example: .remind 30m Buy dinner`"
         )
 
     parts = match.split(" ", 1)
     if len(parts) < 2:
         return await e.eor(
-            "`[REMIND] Please provide both a time and a message.`\n"
+            "`Remind | Please provide both a time and a message.`\n"
             "`Example: .remind 1h Pick up laundry`"
         )
 
@@ -72,12 +72,12 @@ async def set_reminder(e):
 
     if secs <= 0:
         return await e.eor(
-            "`[REMIND] Invalid time format.`\n"
+            "`Remind | Invalid time format.`\n"
             "`Use: 30s, 10m, 2h, 1d`"
         )
 
     if secs > 7 * 24 * 3600:
-        return await e.eor("`[REMIND] Maximum reminder duration is 7 days.`")
+        return await e.eor("`Remind | Maximum reminder duration is 7 days.`")
 
     _counter += 1
     rid = _counter
@@ -95,7 +95,7 @@ async def set_reminder(e):
                 reply_to=msg_id,
             )
         except Exception as err:
-            LOGS.warning(f"[REMIND] Failed to send reminder #{rid}: {err}")
+            LOGS.warning(f"Remind | Failed to send reminder #{rid}: {err}")
         _reminders.pop(rid, None)
 
     task = asyncio.get_event_loop().create_task(_fire())
@@ -103,7 +103,7 @@ async def set_reminder(e):
 
     trigger_fmt = datetime.fromtimestamp(trigger_ts).strftime("%d %b %Y %H:%M:%S")
     await e.eor(
-        f"`[REMIND] Reminder #{rid} set.`\n"
+        f"`Remind | Reminder #{rid} set.`\n"
         f"**Message:** {message}\n"
         f"**Trigger:** `{trigger_fmt}`"
     )
@@ -112,7 +112,7 @@ async def set_reminder(e):
 @ultroid_cmd(pattern="reminders$")
 async def list_reminders(e):
     if not _reminders:
-        return await e.eor("`[REMIND] No active reminders.`")
+        return await e.eor("`Remind | No active reminders.`")
 
     now = int(time.time())
     out = "**Active Reminders:**\n\n"
@@ -133,24 +133,24 @@ async def list_reminders(e):
 async def cancel_reminder(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
-        return await e.eor("`[REMIND] Example: .cancelremind 1`")
+        return await e.eor("`Remind | Example: .cancelremind 1`")
 
     rid = int(match)
     if rid not in _reminders:
-        return await e.eor(f"`[REMIND] Reminder #{rid} not found.`")
+        return await e.eor(f"`Remind | Reminder #{rid} not found.`")
 
     task, msg, _ = _reminders.pop(rid)
     task.cancel()
-    await e.eor(f"`[REMIND] Reminder #{rid} ('{msg[:40]}') cancelled.`")
+    await e.eor(f"`Remind | Reminder #{rid} ('{msg[:40]}') cancelled.`")
 
 
 @ultroid_cmd(pattern="clearremind$")
 async def clear_reminders(e):
     if not _reminders:
-        return await e.eor("`[REMIND] No active reminders.`")
+        return await e.eor("`Remind | No active reminders.`")
 
     count = len(_reminders)
     for rid, (task, _, _) in list(_reminders.items()):
         task.cancel()
     _reminders.clear()
-    await e.eor(f"`[REMIND] {count} reminder(s) cleared.`")
+    await e.eor(f"`Remind | {count} reminder(s) cleared.`")

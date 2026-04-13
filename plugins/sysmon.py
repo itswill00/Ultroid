@@ -187,7 +187,7 @@ async def sys_monitor(e):
     match = e.pattern_match.group(1).strip()
 
     if match == "live":
-        msg = await e.eor("`[SYSMON] Starting live mode (30 seconds)...`")
+        msg = await e.eor("`Sysmon | Starting live mode (30 seconds)...`")
         for _ in range(6):  # 6 × 5s = 30s
             try:
                 await msg.edit(_build_snapshot())
@@ -195,7 +195,7 @@ async def sys_monitor(e):
             except Exception:
                 break
         try:
-            await msg.edit(_build_snapshot() + "\n\n`[SYSMON] Live session ended.`")
+            await msg.edit(_build_snapshot() + "\n\n`Sysmon | Live session ended.`")
         except Exception:
             pass
     else:

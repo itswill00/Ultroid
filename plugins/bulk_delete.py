@@ -91,9 +91,9 @@ async def purge_from(e):
     """Delete all your messages from replied message to current."""
     reply = await e.get_reply_message()
     if not reply:
-        return await e.eor("`[PURGE] Reply to the starting message you want to purge from.`")
+        return await e.eor("`Purge | Reply to the starting message you want to purge from.`")
 
-    xx = await e.eor("`[PURGE] Deleting messages from that point...`")
+    xx = await e.eor("`Purge | Deleting messages from that point...`")
     from_id = reply.id
     to_id = e.id
 
@@ -105,10 +105,10 @@ async def purge_from(e):
             to_delete.append(msg.id)
 
     if not to_delete:
-        return await xx.edit("`[PURGE] No outgoing messages found in that range.`")
+        return await xx.edit("`Purge | No outgoing messages found in that range.`")
 
     try:
         await e.client.delete_messages(e.chat_id, to_delete)
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[PURGE] Failed: {err}`")
+        await xx.edit(f"`Purge | Failed: {err}`")

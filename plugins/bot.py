@@ -211,7 +211,7 @@ async def restartbt(ult):
 
     # Reverting to stable pattern (group 1 contains the matched flags)
     match = ult.pattern_match.group(1).strip()
-    msg = await ult.eor("`[RESTART] Initiating Restart...`")
+    msg = await ult.eor("`Restart | Initiating...`")
 
     # 1. State Resilience
     who = "bot" if ult.client._bot else "user"
@@ -229,7 +229,7 @@ async def restartbt(ult):
     # 2. Update logic (Simple Pull)
     if any(x in match for x in ["-u", "--update"]):
         try:
-            await msg.edit("`[RESTART] Running update...`")
+            await msg.edit("`Restart | Running update...`")
             await bash("git pull -f && pip install -r requirements.txt --break-system-packages -q")
         except Exception:
             pass
@@ -238,7 +238,7 @@ async def restartbt(ult):
     # We skip explicit disconnect() because os.execl is an atomic OS-level 
     # replacement. The OS will automatically close handles and release DB locks.
     # This prevents 'zombie' hangs during graceful shutdown attempts.
-    await msg.edit("`[RESTART] Re-launching process...`")
+    await msg.edit("`Restart | Re-launching process...`")
     await _asyncio.sleep(1) # Final sync buffer
 
     # Absolute process replacement using standard module pattern

@@ -48,7 +48,7 @@ CRITICAL_PATTERNS = [
 ]
 
 # Patterns for log type detection
-TYPE_LOGCAT = re.compile(r"^[0-9-]{5}\s[0-9:.]+\s+[0-9]+\s+[0-9]+\s[VDIWEF]/")
+TYPE_LOGCAT = re.compile(r"^[0-9-]{5}\s[0-9:.]+\s+[0-9]+\s+[0-9]+\sVdiwef |/")
 TYPE_DMESG  = re.compile(r"^\[\s*[0-9.]+\].*")
 
 # ── Smapling Logic ──────────────────────────────────────────────────────────
@@ -192,12 +192,12 @@ async def _log_analyst(ult):
             try:
                 content = gzip.decompress(media.read()).decode("utf-8", errors="replace")
             except Exception:
-                return await msg.edit("`[FAIL] Could not decompress Gzip file.`")
+                return await msg.edit("`Fail | Could not decompress Gzip file.`")
         else:
             content = media.read().decode("utf-8", errors="replace")
 
         if not content.strip():
-            return await msg.edit("`[FAIL] Log file is empty.`")
+            return await msg.edit("`Fail | Log file is empty.`")
 
         # 3. Detect Type & Sample
         await msg.edit("`[..] Sampling & Detecting Patterns...`")
@@ -237,7 +237,7 @@ async def _log_analyst(ult):
             summary += "\n..."
 
         msg_text = (
-            f"`[LOG ANALYSIS]`\n"
+            f"Log Analysis |\n"
             f"`type     {log_type}`\n"
             f"`file     {file_name}`\n"
             f"──────────────────────────────\n"
@@ -249,7 +249,7 @@ async def _log_analyst(ult):
         if url:
              msg_text += f"**Read Full Report**: [Telegraph]({url})"
         else:
-             msg_text += "`[ERROR] Telegraph upload failed.`"
+             msg_text += "`Error | Telegraph upload failed.`"
         
         msg_text += f"\n`time: {duration}s | tokens: {usage}`"
         await msg.edit(msg_text, link_preview=True)
@@ -257,7 +257,7 @@ async def _log_analyst(ult):
     except Exception as e:
 
         LOGS.exception(e)
-        await msg.edit(f"`[ERROR] {str(e)}`")
+        await msg.edit(f"`Error | {str(e)}`")
 from pyUltroid.dB._core import HELP
 
 HELP["log_analyst"] = HELP["analyze"] = """

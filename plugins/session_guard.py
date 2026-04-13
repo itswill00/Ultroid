@@ -48,7 +48,7 @@ def _fmt_session(auth) -> str:
     app = getattr(auth, "app_name", "?")
     date_active = getattr(auth, "date_active", None)
     date_str = date_active.strftime("%d %b %Y %H:%M") if date_active else "?"
-    current = "✅ **[CURRENT]**" if getattr(auth, "current", False) else ""
+    current = "✅ **Current |**" if getattr(auth, "current", False) else ""
     return (
         f"{current}\n"
         f"  Device:  `{device} ({platform})`\n"
@@ -61,16 +61,16 @@ def _fmt_session(auth) -> str:
 
 @ultroid_cmd(pattern="sessions$", owner_only=True)
 async def list_sessions(e):
-    xx = await e.eor("`[SESSION] Fetching active sessions...`")
+    xx = await e.eor("`Session | Fetching active sessions...`")
     try:
         result = await e.client(GetAuthorizationsRequest())
         auths = result.authorizations
     except Exception as err:
         LOGS.exception(err)
-        return await xx.edit(f"`[SESSION] Failed: {err}`")
+        return await xx.edit(f"`Session | Failed: {err}`")
 
     if not auths:
-        return await xx.edit("`[SESSION] No active sessions found.`")
+        return await xx.edit("`Session | No active sessions found.`")
 
     lines = [f"**Active Sessions ({len(auths)}):**\n"]
     for i, auth in enumerate(auths, 1):
@@ -86,43 +86,43 @@ async def list_sessions(e):
 async def revoke_session(e):
     match = e.pattern_match.group(1).strip()
     if not match or not match.isdigit():
-        return await e.eor("`[SESSION] Example: .revoke 2`\nUse .sessions to see the list.")
+        return await e.eor("`Session | Example: .revoke 2`\nUse .sessions to see the list.")
 
     idx = int(match) - 1
-    xx = await e.eor("`[SESSION] Fetching session list...`")
+    xx = await e.eor("`Session | Fetching session list...`")
     try:
         result = await e.client(GetAuthorizationsRequest())
         auths = result.authorizations
     except Exception as err:
-        return await xx.edit(f"`[SESSION] Failed to fetch sessions: {err}`")
+        return await xx.edit(f"`Session | Failed to fetch sessions: {err}`")
 
     if idx < 0 or idx >= len(auths):
-        return await xx.edit(f"`[SESSION] Invalid session number. Choose 1-{len(auths)}.`")
+        return await xx.edit(f"`Session | Invalid session number. Choose 1-{len(auths)}.`")
 
     auth = auths[idx]
     if getattr(auth, "current", False):
-        return await xx.edit("`[SESSION] Cannot revoke the currently active session.`")
+        return await xx.edit("`Session | Cannot revoke the currently active session.`")
 
     try:
         await e.client(ResetAuthorizationRequest(hash=auth.hash))
         await xx.edit(
-            f"`[SESSION] Session #{match} revoked successfully.`\n"
+            f"`Session | Session #{match} revoked successfully.`\n"
             f"Device: `{auth.device_model}`"
         )
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[SESSION] Failed to revoke session: {err}`")
+        await xx.edit(f"`Session | Failed to revoke session: {err}`")
 
 
 @ultroid_cmd(pattern="revokeall$", owner_only=True)
 async def revoke_all_sessions(e):
-    xx = await e.eor("`[SESSION] Revoking all other sessions...`")
+    xx = await e.eor("`Session | Revoking all other sessions...`")
     try:
         await e.client(ResetAuthorizationsRequest())
-        await xx.edit("`[SESSION] All sessions except the current one have been revoked.`")
+        await xx.edit("`Session | All sessions except the current one have been revoked.`")
     except Exception as err:
         LOGS.exception(err)
-        await xx.edit(f"`[SESSION] Failed: {err}`")
+        await xx.edit(f"`Session | Failed: {err}`")
 
 
 @ultroid_cmd(pattern="sessionguard( (.*)|$)", owner_only=True)
@@ -133,10 +133,10 @@ async def session_guard(e):
 
     if action == "on":
         if not log_ch:
-            return await e.eor("`[GUARD] LOG_CHANNEL is not set.`")
+            return await e.eor("`Guard | LOG_CHANNEL is not set.`")
 
         if _guard_task and not _guard_task.done():
-            return await e.eor("`[GUARD] Session Guard is already active.`")
+            return await e.eor("`Guard | Session Guard is already active.`")
 
         udB.set_key(_GUARD_KEY, "on")
 
@@ -175,7 +175,7 @@ async def session_guard(e):
 
         _guard_task = asyncio.get_event_loop().create_task(_guard_loop())
         await e.eor(
-            f"`[GUARD] Session Guard enabled.`\n"
+            f"`Guard | Session Guard enabled.`\n"
             f"Interval: `{_CHECK_INTERVAL}s` · Alerts sent to LOG_CHANNEL."
         )
 
@@ -184,7 +184,7 @@ async def session_guard(e):
         if _guard_task and not _guard_task.done():
             _guard_task.cancel()
             _guard_task = None
-        await e.eor("`[GUARD] Session Guard disabled.`")
+        await e.eor("`Guard | Session Guard disabled.`")
 
     else:
         status = udB.get_key(_GUARD_KEY) or "off"

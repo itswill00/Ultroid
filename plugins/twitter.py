@@ -60,15 +60,15 @@ async def tweet_cmd(event):
     """Post a tweet"""
     text = event.pattern_match.group(1).strip()
     if not text:
-        return await event.eor("`[ERROR] Specify text to tweet.`")
+        return await event.eor("`Error | Specify text to tweet.`")
 
-    msg = await event.eor("`[TWITTER] Tweeting...`")
+    msg = await event.eor("`Twitter | Tweeting...`")
     try:
         client = await get_client()
         tweet = await client.create_tweet(text=text)
-        await msg.edit(f"`[TWITTER] Successfully posted.`\n\n🔗 https://x.com/{tweet.user.screen_name}/status/{tweet.id}")
+        await msg.edit(f"`Twitter | Successfully posted.`\n\n🔗 https://x.com/{tweet.user.screen_name}/status/{tweet.id}")
     except Exception as e:
-        await msg.edit(f"`[ERROR]`\n`{str(e)}`")
+        await msg.edit(f"`Error |`\n`{str(e)}`")
 
 
 @ultroid_cmd(pattern="twdetail( (.*)|$)")
@@ -76,9 +76,9 @@ async def twitter_details(event):
     """Get tweet details"""
     match = event.pattern_match.group(1).strip()
     if not match:
-        return await event.eor("`[ERROR] Specify tweet ID/link.`")
+        return await event.eor("`Error | Specify tweet ID/link.`")
 
-    msg = await event.eor("`[TWITTER] Fetching details...`")
+    msg = await event.eor("`Twitter | Fetching details...`")
     try:
         client = await get_client()
         from urllib.parse import urlparse
@@ -89,7 +89,7 @@ async def twitter_details(event):
             tweet_id = match
 
         tweet = await client.get_tweet_by_id(tweet_id)
-        text = "**[TWITTER] Tweet Details**\n\n"
+        text = "**Twitter | Tweet Details**\n\n"
         text += f"**Content:** `{tweet.text}`\n\n"
         if hasattr(tweet, "metrics"):
             text += f"**Likes:** `{tweet.metrics.likes}`\n"
@@ -99,7 +99,7 @@ async def twitter_details(event):
         
         await msg.edit(text)
     except Exception as e:
-        await msg.edit(f"`[ERROR]`\n`{str(e)}`")
+        await msg.edit(f"`Error |`\n`{str(e)}`")
 
 
 @ultroid_cmd(pattern="twuser( (.*)|$)")
@@ -107,13 +107,13 @@ async def twitter_user(event):
     """Get user details"""
     match = event.pattern_match.group(1).strip()
     if not match:
-        return await event.eor("`[ERROR] Specify username.`")
+        return await event.eor("`Error | Specify username.`")
 
-    msg = await event.eor("`[TWITTER] Fetching user details...`")
+    msg = await event.eor("`Twitter | Fetching user details...`")
     try:
         client = await get_client()
         user = await client.get_user_by_screen_name(match)
-        text = "**[TWITTER] User Details**\n\n"
+        text = "**Twitter | User Details**\n\n"
         text += f"**Name:** `{user.name}`\n"
         text += f"**Username:** `@{user.screen_name}`\n"
         text += f"**Bio:** `{user.description}`\n\n"
@@ -136,7 +136,7 @@ async def twitter_user(event):
             await msg.edit(text)
             
     except Exception as e:
-        await msg.edit(f"`[ERROR]`\n`{str(e)}`")
+        await msg.edit(f"`Error |`\n`{str(e)}`")
 
 
 @ultroid_cmd(pattern="twl( (.*)|$)")
@@ -144,9 +144,9 @@ async def twitter_media(event):
     """Download tweet media"""
     match = event.pattern_match.group(1).strip()
     if not match:
-        return await event.eor("`[ERROR] Specify tweet link.`")
+        return await event.eor("`Error | Specify tweet link.`")
 
-    msg = await event.eor("`[TWITTER] Downloading media...`")
+    msg = await event.eor("`Twitter | Downloading media...`")
     try:
         client = await get_client()
         if "twitter.com" in match or "x.com" in match:
@@ -157,10 +157,10 @@ async def twitter_media(event):
         tweet = await client.get_tweet_by_id(tweet_id)
         
         if not hasattr(tweet, "media"):
-            return await msg.edit("`[TWITTER] No media found in tweet.`")
+            return await msg.edit("`Twitter | No media found in tweet.`")
 
         # Prepare caption with tweet text
-        caption = f"**[TWITTER] Tweet by @{tweet.user.screen_name}**\n\n"
+        caption = f"**Twitter | Tweet by @{tweet.user.screen_name}**\n\n"
         caption += f"{tweet.text}\n\n"
         if hasattr(tweet, "metrics"):
             caption += f"L:`{tweet.metrics.likes}` RT:`{tweet.metrics.retweets}` R:`{tweet.metrics.replies}`"
@@ -197,9 +197,9 @@ async def twitter_media(event):
                         media_count += 1
 
         if media_count > 0:
-            await msg.edit(f"`[TWITTER] Successfully downloaded {media_count} media items.`")
+            await msg.edit(f"`Twitter | Successfully downloaded {media_count} media items.`")
             await msg.delete() # Optional: delete original prompt
         else:
-            await msg.edit("`[ERROR] No media could be downloaded.`")
+            await msg.edit("`Error | No media could be downloaded.`")
     except Exception as e:
-        await msg.edit(f"`[ERROR]`\n`{str(e)}`")
+        await msg.edit(f"`Error |`\n`{str(e)}`")
