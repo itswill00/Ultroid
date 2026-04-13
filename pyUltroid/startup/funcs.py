@@ -520,7 +520,7 @@ async def ready():
     rs_info = None
     if restart_data:
         try:
-            rs_info = _json.loads(restart_data)
+            rs_info = restart_data if isinstance(restart_data, dict) else _json.loads(restart_data)
         except Exception:
             pass
 
@@ -634,7 +634,7 @@ async def WasItRestart(udb):
     import json as _json
 
     try:
-        data = _json.loads(key)
+        data = key if isinstance(key, dict) else _json.loads(key)
         chat_id = int(data["chat_id"])
         msg_id  = int(data["msg_id"])
         
