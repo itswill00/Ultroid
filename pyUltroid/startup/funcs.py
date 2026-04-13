@@ -543,16 +543,13 @@ async def ready():
     # ── Build monospace block ─────────────────────────────────
     header = "[BOOT]" if not rs_info else "[RESTART COMPLETED]"
     block = (
-        f"{header} {boot_ts}\n"
-        f"\n"
+        f"{header} {boot_ts}\n\n"
         f"user   {username}\n"
-        f"bot    {asst_handle}\n"
-        f"\n"
-        f"sys    {hosted} · {arch}\n"
-        f"py     {py_short} · telethon {telever}\n"
-        f"db     {udB.name}\n"
-        f"\n"
-        f"cmd    {plugin_count} ({official_count} official, {addon_count} addons)\n"
+        f"bot    {asst_handle}\n\n"
+        f"sys    {hosted} | {arch}\n"
+        f"py     {py_short} | telethon {telever}\n"
+        f"db     {udB.name}\n\n"
+        f"cmd    {plugin_count} | {official_count} off | {addon_count} add\n"
         f"ver    v{ult_ver}"
     )
 
@@ -575,6 +572,7 @@ async def ready():
     )
     block += f"\nmode   {_mode_label}"
     CARD = f"`{block}`"
+
 
     # ── Buttons ───────────────────────────────────────────────
     has_update = False
