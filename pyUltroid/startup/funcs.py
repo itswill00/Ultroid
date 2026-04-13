@@ -504,6 +504,8 @@ async def plug(plugin_channels):
 async def ready():
     from .. import asst, udB, ultroid_bot
     import platform
+    import json as _json
+    import time as _time
     from ..version import __version__ as pyver, ultroid_version as ult_ver
     from ..dB._core import HELP, LIST
     from telethon import __version__ as telever
@@ -513,12 +515,20 @@ async def ready():
         LOGS.warning("LOG_CHANNEL not set — skipping startup notification.")
         return
 
+    # ── Restart Detection & Unified Data ──────────────────────
+    restart_data = udB.get_key("_RESTART")
+    rs_info = None
+    if restart_data:
+        try:
+            rs_info = _json.loads(restart_data)
+        except Exception:
+            pass
+
     # ── Runtime data ──────────────────────────────────────────
     boot_ts        = datetime.now(dt_timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     py_short       = platform.python_version()
     arch           = platform.machine() or "unknown"
     _raw_hosted    = getattr(ultroid_bot, "_hosted_on", None) or os.environ.get("HOSTED_ON", "local")
-    # Clean up accidental comments/hints if they seeped into the env
     hosted         = str(_raw_hosted).split("#")[0].strip() or "local"
 
     plugin_count   = sum(len(v) for v in LIST.values())
@@ -530,10 +540,10 @@ async def ready():
     username    = f"@{me.username}" if me.username else me.first_name
     asst_handle = f"@{asst_me.username}" if asst_me.username else "—"
 
-    # ── Build monospace block (guaranteed alignment) ──────────
-    # Field widths: label=6 chars, padded with spaces
+    # ── Build monospace block ─────────────────────────────────
+    header = "[BOOT]" if not rs_info else "[RESTART COMPLETED]"
     block = (
-        f"[BOOT] {boot_ts}\n"
+        f"{header} {boot_ts}\n"
         f"\n"
         f"user   {username}\n"
         f"bot    {asst_handle}\n"
@@ -546,7 +556,18 @@ async def ready():
         f"ver    v{ult_ver}"
     )
 
-    # Add mode line to card so it's visible at runtime
+    if rs_info:
+        # Calculate downtime
+        downtime = round(_time.time() - float(rs_info.get("ts", _time.time())), 1)
+        dt_str = f"{downtime / 3600:.1f}h" if downtime > 3600 else f"{downtime / 60:.1f}m" if downtime > 60 else f"{downtime}s"
+        block += f"\ndown   {dt_str}"
+        
+        # Version change detection
+        prev_v = rs_info.get("version", "?")
+        if prev_v != "?" and prev_v != str(ult_ver):
+            block += f"\nupd    {prev_v} -> {ult_ver}"
+
+    # Add mode line
     _mode_label = (
         "user-only" if getattr(asst, "_bot", False) is False
         else "bot-only" if (asst is ultroid_bot and getattr(asst, "_bot", False))
@@ -555,14 +576,13 @@ async def ready():
     block += f"\nmode   {_mode_label}"
     CARD = f"`{block}`"
 
-    # ── Buttons — only if asst is a real bot (not userbot alias) ─
+    # ── Buttons ───────────────────────────────────────────────
     has_update = False
     try:
         has_update = await updater()
     except Exception:
         pass
 
-    # Inline buttons require the sender to be a bot account
     if getattr(asst, "_bot", False):
         BTTS = [[
             Button.inline("Ping",  data="pkng"),
@@ -571,59 +591,41 @@ async def ready():
         if has_update:
             BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
     else:
-        # user mode — userbot can't send inline buttons
         BTTS = None
 
+    # ── Send Card ─────────────────────────────────────────────
+    # Delete previous cards to keep logs clean
+    prev_ids = [udB.get_key("LAST_UPDATE_LOG_SPAM"), udB.get_key("LAST_UPDATE_USERBOT_MSG")]
+    for p_id in prev_ids:
+        if p_id:
+            try:
+                await asst.delete_messages(chat_id, int(p_id))
+            except Exception:
+                pass
 
-    # ── Delete previous startup card ──────────────────────────
-    prev_id = udB.get_key("LAST_UPDATE_LOG_SPAM")
-    if prev_id:
-        try:
-            await asst.delete_messages(chat_id, int(prev_id))
-        except Exception:
-            pass
-        try:
-            prev_user_id = udB.get_key("LAST_UPDATE_USERBOT_MSG")
-            if prev_user_id:
-                await ultroid_bot.delete_messages(chat_id, int(prev_user_id))
-        except Exception:
-            pass
-
-    # ── Send single card via assistant ────────────────────────
     card_sent = None
     try:
-        card_sent = await asst.send_message(
-            chat_id,
-            CARD,
-            buttons=BTTS,
-            link_preview=False,
-        )
+        card_sent = await asst.send_message(chat_id, CARD, buttons=BTTS, link_preview=False)
         LOGS.info("Startup card sent.")
     except Exception as e:
         LOGS.warning(f"Assistant failed to send startup card: {e}")
         try:
-            card_sent = await ultroid_bot.send_message(
-                chat_id, CARD, link_preview=False
-            )
+            card_sent = await ultroid_bot.send_message(chat_id, CARD, link_preview=False)
         except Exception as e2:
             LOGS.error(f"Both clients failed to send startup card: {e2}")
 
-    # ── Persist message ID for cleanup on next restart ────────
     if card_sent:
         udB.set_key("LAST_UPDATE_LOG_SPAM", card_sent.id)
-        udB.del_key("LAST_UPDATE_USERBOT_MSG")   # only one msg now
 
-    # ── Mark initial deploy ───────────────────────────────────
+    # Clean initial deploy mark
     if not udB.get_key("INIT_DEPLOY"):
         udB.set_key("INIT_DEPLOY", "Done")
 
     if not udB.get_key("NO_JOIN_CHANNEL"):
         try:
-            from telethon.tl.functions.channels import JoinChannelRequest
             await ultroid_bot(JoinChannelRequest("TheUltroid"))
         except Exception:
             pass
-
 
 
 async def WasItRestart(udb):
@@ -632,74 +634,26 @@ async def WasItRestart(udb):
         return
     from .. import asst, ultroid_bot
     import json as _json
-    import time as _time
 
     try:
-        # Current format: JSON {who, chat_id, msg_id, ts, version}
         data = _json.loads(key)
-        who     = data["who"]
         chat_id = int(data["chat_id"])
         msg_id  = int(data["msg_id"])
-        ts      = float(data.get("ts", _time.time()))
-        prev_version = data.get("version", "?")
-    except (ValueError, KeyError, TypeError):
-        # Legacy fallback: "user_CHATID_MSGID"
+        
+        # Professional cleanup: delete the old 'Initiating Restart' message
+        # This prevents redundant notifications and keeps the chat clean.
         try:
-            parts   = key.split("_", 2)
-            who     = parts[0]
-            chat_id = int(parts[1])
-            msg_id  = int(parts[2])
-            ts      = _time.time()
-            prev_version = "?"
+            await asst.delete_messages(chat_id, msg_id)
         except Exception:
-            udb.del_key("_RESTART")
-            return
-
-    # ── Compute downtime ──────────────────────────────────────────────
-    downtime = round(_time.time() - ts, 1)
-    if downtime > 3600:
-        dt_str = f"{downtime / 3600:.1f}h"
-    elif downtime > 60:
-        dt_str = f"{downtime / 60:.1f}m"
-    else:
-        dt_str = f"{downtime}s"
-
-    # ── Plugin count ──────────────────────────────────────────────────
-    try:
-        from ..dB._core import LIST
-        plugin_count = sum(len(v) for v in LIST.values())
-    except Exception:
-        plugin_count = "?"
-
-    # ── Version change flag ───────────────────────────────────────────
-    try:
-        from ..version import ultroid_version as cur_ver
-    except Exception:
-        cur_ver = "?"
-
-    version_note = ""
-    if prev_version != "?" and cur_ver != "?" and prev_version != str(cur_ver):
-        version_note = f" · `{prev_version}` → `{cur_ver}`"
-
-    # ── Compose report ────────────────────────────────────────────────
-    report = (
-        f"`[RESTART] Completed in {dt_str}`\n"
-        f"**Version:** `{cur_ver}`{version_note}\n"
-        f"**Plugins:** `{plugin_count} commands loaded`"
-    )
-
-    # The restart message was sent/edited by the userbot — use same client
-    client = asst if who == "bot" else ultroid_bot
-    try:
-        await client.edit_message(chat_id, msg_id, report)
-    except Exception:
-        other = ultroid_bot if client is asst else asst
-        try:
-            await other.edit_message(chat_id, msg_id, report)
-        except Exception:
-            pass
+            try:
+                await ultroid_bot.delete_messages(chat_id, msg_id)
+            except Exception:
+                pass
+    except Exception as e:
+        LOGS.error(f"Error during WasItRestart cleanup: {e}")
 
     udb.del_key("_RESTART")
+
 
 
 def _version_changes(udb):
