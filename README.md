@@ -44,7 +44,7 @@ Create a `.env` file in the project root. All supported variables:
 ### Core (Required)
 
 | Variable | Description |
-|:---|:---|
+| :--- | :--- |
 | `API_ID` | Telegram API ID from my.telegram.org |
 | `API_HASH` | Telegram API Hash from my.telegram.org |
 | `SESSION` | Telethon string session (required unless `RUNTIME_MODE=bot`) |
@@ -54,7 +54,7 @@ Create a `.env` file in the project root. All supported variables:
 ### Runtime Mode
 
 | Variable | Values | Default |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | `RUNTIME_MODE` | `dual` / `user` / `bot` | `dual` |
 
 - **`dual`** — Both userbot and assistant bot are active.
@@ -64,7 +64,7 @@ Create a `.env` file in the project root. All supported variables:
 ### AI & Advanced
 
 | Variable | Description |
-|:---|:---|
+| :--- | :--- |
 | `GROQ_API_KEY` | Supports multiple keys (space-separated) for automatic rotation |
 | `GEMINI_API_KEY` | Secondary AI failover provider (used if Groq is exhausted) |
 | `HNDLR` | Command prefix (default: `.`) |
@@ -74,12 +74,13 @@ Create a `.env` file in the project root. All supported variables:
 
 ## Restart and Update
 
-```
+```text
 .restart           — Atomic process replacement
 .restart -u        — Pull latest commits and dependencies, then restart
 ```
 
 **Restart Sequence:**
+
 1. Saves runtime context and downtime marker to LocalDB.
 2. Performs repository synchronization (if `-u` is used).
 3. **Automatic Cleanup**: Deletes the old "Initiating" message to keep logs clean.
@@ -92,7 +93,7 @@ Create a `.env` file in the project root. All supported variables:
 
 Powered by Llama 3.3 (Groq) with seamless failover to Google Gemini.
 
-```
+```text
 .ask <query>              — Standard AI query
 .ask --search <query>     — Ask with real-time web search
 .tldr <count>             — Summarize last N messages in chat
@@ -107,17 +108,18 @@ Powered by Llama 3.3 (Groq) with seamless failover to Google Gemini.
 
 Professional diagnostic tools for Android developers. Supports `.log`, `.txt`, and `.gz` formats.
 
-```
+```text
 .analyze                  — Automatically detects Logcat, Dmesg, and Build logs
 .analyze <instruction>    — Analyze with specific prompts (e.g., "cari penyebab lmk")
 ```
+
 *Outputs are rendered as professional Markdown reports on Telegraph.*
 
 ---
 
 ## System Monitoring
 
-```
+```text
 .sysmon          — CPU, RAM, disk, and network snapshot
 .sysmon live     # Live monitor mode (30s)
 .sysinfo         — Full OS/Python/Architecture info
@@ -129,7 +131,7 @@ Professional diagnostic tools for Android developers. Supports `.log`, `.txt`, a
 
 ## Session Security
 
-```
+```text
 .sessions        — List all active Telegram sessions
 .revoke <n>      — Revoke a specific session
 .revokeall       — Terminate all other sessions
