@@ -46,21 +46,19 @@ async def _health_cmd(ult):
 
     # Build Dashboard Card
     card = (
-        f"╔════════ SYSTEM SENTINEL ════════╗\n"
-        f"║ status : OPERATIONAL            ║\n"
-        f"║ uptime : {uptime:<21} ║\n"
-        f"╟─────────────────────────────────╢\n"
-        f"║ cpu    : {cpu_usage:<21} ║\n"
-        f"║ ram    : {mem_usage:<21} ║\n"
-        f"║ db pt  : {db_latency:<17} ms ║\n"
-        f"╟─────────────────────────────────╢\n"
-        f"║ engine : Ultroid {ultroid_version:<13} ║\n"
-        f"║ env    : {sys_name} / {py_ver:<11} ║\n"
-        f"║ active : {plugin_count:<4} plugins           ║\n"
-        f"╚═════════════════════════════════╝"
+        f"📡 **System Status**\n"
+        f"---"
+        f"\n⌛ **Uptime:** {uptime}"
+        f"\n🚨 **Status:** Running"
+        f"\n\n🧠 **Memory:** {mem_usage}"
+        f"\n📊 **CPU:** {cpu_usage}"
+        f"\n⚡ **Latency:** {db_latency}ms"
+        f"\n\n⚙️ **Engine:** Ultroid {ultroid_version}"
+        f"\n🖥️ **Env:** {sys_name} / {py_ver}"
+        f"\n🧩 **Active:** {plugin_count} plugins"
     )
 
-    await ult.eor(f"`{card}`")
+    await ult.eor(card)
 
 @ultroid_cmd(pattern="syslog(?: (.+))?$")
 async def _syslog_cmd(ult):

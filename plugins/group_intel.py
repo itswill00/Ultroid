@@ -250,25 +250,16 @@ async def _send_alert(
         return
     _rate_cache[rate_key] = now
 
-    ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-    
-    # Standardize types to 8 chars for alignment
-    ev_type = f"{event_type[:8]:<8}"
-    g_title = f"{group_title[:20]}"
-    
-    # Aesthetic Double Box Header
+    # Aesthetic Minimalist Header
     text = (
-        f"╔═════════ GROUP INTEL ═════════╗\n"
-        f"║ group : {g_title:<21} ║\n"
-        f"║ event : {ev_type}                 ║\n"
-        f"╟───────────────────────────────╢\n"
-        f"{body.strip()}\n"
-        f"╟───────────────────────────────╢\n"
+        f"🛡️ **Intel Alert: {event_type.title()}**\n\n"
+        f"📍 **Group:** {group_title}\n"
+        f"{body.strip()}"
     )
     if risk_label:
-        text += f"║ risk  : {risk_label:<21} ║\n"
+        text += f"\n🚨 **Risk:** {risk_label}"
     
-    text += f"╚═══════ {ts} ══════╝"
+    text += f"\n\n⏱️ `{ts}`"
 
     try:
         await ultroid_bot.send_message(LOG_CHANNEL, text)
@@ -301,9 +292,9 @@ async def _get_user(user_id: int):
 
 def _format_user(user) -> str:
     if not user:
-        return "unknown"
-    name = (getattr(user, "first_name", "") or "User")[:14]
-    return f"{name} [{user.id}]"
+        return "Unknown"
+    name = (getattr(user, "first_name", "") or "User")[:20]
+    return f"{name} `[{user.id}]`"
 
 
 # ── Join Batcher ────────────────────────────────────────────────────────────
@@ -316,14 +307,14 @@ async def _handle_join_batch(group_id: int, group_title: str):
         return  # already sent individually or too few
 
     # Batch report
-    ids_preview = ", ".join(str(uid) for uid, _ in entries[:3])
+    ids_preview = ", ".join(f"`{uid}`" for uid, _ in entries[:3])
     if len(entries) > 3:
         ids_preview += "..."
     
     body = (
-        f"║ count : {len(entries):<21} ║\n"
-        f"║ window: {JOIN_BATCH_WINDOW:<3}s                 ║\n"
-        f"║ users : {ids_preview:<21} ║"
+        f"👥 **Count:** {len(entries)} joins\n"
+        f"⏳ **Window:** {JOIN_BATCH_WINDOW}s\n"
+        f"👤 **Users:** {ids_preview}"
     )
 
     _rate_cache.pop((group_id, "join"), None)
@@ -357,16 +348,18 @@ async def _intel_chat_action(event):
             asyncio.create_task(_handle_join_batch(chat_id, group_title))
 
         if len(buf) < JOIN_BATCH_MIN:
-            via = "link" if event.user_joined else "admin"
+            via = "link" if isinstance(event.action, types.ChatAddByLink) else "added"
             body = (
-                f"║ user  : {_format_user(user):<21} ║\n"
-                f"║ via   : {via:<21} ║"
+                f"👤 **User:** {_format_user(user)}\n"
+                f"🔗 **Via:** {via}"
             )
+            # Add risk flags if any
+            score, risk_label, risk_reasons = _risk_score(user)
             if risk_reasons:
-                flags = ", ".join(risk_reasons[:2])[:21]
-                body += f"\n║ flags : {flags:<21} ║"
-
-            await _send_alert("join", chat_id, group_title, body, risk_label, event.user_id)
+                flags = ", ".join(risk_reasons)
+                body += f"\n🚩 **Flags:** {flags}"
+            
+            await _send_alert("join", event.chat_id, group_title, body, risk_label, user.id)
 
     # ── Member left / kicked / banned ─────────────────────────
     elif event.user_left or event.user_kicked:
@@ -453,8 +446,8 @@ async def _intel_new_message(event):
 
         if len(_flood_tracker[key]) >= FLOOD_COUNT:
             body = (
-                f"║ user  : {_format_user(sender):<21} ║\n"
-                f"║ count : {len(_flood_tracker[key]):<3} msg / {FLOOD_SECS}s      ║"
+                f"👤 **User:** {_format_user(sender)}\n"
+                f"📊 **Rate:** {len(_flood_tracker[key])} msgs / {FLOOD_SECS}s"
             )
             _flood_tracker[key] = []
             await _send_alert("flood", chat_id, group_title, body, risk_label="HIGH — FLOOD", user_id=sender.id)
@@ -474,14 +467,14 @@ async def _intel_new_message(event):
         )
         if has_link:
             _, risk_label, risk_reasons = _risk_score(sender, text)
-            msg_snip = text[:40].replace('\n', ' ')[:18]
+            msg_snip = text[:40].replace('\n', ' ')[:25]
             body = (
-                f"║ user  : {_format_user(sender):<21} ║\n"
-                f"║ msg   : {msg_snip:<21} ║"
+                f"👤 **User:** {_format_user(sender)}\n"
+                f"💬 **Msg:** {msg_snip}..."
             )
             if risk_reasons:
-                flags = ", ".join(risk_reasons[:2])[:21]
-                body += f"\n║ flags : {flags:<21} ║"
+                flags = ", ".join(risk_reasons[:2])
+                body += f"\n🚩 **Flags:** {flags}"
             await _send_alert("link", chat_id, group_title, body, risk_label, sender.id)
 
     # ── Forward detection ────────────────────────────────────
@@ -494,8 +487,8 @@ async def _intel_new_message(event):
             origin = f"@{fwd.sender.username}" if getattr(fwd.sender, "username", None) else str(fwd.from_id)
 
         body = (
-            f"║ user  : {_format_user(sender):<21} ║\n"
-            f"║ from  : {origin[:21]:<21} ║"
+            f"👤 **User:** {_format_user(sender)}\n"
+            f"📤 **From:** {origin}"
         )
         await _send_alert("forward", chat_id, group_title, body, user_id=sender.id)
 
@@ -571,17 +564,16 @@ async def _monitor_cmd(ult):
         if not data:
             return await ult.eor("`No activity recorded.`")
 
-        chat = await ult.get_chat()
+        chat = await ultroid.get_chat()
         lines = (
-            f"╔════════ INTEL REPORT ════════╗\n"
-            f"║ group : {chat.title[:20]:<20} ║\n"
-            f"║ period: {period:<20} ║\n"
-            f"╟──────────────────────────────╢\n"
+            f"📊 **Activity Report**\n"
+            f"📍 **Group:** {chat.title}\n"
+            f"🕒 **Period:** {period}\n"
+            f"---"
         )
         for ev, count in sorted(data.items(), key=lambda x: -x[1]):
-            lines += f"║ {ev:<10} : {count:<17} ║\n"
-        lines += f"╚══════════════════════════════╝"
-        return await ult.eor(f"`{lines}`")
+            lines += f"\n• **{ev.title()}:** {count}"
+        return await ult.eor(lines)
 
     else:
         return await ult.eor(

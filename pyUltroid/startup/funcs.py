@@ -532,39 +532,40 @@ async def ready():
     username    = f"@{me.username}" if me.username else me.first_name
     asst_handle = f"@{asst_me.username}" if asst_me.username else "—"
 
-    # ── Build monospace block ─────────────────────────────────
-    header = "Boot |" if not rs_info else "Restart complete"
-    block = (
-        f"{header} {boot_ts}\n\n"
-
-        f"user   {username}\n"
-        f"bot    {asst_handle}\n\n"
-        f"sys    {hosted} | {arch}\n"
-        f"py     {py_short} | telethon {telever}\n"
-        f"db     {udB.name}\n\n"
-        f"cmd    {plugin_count} | {official_count} off | {addon_count} add\n"
-        f"ver    v{ult_ver}"
+    # ── Build Human-Friendly Card ─────────────────────────────
+    header_emoji = "🚀" if not rs_info else "🔄"
+    status_text = "System Online" if not rs_info else "Restart Complete"
+    
+    CARD = (
+        f"{header_emoji} **{status_text}**\n"
+        f"---"
+        f"\n👤 **Owner:** {username}"
+        f"\n🤖 **Assistant:** {asst_handle}"
+        f"\n\n🖥️ **System:** {hosted} (`{arch}`)"
+        f"\n⚙️ **Engine:** `{py_short}` / `v{ult_ver}`"
+        f"\n🗄️ **Database:** {udB.name}"
+        f"\n🧩 **Plugins:** {plugin_count} total"
+        f"\n\n⏱️ `{boot_ts}`"
     )
 
     if rs_info:
         # Calculate downtime
         downtime = round(_time.time() - float(rs_info.get("ts", _time.time())), 1)
         dt_str = f"{downtime / 3600:.1f}h" if downtime > 3600 else f"{downtime / 60:.1f}m" if downtime > 60 else f"{downtime}s"
-        block += f"\ndown   {dt_str}"
+        CARD += f"\n📉 **Downtime:** {dt_str}"
         
         # Version change detection
         prev_v = rs_info.get("version", "?")
         if prev_v != "?" and prev_v != str(ult_ver):
-            block += f"\nupd    {prev_v} -> {ult_ver}"
+            CARD += f"\n🆙 **Update:** `{prev_v}` → `{ult_ver}`"
 
     # Add mode line
     _mode_label = (
-        "user-only" if getattr(asst, "_bot", False) is False
-        else "bot-only" if (asst is ultroid_bot and getattr(asst, "_bot", False))
-        else "dual"
+        "User Only" if getattr(asst, "_bot", False) is False
+        else "Bot Only" if (asst is ultroid_bot and getattr(asst, "_bot", False))
+        else "Dual Mode"
     )
-    block += f"\nmode   {_mode_label}"
-    CARD = f"`{block}`"
+    CARD += f"\n🛠️ **Mode:** {_mode_label}"
 
 
     # ── Buttons ───────────────────────────────────────────────
