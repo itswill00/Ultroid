@@ -22,6 +22,8 @@ from telethon import events
 from telethon.tl import types
 from telethon.tl.functions.channels import GetParticipantRequest
 
+from pyUltroid.dB.gban_mute_db import is_gbanned
+
 from . import (
     LOG_CHANNEL,
     LOGS,
@@ -49,6 +51,10 @@ FLOOD_SECS  = 10  # within this many seconds
 # User info cache: {user_id: (Entity, fetched_at)}
 _user_cache: dict = {}
 USER_CACHE_TTL = 3600  # 1 hour
+
+# Admin cache: {group_id: (set(admin_ids), fetched_at)}
+_admin_cache: dict = {}
+ADMIN_CACHE_TTL = 1800  # 30 minutes
 
 # Activity counter for .monitor report: {group_id: {event_type: count}}
 _activity: dict = defaultdict(lambda: defaultdict(int))
@@ -93,151 +99,186 @@ def _flag_on(event_type: str) -> bool:
     return _get_flags().get(event_type, True)
 
 
+# ── Admin Helper ────────────────────────────────────────────────────────────
+
+async def _get_admins(chat_id: int) -> set:
+    """Fetch and cache admins for a group."""
+    now = time.time()
+    if chat_id in _admin_cache:
+        admins, fetched = _admin_cache[chat_id]
+        if now - fetched < ADMIN_CACHE_TTL:
+            return admins
+
+    try:
+        admins = {
+            p.id
+            for p in await ultroid_bot.get_participants(
+                chat_id, filter=types.ChannelParticipantsAdmins
+            )
+        }
+        _admin_cache[chat_id] = (admins, now)
+        return admins
+    except Exception as e:
+        LOGS.debug(f"group_intel: failed to fetch admins for {chat_id} — {e}")
+        return set()
+
+
+async def _is_admin(chat_id: int, user_id: int) -> bool:
+    """Check if a user is an admin using cache."""
+    admins = await _get_admins(chat_id)
+    return user_id in admins
+
+
 # ── Risk Scoring ───────────────────────────────────────────────────────────
 
 PROMO_KEYWORDS = [
-    "promo", "jual", "murah", "diskon", "sale", "buy", "cheap",
-    "wa.me", "t.me/+", "http", "discord.gg", "bit.ly",
+    "promo", "jual", "murah", "diskon", "sale", "buy", "cheap", "bonus", "slot",
+    "wa.me", "t.me/+", "http", "discord.gg", "bit.ly", "invest", "crypto",
 ]
 
 
-def _risk_score(user, message_text: str = "") -> tuple[int, list[str]]:
-    """Return (score, [reasons]). Score >= 5 = HIGH, 3-4 = MEDIUM, <3 = LOW."""
+def _risk_score(user, message_text: str = "") -> tuple[int, str, list[str]]:
+    """Return (score, label, [reasons]). Score >= 5 = HIGH, 3-4 = MEDIUM, <3 = LOW."""
     score = 0
     reasons = []
 
-    # Account age (from user.id Snowflake — rough estimate)
-    # Real account age requires extra API call; use ID range as proxy
-    if user and hasattr(user, "id"):
+    if not user:
+        return 0, "LOW", []
+
+    # 1. Native Telegram Flags (CRITICAL)
+    if getattr(user, "scam", False):
+        score += 5
+        reasons.append("TELEGRAM SCAM FLAG")
+    if getattr(user, "fake", False):
+        score += 4
+        reasons.append("TELEGRAM FAKE FLAG")
+    if getattr(user, "deleted", False):
+        score += 5
+        reasons.append("DELETED ACCOUNT")
+
+    # 2. Global Ban Check
+    if is_gbanned(user.id):
+        score += 6
+        reasons.append("GLOBALLY BANNED (GBAN)")
+
+    # 3. Account Age (Refined)
+    if hasattr(user, "id"):
         uid = user.id
-        # Accounts registered after ~2021 have ID > 1_500_000_000
-        if uid > 6_000_000_000:
+        # Rough estimates for 2024: IDs > 7.3B are very new
+        if uid > 7_300_000_000:
             score += 3
-            reasons.append("very new account")
+            reasons.append("brand new account (2024+)")
+        elif uid > 6_000_000_000:
+            score += 2
+            reasons.append("relatively new account")
         elif uid > 4_000_000_000:
             score += 1
-            reasons.append("relatively new account")
+            reasons.append("moderate account age")
 
-    # Bio / first name check
+    # 4. Profile Completeness
+    if not getattr(user, "photo", None):
+        score += 2
+        reasons.append("no profile photo")
+    if not getattr(user, "username", None):
+        score += 1
+        reasons.append("no username")
+    if getattr(user, "premium", False):
+        score -= 2  # Premium users are less likely to be bots
+        reasons.append("verified premium user")
+
+    # 5. Bio / First Name keywords
     bio = ""
-    if user and hasattr(user, "first_name") and user.first_name:
+    if getattr(user, "first_name", None):
         bio += user.first_name.lower()
-    if hasattr(user, "about") and user.about:
+    if getattr(user, "last_name", None):
+        bio += " " + user.last_name.lower()
+    if getattr(user, "about", None):
         bio += " " + user.about.lower()
 
     for kw in PROMO_KEYWORDS:
         if kw in bio:
             score += 2
             reasons.append(f"promo keyword in profile: '{kw}'")
-            break  # only count once for bio
+            break
 
-    # Message text
+    # 6. Message Content
     if message_text:
         text_lower = message_text.lower()
+        if any(kw in text_lower for kw in PROMO_KEYWORDS):
+            score += 2
+            reasons.append("suspicious keywords in message")
+        
         link_count = text_lower.count("http") + text_lower.count("t.me")
         if link_count >= 2:
             score += 3
-            reasons.append(f"{link_count} links in message")
+            reasons.append(f"multiple links ({link_count})")
         elif link_count == 1:
-            score += 2
-            reasons.append("link in message")
-        for kw in PROMO_KEYWORDS[:6]:
-            if kw in text_lower:
-                score += 1
-                reasons.append(f"promo keyword in message: '{kw}'")
-                break
+            score += 1
+            reasons.append("contains link")
 
-    label = "HIGH" if score >= 5 else "MEDIUM" if score >= 3 else "LOW"
+    # Final Labeling
+    score = max(0, score)  # Ensure no negative
+    label = "HIGH" if score >= 6 else "MEDIUM" if score >= 3 else "LOW"
     return score, label, reasons
 
 
 # ── Alert Sender ───────────────────────────────────────────────────────────
 
-async def _send_alert(event_type: str, group_id: int, group_title: str, body: str, risk_label: str = ""):
-    """Send a formatted alert to LOG_CHANNEL. Rate-limited."""
-    if not LOG_CHANNEL:
-        return
-    if _is_paused():
-        return
-    if not _flag_on(event_type):
-        return
+# ── Alert Sender ───────────────────────────────────────────────────────────
 
-    # Track activity for .monitor report
-    _activity[group_id][event_type] += 1
-    if group_id not in _activity_reset:
-        _activity_reset[group_id] = time.time()
-
-    # Rate-limit check (keyed on group + event type only for group-wide events)
-    rate_key = (group_id, event_type)
-    now = time.time()
-    if _rate_cache.get(rate_key, 0) + RATE_LIMIT_SECS > now:
-        return
-    _rate_cache[rate_key] = now
-
-    risk_line = f"\n`risk    {risk_label}`" if risk_label else ""
-    ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-
-    text = (
-        f"`GROUP INTEL ──────────────────`\n"
-        f"`group   {group_title}`\n"
-        f"`event   {event_type}`\n"
-        f"`──────────────────────────────`\n"
-        f"{body}"
-        f"{risk_line}\n"
-        f"`──────────────────────────────`\n"
-        f"`{ts}`"
-    )
-
-    try:
-        await ultroid_bot.send_message(LOG_CHANNEL, text)
-    except Exception as e:
-        LOGS.warning(f"group_intel: failed to send alert — {e}")
-
-
-async def _send_alert_per_user(
+async def _send_alert(
     event_type: str,
     group_id: int,
     group_title: str,
-    user_id: int,
     body: str,
     risk_label: str = "",
+    user_id: int = None,
 ):
-    """Like _send_alert but rate-limited per (group, user, event_type)."""
-    if not LOG_CHANNEL:
-        return
-    if _is_paused():
-        return
-    if not _flag_on(event_type):
+    """Send a formatted Double-Box alert to LOG_CHANNEL. Rate-limited."""
+    if not LOG_CHANNEL or _is_paused() or not _flag_on(event_type):
         return
 
+    # Track activity
     _activity[group_id][event_type] += 1
     if group_id not in _activity_reset:
         _activity_reset[group_id] = time.time()
 
-    rate_key = (group_id, user_id, event_type)
+    # Rate-limit check
+    rate_key = (group_id, user_id, event_type) if user_id else (group_id, event_type)
     now = time.time()
     if _rate_cache.get(rate_key, 0) + RATE_LIMIT_SECS > now:
         return
     _rate_cache[rate_key] = now
 
-    risk_line = f"\n`risk    {risk_label}`" if risk_label else ""
     ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-
+    
+    # Standardize types to 8 chars for alignment
+    ev_type = f"{event_type[:8]:<8}"
+    g_title = f"{group_title[:20]}"
+    
+    # Aesthetic Double Box Header
     text = (
-        f"`GROUP INTEL ──────────────────`\n"
-        f"`group   {group_title}`\n"
-        f"`event   {event_type}`\n"
-        f"`──────────────────────────────`\n"
-        f"{body}"
-        f"{risk_line}\n"
-        f"`──────────────────────────────`\n"
-        f"`{ts}`"
+        f"╔═════════ GROUP INTEL ═════════╗\n"
+        f"║ group : {g_title:<21} ║\n"
+        f"║ event : {ev_type}                 ║\n"
+        f"╟───────────────────────────────╢\n"
+        f"{body.strip()}\n"
+        f"╟───────────────────────────────╢\n"
     )
+    if risk_label:
+        text += f"║ risk  : {risk_label:<21} ║\n"
+    
+    text += f"╚═══════ {ts} ══════╝"
 
     try:
         await ultroid_bot.send_message(LOG_CHANNEL, text)
     except Exception as e:
         LOGS.warning(f"group_intel: failed to send alert — {e}")
+
+
+# Legacy helper for compatibility during refactor
+async def _send_alert_per_user(event_type, group_id, group_title, user_id, body, risk_label=""):
+    await _send_alert(event_type, group_id, group_title, body, risk_label, user_id)
 
 
 # ── User Info Helper ────────────────────────────────────────────────────────
@@ -260,12 +301,9 @@ async def _get_user(user_id: int):
 
 def _format_user(user) -> str:
     if not user:
-        return "`unknown`"
-    name = getattr(user, "first_name", "") or ""
-    if getattr(user, "last_name", None):
-        name += f" {user.last_name}"
-    uname = f"@{user.username}" if getattr(user, "username", None) else "no username"
-    return f"`{name}` ({uname} · `{user.id}`)"
+        return "unknown"
+    name = (getattr(user, "first_name", "") or "User")[:14]
+    return f"{name} [{user.id}]"
 
 
 # ── Join Batcher ────────────────────────────────────────────────────────────
@@ -278,14 +316,18 @@ async def _handle_join_batch(group_id: int, group_title: str):
         return  # already sent individually or too few
 
     # Batch report
-    body = f"`count   {len(entries)} joins in {JOIN_BATCH_WINDOW}s`\n"
-    ids_preview = ", ".join(str(uid) for uid, _ in entries[:5])
-    if len(entries) > 5:
-        ids_preview += f" … +{len(entries) - 5} more"
-    body += f"`users   {ids_preview}`\n"
+    ids_preview = ", ".join(str(uid) for uid, _ in entries[:3])
+    if len(entries) > 3:
+        ids_preview += "..."
+    
+    body = (
+        f"║ count : {len(entries):<21} ║\n"
+        f"║ window: {JOIN_BATCH_WINDOW:<3}s                 ║\n"
+        f"║ users : {ids_preview:<21} ║"
+    )
 
-    _rate_cache.pop((group_id, "join"), None)   # clear rate limit so batch goes through
-    await _send_alert("join", group_id, group_title, body, risk_label="MEDIUM — mass join")
+    _rate_cache.pop((group_id, "join"), None)
+    await _send_alert("join", group_id, group_title, body, risk_label="MEDIUM — MASS JOIN")
 
 
 # ── Event Handlers ─────────────────────────────────────────────────────────
@@ -295,7 +337,6 @@ async def _intel_chat_action(event):
     groups = _get_groups()
     chat_id = event.chat_id
 
-    # Only process if this group is in our watchlist
     if str(chat_id) not in groups and chat_id not in groups:
         return
 
@@ -309,29 +350,23 @@ async def _intel_chat_action(event):
         user = await _get_user(event.user_id)
         _, risk_label, risk_reasons = _risk_score(user)
 
-        # Batch logic: buffer joins; if count < MIN send individually
         buf = _join_buffer[chat_id]
         buf.append((event.user_id, time.time()))
 
         if len(buf) == 1:
-            # First join in window — schedule batch check
-            asyncio.get_event_loop().create_task(
-                _handle_join_batch(chat_id, group_title)
-            )
+            asyncio.create_task(_handle_join_batch(chat_id, group_title))
 
         if len(buf) < JOIN_BATCH_MIN:
-            # Send individually until batch threshold
-            via = "via link" if event.user_joined else "added by admin"
+            via = "link" if event.user_joined else "admin"
             body = (
-                f"`user    {_format_user(user)}`\n"
-                f"`via     {via}`\n"
+                f"║ user  : {_format_user(user):<21} ║\n"
+                f"║ via   : {via:<21} ║"
             )
             if risk_reasons:
-                body += f"`flags   {', '.join(risk_reasons[:2])}`\n"
+                flags = ", ".join(risk_reasons[:2])[:21]
+                body += f"\n║ flags : {flags:<21} ║"
 
-            await _send_alert_per_user(
-                "join", chat_id, group_title, event.user_id, body, risk_label
-            )
+            await _send_alert("join", chat_id, group_title, body, risk_label, event.user_id)
 
     # ── Member left / kicked / banned ─────────────────────────
     elif event.user_left or event.user_kicked:
@@ -339,58 +374,49 @@ async def _intel_chat_action(event):
         if not _flag_on("ban" if event.user_kicked else "leave"):
             return
 
-        user    = await _get_user(event.user_id)
-        actor   = await _get_user(event.action_message.sender_id) if event.action_message else None
-
+        user = await _get_user(event.user_id)
+        actor_id = event.action_message.sender_id if event.action_message else None
+        
         body = (
-            f"`user    {_format_user(user)}`\n"
-            f"`action  {action_type}`\n"
+            f"║ user  : {_format_user(user):<21} ║\n"
+            f"║ action: {action_type:<21} ║"
         )
-        if actor and actor.id != event.user_id:
-            body += f"`by      {_format_user(actor)}`\n"
+        if actor_id and actor_id != event.user_id:
+            actor = await _get_user(actor_id)
+            body += f"\n║ by    : {_format_user(actor):<21} ║"
 
-        await _send_alert_per_user(
+        await _send_alert(
             "ban" if event.user_kicked else "leave",
-            chat_id, group_title, event.user_id, body
+            chat_id, group_title, body, user_id=event.user_id
         )
 
-    # ── Admin promotion / demotion ─────────────────────────────
-    elif isinstance(event.action, (
-        types.MessageActionChatEditAdmin,
-        types.MessageActionChatAddUser,
-    )) or event.new_title or event.new_photo is not None:
+    # ── Settings / Admin change ──────────────────────────────
+    if event.new_title or event.new_photo is not None:
+        if not _flag_on("settings"):
+            return
+        what = "title" if event.new_title else "photo"
+        actor_id = event.action_message.sender_id if event.action_message else None
+        actor = await _get_user(actor_id) if actor_id else None
+        body = (
+            f"║ change: {what:<21} ║\n"
+            f"║ by    : {_format_user(actor):<21} ║"
+        )
+        await _send_alert("settings", chat_id, group_title, body)
 
-        # Group settings change
-        if event.new_title or event.new_photo is not None:
-            if not _flag_on("settings"):
-                return
-            what = "title changed" if event.new_title else "photo changed"
-            new_val = f" → `{event.new_title}`" if event.new_title else ""
-            actor = await _get_user(event.action_message.sender_id) if event.action_message else None
-            body = (
-                f"`change  {what}{new_val}`\n"
-                f"`by      {_format_user(actor)}`\n"
-            )
-            await _send_alert("settings", chat_id, group_title, body)
-
-    # Telethon emits admin changes as ChatParticipantAdmin
-    if hasattr(event, "action") and isinstance(
-        event.action, types.MessageActionChatEditAdmin
-    ):
+    if hasattr(event, "action") and isinstance(event.action, types.MessageActionChatEditAdmin):
         if not _flag_on("promote"):
             return
-        user  = await _get_user(event.user_id)
-        actor = await _get_user(event.action_message.sender_id) if event.action_message else None
+        user = await _get_user(event.user_id)
+        actor_id = event.action_message.sender_id if event.action_message else None
+        actor = await _get_user(actor_id) if actor_id else None
         demoted = getattr(event.action, "admin_rights", None) is None
-        action_str = "demoted" if demoted else "promoted to admin"
+        action_str = "demoted" if demoted else "promoted"
         body = (
-            f"`user    {_format_user(user)}`\n"
-            f"`action  {action_str}`\n"
-            f"`by      {_format_user(actor)}`\n"
+            f"║ user  : {_format_user(user):<21} ║\n"
+            f"║ action: {action_str:<21} ║\n"
+            f"║ by    : {_format_user(actor):<21} ║"
         )
-        await _send_alert_per_user(
-            "promote", chat_id, group_title, event.user_id, body
-        )
+        await _send_alert("promote", chat_id, group_title, body, user_id=event.user_id)
 
 
 @ultroid_bot.on(events.NewMessage(incoming=True))
@@ -410,17 +436,9 @@ async def _intel_new_message(event):
     if not sender:
         return
 
-    # Skip messages from group admins (we trust them)
-    try:
-        participant = await ultroid_bot(GetParticipantRequest(chat_id, sender.id))
-        is_admin = isinstance(
-            participant.participant,
-            (types.ChannelParticipantAdmin, types.ChannelParticipantCreator),
-        )
-        if is_admin:
-            return
-    except Exception:
-        is_admin = False
+    # Skip messages from group admins (using cache for efficiency)
+    if await _is_admin(chat_id, sender.id):
+        return
 
     text = event.raw_text or ""
 
@@ -435,13 +453,11 @@ async def _intel_new_message(event):
 
         if len(_flood_tracker[key]) >= FLOOD_COUNT:
             body = (
-                f"`user    {_format_user(sender)}`\n"
-                f"`count   {len(_flood_tracker[key])} messages / {FLOOD_SECS}s`\n"
+                f"║ user  : {_format_user(sender):<21} ║\n"
+                f"║ count : {len(_flood_tracker[key]):<3} msg / {FLOOD_SECS}s      ║"
             )
-            _flood_tracker[key] = []   # reset after alert
-            await _send_alert_per_user(
-                "flood", chat_id, group_title, sender.id, body, "HIGH"
-            )
+            _flood_tracker[key] = []
+            await _send_alert("flood", chat_id, group_title, body, risk_label="HIGH — FLOOD", user_id=sender.id)
 
     # ── Link detection ───────────────────────────────────────
     if _flag_on("link"):
@@ -458,33 +474,30 @@ async def _intel_new_message(event):
         )
         if has_link:
             _, risk_label, risk_reasons = _risk_score(sender, text)
+            msg_snip = text[:40].replace('\n', ' ')[:18]
             body = (
-                f"`user    {_format_user(sender)}`\n"
-                f"`msg     {text[:120].replace(chr(96), chr(39))}{'...' if len(text)>120 else ''}`\n"
+                f"║ user  : {_format_user(sender):<21} ║\n"
+                f"║ msg   : {msg_snip:<21} ║"
             )
             if risk_reasons:
-                body += f"`flags   {', '.join(risk_reasons[:3])}`\n"
-            await _send_alert_per_user(
-                "link", chat_id, group_title, sender.id, body, risk_label
-            )
+                flags = ", ".join(risk_reasons[:2])[:21]
+                body += f"\n║ flags : {flags:<21} ║"
+            await _send_alert("link", chat_id, group_title, body, risk_label, sender.id)
 
     # ── Forward detection ────────────────────────────────────
     if _flag_on("forward") and event.forward:
         fwd = event.forward
-        origin = ""
+        origin = "unknown"
         if fwd.chat:
             origin = f"@{fwd.chat.username}" if getattr(fwd.chat, "username", None) else str(fwd.chat_id)
         elif fwd.sender:
             origin = f"@{fwd.sender.username}" if getattr(fwd.sender, "username", None) else str(fwd.from_id)
 
         body = (
-            f"`user    {_format_user(sender)}`\n"
-            f"`from    {origin or 'unknown'}`\n"
-            f"`msg     {text[:80].replace(chr(96), chr(39))}{'...' if len(text)>80 else ''}`\n"
+            f"║ user  : {_format_user(sender):<21} ║\n"
+            f"║ from  : {origin[:21]:<21} ║"
         )
-        await _send_alert_per_user(
-            "forward", chat_id, group_title, sender.id, body
-        )
+        await _send_alert("forward", chat_id, group_title, body, user_id=sender.id)
 
 
 # ── Commands ────────────────────────────────────────────────────────────────
@@ -545,27 +558,30 @@ async def _monitor_cmd(ult):
         udB.del_key(DB_KEY_PAUSED)
         return await ult.eor("`INTEL — Monitoring resumed.`")
 
-    # ── monitor report ────────────────────────────────────────
     elif action == "report":
         chat_id = str(ult.chat_id) if ult.is_group else None
         if not chat_id or chat_id not in _get_groups():
             return await ult.eor("`Use this inside a monitored group.`")
 
-        data   = _activity.get(int(chat_id), {})
-        reset  = _activity_reset.get(int(chat_id), time.time())
-        delta  = int(time.time() - reset)
-        hours  = delta // 3600
-        mins   = (delta % 3600) // 60
+        data = _activity.get(int(chat_id), {})
+        reset = _activity_reset.get(int(chat_id), time.time())
+        delta = int(time.time() - reset)
+        period = f"{delta // 3600}h {(delta % 3600) // 60}m"
 
         if not data:
-            return await ult.eor("`No activity recorded since last reset.`")
+            return await ult.eor("`No activity recorded.`")
 
-        chat   = await ult.get_chat()
-        title  = getattr(chat, "title", chat_id)
-        lines  = f"`INTEL REPORT — {title}`\n`period  {hours}h {mins}m`\n`──────────────────────────────`\n"
-        for event_type, count in sorted(data.items(), key=lambda x: -x[1]):
-            lines += f"`{event_type:<10} {count}`\n"
-        return await ult.eor(lines)
+        chat = await ult.get_chat()
+        lines = (
+            f"╔════════ INTEL REPORT ════════╗\n"
+            f"║ group : {chat.title[:20]:<20} ║\n"
+            f"║ period: {period:<20} ║\n"
+            f"╟──────────────────────────────╢\n"
+        )
+        for ev, count in sorted(data.items(), key=lambda x: -x[1]):
+            lines += f"║ {ev:<10} : {count:<17} ║\n"
+        lines += f"╚══════════════════════════════╝"
+        return await ult.eor(f"`{lines}`")
 
     else:
         return await ult.eor(
