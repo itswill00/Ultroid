@@ -16,7 +16,7 @@ from io import BytesIO
 from telethon import events
 from . import udB, LOGS, ultroid_cmd, asst, OWNER_NAME, get_string
 
-# ── Configuration ──────────────────────────────────────────────────────────
+# Configuration
 
 # Max lines to send to AI (Digest size)
 MAX_DIGEST_LINES = 300
@@ -28,7 +28,7 @@ CONTEXT_WINDOW = 20
 
 
 
-# ── LOG PATTERNS ────────────────────────────────────────────────────────────
+# Log Patterns
 
 # Patterns indicating high-priority diagnostic info
 CRITICAL_PATTERNS = [
@@ -51,7 +51,7 @@ CRITICAL_PATTERNS = [
 TYPE_LOGCAT = re.compile(r"^[0-9-]{5}\s[0-9:.]+\s+[0-9]+\s+[0-9]+\sVdiwef |/")
 TYPE_DMESG  = re.compile(r"^\[\s*[0-9.]+\].*")
 
-# ── Smapling Logic ──────────────────────────────────────────────────────────
+# Sampling Logic
 
 def _smart_sample(content: str) -> str:
     """Extracts critical chunks from a large log file to fit AI context."""
@@ -129,7 +129,7 @@ def _detect_type(content: str) -> str:
     
     return "Generic Log / Text"
 
-# ── AI Integration ─────────────────────────────────────────────────────────
+# AI Integration
 
 async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = ""):
     """Specialized AI call for log analysis."""
@@ -166,7 +166,7 @@ async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = 
     return ans, usage
 
 
-# ── COMMAND HANDLER ────────────────────────────────────────────────────────
+# Command Handler
 
 @ultroid_cmd(pattern="analy[sz]e(?: (.*))?$")
 async def _log_analyst(ult):

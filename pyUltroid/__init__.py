@@ -47,7 +47,7 @@ if run_as_module:
     if udB.ping():
         LOGS.info(f"Connected to {udB.name} Successfully!")
 
-    # ── Runtime Mode Resolution ─────────────────────────────────────────
+    # Runtime Mode Resolution
     # Priority: .env RUNTIME_MODE > DB RUNTIME_MODE > legacy DB flags
     _mode_raw = (Var.RUNTIME_MODE or udB.get_key("RUNTIME_MODE") or "").lower().strip()
 
@@ -68,7 +68,7 @@ if run_as_module:
     DUAL_MODE = (RUNTIME_MODE == "dual")
     LOGS.info(f"Mode | Runtime: {RUNTIME_MODE.upper()}")
 
-    # ── Client Initialization ───────────────────────────────────────────
+    # Client Initialization
     if RUNTIME_MODE in ("user", "dual"):
         # Userbot required — validate and connect SESSION
         ultroid_bot = UltroidClient(
@@ -113,7 +113,7 @@ if run_as_module:
             )
         asst = UltroidClient("asst", bot_token=_token, udB=udB)
 
-    # ── Post-initialization ─────────────────────────────────────────────
+    # Post-initialization
     if BOT_MODE:
         # Restore ultroid_bot.me from stored OWNER_ID (needed by helper fns)
         if udB.get_key("OWNER_ID"):

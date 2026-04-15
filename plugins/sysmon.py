@@ -37,7 +37,7 @@ except ImportError:
     _HAS_PSUTIL = False
 
 
-# ── Helper: human-readable bytes ─────────────────────────────
+# Helper: human-readable bytes
 def _fmt_bytes(b: float) -> str:
     for unit in ("B", "KB", "MB", "GB", "TB"):
         if b < 1024:
@@ -52,7 +52,7 @@ def _bar(percent: float, width: int = 12) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
-# ── /proc-based fallbacks (work on Android/Termux and all Linux) ──
+# /proc-based fallbacks
 
 def _proc_uptime() -> str:
     """Read system uptime from /proc/uptime (works on Termux)."""
@@ -137,7 +137,7 @@ def _disk_usage() -> tuple[float, int, int]:
         return 0.0, 0, 0
 
 
-# ── Main snapshot builder ─────────────────────────────────────
+# Main snapshot builder
 
 def _build_snapshot() -> str:
     if _HAS_PSUTIL:
@@ -177,7 +177,7 @@ def _build_snapshot() -> str:
     )
 
 
-# ── Commands ──────────────────────────────────────────────────
+# Commands
 
 @ultroid_cmd(pattern="sysmon( (.*)|$)")
 async def sys_monitor(e):

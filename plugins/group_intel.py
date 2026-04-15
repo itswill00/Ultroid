@@ -222,9 +222,7 @@ def _risk_score(user, message_text: str = "") -> tuple[int, str, list[str]]:
     return score, label, reasons
 
 
-# ── Alert Sender ───────────────────────────────────────────────────────────
-
-# ── Alert Sender ───────────────────────────────────────────────────────────
+# = Security Monitor Logic =
 
 async def _send_alert(
     event_type: str,
@@ -274,7 +272,7 @@ async def _send_alert_per_user(event_type, group_id, group_title, user_id, body,
     await _send_alert(event_type, group_id, group_title, body, risk_label, user_id)
 
 
-# ── User Info Helper ────────────────────────────────────────────────────────
+# = User Info Helper =
 
 async def _get_user(user_id: int):
     """Cached user entity fetch."""
@@ -299,7 +297,7 @@ def _format_user(user) -> str:
     return f"{name} `[{user.id}]`"
 
 
-# ── Join Batcher ────────────────────────────────────────────────────────────
+# = Join Batcher =
 
 async def _handle_join_batch(group_id: int, group_title: str):
     """Waits JOIN_BATCH_WINDOW seconds then sends a batched join report if needed."""
@@ -323,7 +321,7 @@ async def _handle_join_batch(group_id: int, group_title: str):
     await _send_alert("join", group_id, group_title, body, risk_label="MEDIUM — MASS JOIN")
 
 
-# ── Event Handlers ─────────────────────────────────────────────────────────
+# = Event Handlers =
 
 @ultroid_bot.on(events.ChatAction())
 async def _intel_chat_action(event):
@@ -495,7 +493,7 @@ async def _intel_new_message(event):
         await _send_alert("forward", chat_id, group_title, body, user_id=sender.id)
 
 
-# ── Commands ────────────────────────────────────────────────────────────────
+# = Commands =
 
 @ultroid_cmd(pattern=r"monitor(?: (.+))?$")
 async def _monitor_cmd(ult):
@@ -521,7 +519,7 @@ async def _monitor_cmd(ult):
             f"\n🆔 **ID:** `{gid}`"
         )
 
-    # ── monitor remove ────────────────────────────────────────
+    # Monitor Remove
     elif action == "remove":
         if not ult.is_group:
             return await ult.eor("`Use this inside the target group.`")
@@ -533,7 +531,7 @@ async def _monitor_cmd(ult):
         _save_groups(groups)
         return await ult.eor(f"❌ **Intel — Monitoring Removed**\n📍 **Group:** {title}")
 
-    # ── monitor list ─────────────────────────────────────────
+    # Monitor List
     elif action == "list":
         groups = _get_groups()
         if not groups:
