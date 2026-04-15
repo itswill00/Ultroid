@@ -102,7 +102,7 @@ class _BaseDatabase:
         if data and isinstance(data, str):
             try:
                 # Use safer literal_eval but handle failures gracefully
-                if data in ("True", "False", "None") or (data.startswith(("[", "{"))):
+                if data in ("True", "False", "None") or (data.startswith(("[", "{", "-"))) or data.isdigit():
                     data = ast.literal_eval(data)
             except (ValueError, SyntaxError):
                 pass

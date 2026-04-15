@@ -276,7 +276,7 @@ async def autopilot():
     new_channel = None
     if channel:
         try:
-            chat = await ultroid_bot.get_entity(channel)
+            chat = await ultroid_bot.get_entity(int(channel))
         except Exception as err:
             LOGS.warning(f"Failed to fetch Log Channel identity: {err}")
             udB.del_key("LOG_CHANNEL")
