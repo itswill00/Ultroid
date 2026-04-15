@@ -162,21 +162,18 @@ def _build_snapshot() -> str:
         net_str = f"↑ {_fmt_bytes(s)}  ↓ {_fmt_bytes(r)}"
         uptime = _proc_uptime()
 
-    sep = "─" * 30
     mode = "psutil" if _HAS_PSUTIL else "/proc"
     return (
-        f"{sep}\n"
-        f"⚙️ **System Monitor** `({mode})`\n"
-        f"{sep}\n"
-        f"**CPU**   `{cpu:5.1f}%`  `{_bar(cpu)}`\n"
-        f"**RAM**   `{ram_pct:5.1f}%`  `{_bar(ram_pct)}`\n"
-        f"         `{_fmt_bytes(ram_used)} / {_fmt_bytes(ram_total)}`\n"
-        f"**Disk**  `{disk_pct:5.1f}%`  `{_bar(disk_pct)}`\n"
-        f"         `{_fmt_bytes(disk_used)} / {_fmt_bytes(disk_total)}`\n"
-        f"**Net**   `{net_str}`\n"
-        f"**Up**    `{uptime}`\n"
-        f"{sep}\n"
-        f"`{datetime.now().strftime('%d %b %Y %H:%M:%S')}`"
+        f"📊 **System Monitor** `({mode})`\n"
+        f"---"
+        f"\n**CPU**   `{cpu:>5.1f}%`  `{_bar(cpu)}`"
+        f"\n**RAM**   `{ram_pct:>5.1f}%`  `{_bar(ram_pct)}`"
+        f"\n         `{_fmt_bytes(ram_used)} / {_fmt_bytes(ram_total)}`"
+        f"\n**Disk**  `{disk_pct:>5.1f}%`  `{_bar(disk_pct)}`"
+        f"\n         `{_fmt_bytes(disk_used)} / {_fmt_bytes(disk_total)}`"
+        f"\n**Net**   `{net_str}`"
+        f"\n**Up**    `{uptime}`"
+        f"\n\n⏱️ `{datetime.now().strftime('%d %b %Y %H:%M:%S')}`"
     )
 
 
@@ -230,19 +227,16 @@ async def sys_info(e):
         pass
 
     backend = "psutil" if _HAS_PSUTIL else "/proc (Termux-safe)"
-    sep = "─" * 30
     text = (
-        f"{sep}\n"
         f"🖥️ **System Info**\n"
-        f"{sep}\n"
-        f"**OS**       `{uname.system} {uname.release}`\n"
-        f"**Arch**     `{uname.machine}`\n"
-        f"**Hostname** `{uname.node}`\n"
-        f"**Python**   `{py_ver}`\n"
-        f"**CPU**      `{cpu_count} core(s) @ {cpu_freq}`\n"
-        f"**Boot**     `{boot_ts}`\n"
-        f"**Uptime**   `{uptime}`\n"
-        f"**Backend**  `{backend}`\n"
-        f"{sep}"
+        f"---"
+        f"\n**OS**       {uname.system} {uname.release}"
+        f"\n**Arch**     `{uname.machine}`"
+        f"\n**Hostname** `{uname.node}`"
+        f"\n**Python**   `{py_ver}`"
+        f"\n**CPU**      {cpu_count} core(s) @ {cpu_freq}"
+        f"\n**Boot**     `{boot_ts}`"
+        f"\n**Uptime**   `{uptime}`"
+        f"\n\n⚙️ **Backend:** `{backend}`"
     )
     await e.eor(text)

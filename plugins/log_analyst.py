@@ -237,12 +237,11 @@ async def _log_analyst(ult):
             summary += "\n..."
 
         msg_text = (
-            f"Log Analysis |\n"
-            f"`type     {log_type}`\n"
-            f"`file     {file_name}`\n"
-            f"──────────────────────────────\n"
-            f"{summary}\n"
-            f"──────────────────────────────\n"
+            f"📊 **Log Analysis**\n"
+            f"---"
+            f"\n🏷️ **Type:** {log_type}"
+            f"\n📄 **File:** `{file_name}`\n"
+            f"\n{summary}\n"
         )
 
         url = await fast_telegraph(telegraph_title, telegraph_content)

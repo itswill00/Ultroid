@@ -134,9 +134,9 @@ async def _help(ult):
             # so the user knows this is expected, not a bug.
             if not _HAS_BOT_AST:
                 help_text += (
-                    "\n\n`────────────────────`"
-                    "\n`mode  user-only`"
-                    "\n`note  set RUNTIME_MODE=dual for inline help`"
+                    "\n\n---"
+                    "\n🛠️ **Mode:** User Only"
+                    "\n💡 **Tip:** Set `RUNTIME_MODE=dual` for inline help."
                 )
 
             return await ult.reply(

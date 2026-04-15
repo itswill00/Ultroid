@@ -44,11 +44,11 @@ async def export_notes(e):
         with open(filename, "w", encoding="utf-8") as f:
             f.write(f"# Notes Export — {datetime.now().strftime('%d %b %Y %H:%M:%S')}\n")
             f.write(f"# Chat: {e.chat_id}\n")
-            f.write("─" * 50 + "\n\n")
+            f.write("-" * 50 + "\n\n")
             for i, (keyword, content) in enumerate(notes.items(), 1):
                 f.write(f"[{i}] Keyword: {keyword}\n")
                 f.write(f"Content:\n{content}\n")
-                f.write("─" * 30 + "\n\n")
+                f.write("-" * 30 + "\n\n")
 
         await e.client.send_file(
             e.chat_id,
@@ -83,7 +83,7 @@ async def export_messages(e):
         with open(filename, "w", encoding="utf-8") as f:
             f.write(f"# Messages Export — {datetime.now().strftime('%d %b %Y %H:%M:%S')}\n")
             f.write(f"# Chat: {e.chat_id} | Limit: {limit}\n")
-            f.write("─" * 50 + "\n\n")
+            f.write("-" * 50 + "\n\n")
             async for msg in e.client.iter_messages(e.chat_id, limit=limit):
                 if not msg.text:
                     continue

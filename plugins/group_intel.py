@@ -250,6 +250,8 @@ async def _send_alert(
         return
     _rate_cache[rate_key] = now
 
+    ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
+    
     # Aesthetic Minimalist Header
     text = (
         f"🛡️ **Intel Alert: {event_type.title()}**\n\n"
@@ -371,12 +373,12 @@ async def _intel_chat_action(event):
         actor_id = event.action_message.sender_id if event.action_message else None
         
         body = (
-            f"║ user  : {_format_user(user):<21} ║\n"
-            f"║ action: {action_type:<21} ║"
+            f"👤 **User:** {_format_user(user)}\n"
+            f"🚫 **Action:** {action_type}"
         )
         if actor_id and actor_id != event.user_id:
             actor = await _get_user(actor_id)
-            body += f"\n║ by    : {_format_user(actor):<21} ║"
+            body += f"\n👮 **By:** {_format_user(actor)}"
 
         await _send_alert(
             "ban" if event.user_kicked else "leave",
@@ -391,8 +393,8 @@ async def _intel_chat_action(event):
         actor_id = event.action_message.sender_id if event.action_message else None
         actor = await _get_user(actor_id) if actor_id else None
         body = (
-            f"║ change: {what:<21} ║\n"
-            f"║ by    : {_format_user(actor):<21} ║"
+            f"📝 **Change:** {what}\n"
+            f"👤 **By:** {_format_user(actor)}"
         )
         await _send_alert("settings", chat_id, group_title, body)
 
@@ -405,9 +407,9 @@ async def _intel_chat_action(event):
         demoted = getattr(event.action, "admin_rights", None) is None
         action_str = "demoted" if demoted else "promoted"
         body = (
-            f"║ user  : {_format_user(user):<21} ║\n"
-            f"║ action: {action_str:<21} ║\n"
-            f"║ by    : {_format_user(actor):<21} ║"
+            f"👤 **User:** {_format_user(user)}\n"
+            f"⚡ **Action:** {action_str}\n"
+            f"👮 **By:** {_format_user(actor)}"
         )
         await _send_alert("promote", chat_id, group_title, body, user_id=event.user_id)
 
@@ -513,7 +515,10 @@ async def _monitor_cmd(ult):
         groups[gid] = gtitle
         _save_groups(groups)
         return await ult.eor(
-            f"`INTEL — Monitoring enabled`\n`group   {gtitle}`\n`id      {gid}`"
+            f"✅ **Intel — Monitoring Enabled**\n"
+            f"---"
+            f"\n📍 **Group:** {gtitle}"
+            f"\n🆔 **ID:** `{gid}`"
         )
 
     # ── monitor remove ────────────────────────────────────────
@@ -526,20 +531,20 @@ async def _monitor_cmd(ult):
             return await ult.eor("`This group is not in the watchlist.`")
         title = groups.pop(gid)
         _save_groups(groups)
-        return await ult.eor(f"`INTEL — Monitoring removed`\n`group   {title}`")
+        return await ult.eor(f"❌ **Intel — Monitoring Removed**\n📍 **Group:** {title}")
 
     # ── monitor list ─────────────────────────────────────────
     elif action == "list":
         groups = _get_groups()
         if not groups:
             return await ult.eor("`No groups in watchlist. Use .monitor add inside a group.`")
-        lines = "`INTEL — Watchlist`\n`──────────────────────────────`\n"
+        lines = "📋 **Intel — Watchlist**\n---\n"
         for gid, title in groups.items():
-            lines += f"`{title}` — `{gid}`\n"
+            lines += f"• `{title}` — `{gid}`\n"
         flags = _get_flags()
         enabled = [k for k, v in flags.items() if v]
-        lines += f"\n`flags   {', '.join(enabled)}`"
-        lines += f"\n`status  {'PAUSED' if _is_paused() else 'ACTIVE'}`"
+        lines += f"\n🚩 **Flags:** {', '.join(enabled)}"
+        lines += f"\n📊 **Status:** {'⏸ PAUSED' if _is_paused() else '▶️ ACTIVE'}"
         return await ult.eor(lines)
 
     # ── monitor pause / resume ────────────────────────────────

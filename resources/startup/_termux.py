@@ -45,13 +45,13 @@ DISCLAIMER_TEXT = ""
 
 COPYRIGHT = f"©️ TeamUltroid {datetime.now().year}"
 
-HEADER = f"""{Fore.MAGENTA}
-╔╗ ╔╗╔╗  ╔╗            ╔╗
-║║ ║║║║ ╔╝╚╗           ║║
-║║ ║║║║ ╚╗╔╝╔═╗╔══╗╔╗╔═╝║
-║║ ║║║║  ║║ ║╔╝║╔╗║╠╣║╔╗║
-║╚═╝║║╚╗ ║╚╗║║ ║╚╝║║║║╚╝║
-╚═══╝╚═╝ ╚═╝╚╝ ╚══╝╚╝╚══╝\n{Fore.RESET}
+HEADER = f"""{Fore.CYAN}
+   __  ____  __                _     __
+  / / / / /_/ /__________  identity_/ /
+ / / / / / __/ ___/ __ \ \/ / __  / __/
+/ /_/ / / /_/ /  / /_/ />  < /_/ / /_  
+\____/_/\__/_/   \____/_/\_\____/\__/  
+\n{Fore.RESET}
 """
 
 INFO_TEXT = f"""
@@ -175,21 +175,14 @@ def ask_make_env():
         print("OK!")
 
 
-# ------------------------------------------------------------------------------------------ #
-
 clear()
 
 print(
     f"""
-{Fore.BLACK}{Back.WHITE} _____________ 
- ▄▄   ▄▄ ▄▄▄     ▄▄▄▄▄▄▄ ▄▄▄▄▄▄   ▄▄▄▄▄▄▄ ▄▄▄ ▄▄▄▄▄▄  
-█  █ █  █   █   █       █   ▄  █ █       █   █      █ 
-█  █ █  █   █   █▄     ▄█  █ █ █ █   ▄   █   █  ▄    █
-█  █▄█  █   █     █   █ █   █▄▄█▄█  █ █  █   █ █ █   █
-█       █   █▄▄▄  █   █ █    ▄▄  █  █▄█  █   █ █▄█   █
-█       █       █ █   █ █   █  █ █       █   █       █
-█▄▄▄▄▄▄▄█▄▄▄▄▄▄▄█ █▄▄▄█ █▄▄▄█  █▄█▄▄▄▄▄▄▄█▄▄▄█▄▄▄▄▄▄█ 
-{Style.RESET_ALL}
+{Fore.CYAN}
+    ULTROID - Professional UserBot
+    Human-centric. Minimalist. Robust.
+{Fore.RESET}
 {Fore.GREEN}- ULTROID Termux Installation -
   The Main Aim of this script is to deploy Ultroid with basic requirements and save your phone resources.
 {Fore.RESET}
