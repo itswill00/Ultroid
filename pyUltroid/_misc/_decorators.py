@@ -148,7 +148,8 @@ def ultroid_cmd(
             except (ChatSendInlineForbiddenError, ChatSendMediaForbiddenError, ChatSendStickersForbiddenError, BotMethodInvalidError, UserIsBotError, AlreadyInConversationError, BotInlineDisabledError, DependencyMissingError) as er:
                 return await eod(ult, f"`{er}`" if isinstance(er, (BotInlineDisabledError, DependencyMissingError)) else f"`{str(er)}`")
             except (MessageIdInvalidError, MessageNotModifiedError, MessageDeleteForbiddenError, AuthKeyDuplicatedError) as er:
-                LOGS.exception(er)
+                if not isinstance(er, MessageNotModifiedError):
+                    LOGS.exception(er)
                 if isinstance(er, AuthKeyDuplicatedError):
                     log_chat = ULT_CONFIG.get("LOG_CHANNEL")
                     if log_chat:

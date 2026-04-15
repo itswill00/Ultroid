@@ -83,6 +83,9 @@ def callback(data=None, from_users=[], admins=False, owner=False, **kwargs):
             try:
                 await func(event)
             except Exception as er:
+                from telethon.errors import MessageNotModifiedError
+                if isinstance(er, MessageNotModifiedError):
+                    return
                 LOGS.exception(er)
 
         asst.add_event_handler(wrapper, CallbackQuery(data=data, **kwargs))
