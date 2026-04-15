@@ -578,7 +578,8 @@ async def ready():
     if getattr(asst, "_bot", False):
         BTTS = [[
             Button.inline("Ping",  data="pkng"),
-            Button.inline("Logs",  data="open"),
+            Button.inline("Help",  data="open"),
+            Button.inline("Stats", data="alive"),
         ]]
         if has_update:
             BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
