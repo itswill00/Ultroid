@@ -166,8 +166,9 @@ if run_as_module:
                     )
         try:
             load_addons(dl)  # dl.split("/")[-1].replace(".py", ""))
-        except BaseException:
+        except Exception as e:
             os.remove(dl)
+            LOGS.error(f"Plugin installation failed for '{dl}': {e}")
             return await eor(ok, f"**ERROR**\n\n`{format_exc()}`", time=30)
         plug = sm.replace(".py", "")
         if plug in HELP:
@@ -186,7 +187,7 @@ if run_as_module:
                 for d in LIST[plug]:
                     x += HNDLR + d + "\n"
                 await eod(ok, f"✓ `Ultroid - Installed`: `{plug}` ✓\n\n`{x}`")
-            except BaseException:
+            except Exception:
                 await eod(ok, f"✓ `Ultroid - Installed`: `{plug}` ✓")
 
     async def heroku_logs(event):
@@ -202,8 +203,8 @@ if run_as_module:
             )
         try:
             app = (heroku3.from_key(Var.HEROKU_API)).app(Var.HEROKU_APP_NAME)
-        except BaseException as se:
-            LOGS.info(se)
+        except Exception as se:
+            LOGS.warning(f"Heroku Logs fetch failed: {se}")
             return await xx.edit(
                 "`HEROKU_API` and `HEROKU_APP_NAME` is wrong! Kindly re-check in config vars."
             )

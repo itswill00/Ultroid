@@ -277,8 +277,8 @@ async def autopilot():
     if channel:
         try:
             chat = await ultroid_bot.get_entity(channel)
-        except BaseException as err:
-            LOGS.exception(err)
+        except Exception as err:
+            LOGS.warning(f"Failed to fetch Log Channel identity: {err}")
             udB.del_key("LOG_CHANNEL")
             channel = None
     if not channel:
@@ -304,15 +304,11 @@ async def autopilot():
             )
         except ChannelsTooMuchError as er:
             LOGS.critical(
-                "You Are in Too Many Channels & Groups , Leave some And Restart The Bot"
+                "You are in too many channels/groups. Please leave some and restart."
             )
             return await _save(str(er))
-        except BaseException as er:
-            LOGS.exception(er)
-            LOGS.info(
-                "Something Went Wrong , Create A Group and set its id on config var LOG_CHANNEL."
-            )
-
+        except Exception as er:
+            LOGS.error(f"Automatic Log Channel creation failed: {er}")
             return await _save(str(er))
         new_channel = True
         chat = r.chats[0]
@@ -324,13 +320,12 @@ async def autopilot():
     except UserNotParticipantError:
         try:
             await ultroid_bot(InviteToChannelRequest(int(channel), [asst.me.username]))
-        except BaseException as er:
-            LOGS.info("Error while Adding Assistant to Log Channel")
-            LOGS.exception(er)
+        except Exception as er:
+            LOGS.warning(f"Failed to add Assistant to Log Channel: {er}")
             assistant = False
-    except BaseException as er:
+    except Exception as er:
         assistant = False
-        LOGS.exception(er)
+        LOGS.debug(f"Permission check for Log Channel failed: {er}")
     if assistant and new_channel:
         try:
             achat = await asst.get_entity(int(channel))
@@ -356,12 +351,9 @@ async def autopilot():
                     )
                 )
             except ChatAdminRequiredError:
-                LOGS.info(
-                    "Failed to promote 'Assistant Bot' in 'Log Channel' due to 'Admin Privileges'"
-                )
-            except BaseException as er:
-                LOGS.info("Error while promoting assistant in Log Channel..")
-                LOGS.exception(er)
+                LOGS.warning("Missing admin rights to promote Assistant in Log Channel.")
+            except Exception as er:
+                LOGS.error(f"Assistant promotion failed: {er}")
     if isinstance(chat.photo, ChatPhotoEmpty):
         photo, _ = await download_file(
             "https://graph.org/file/27c6812becf6f376cbb10.jpg", "channelphoto.jpg"
@@ -441,7 +433,7 @@ async def customize():
             os.remove(file)
         LOGS.info("Customisation Done")
     except Exception as e:
-        LOGS.exception(e)
+        LOGS.warning(f"Assistant Bot customization failed: {e}")
 
 
 async def plug(plugin_channels):

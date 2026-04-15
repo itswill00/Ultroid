@@ -49,8 +49,7 @@ def main():
 
     LOGS.info("Initialising...")
     
-    # Re-cache all database keys once to avoid repeated disk I/O
-    udB.re_cache()
+    # Initialising asst/pmbot/addons config
 
     ultroid_bot.loop.create_task(keep_redis_alive())
 

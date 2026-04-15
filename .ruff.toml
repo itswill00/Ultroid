@@ -1,0 +1,29 @@
+[tool.ruff]
+# Target version for Python
+target-version = "py311"
+
+# Enable several rule categories
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "B",   # flake8-bugbear
+    "I",   # isort
+    "ASYNC" # flake8-async
+]
+
+ignore = [
+    "E501", # line too long (handled by formatter)
+    "B008", # function-call-in-default-argument
+    "F403", # star imports (used extensively in Ultroid)
+    "F405", # star imports (used extensively in Ultroid)
+]
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9_]+))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

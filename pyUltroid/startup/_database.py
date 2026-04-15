@@ -57,18 +57,23 @@ else:
 class _BaseDatabase:
     def __init__(self, *args, **kwargs):
         self._cache = {}
+        self._ttl = 3600  # Default 1 hour TTL
 
     def get_key(self, key):
+        now = time.time()
         if key in self._cache:
-            return self._cache[key]
+            val, expiry = self._cache[key]
+            if now < expiry:
+                return val
+        
+        # Cache miss or expired
         value = self._get_data(key)
-        self._cache.update({key: value})
+        self._cache[key] = (value, now + self._ttl)
         return value
 
     def re_cache(self):
+        """Clears cache to force fresh fetches. Pre-loading is disabled to save RAM."""
         self._cache.clear()
-        for key in self.keys():
-            self._cache.update({key: self.get_key(key)})
 
     def ping(self):
         return 1
@@ -88,17 +93,23 @@ class _BaseDatabase:
 
     def _get_data(self, key=None, data=None):
         if key:
-            data = self.get(str(key))
+            try:
+                data = self.get(str(key))
+            except Exception as e:
+                LOGS.debug(f"DB Read Error for '{key}': {e}")
+                return None
         if data and isinstance(data, str):
             try:
-                data = ast.literal_eval(data)
-            except BaseException:
+                # Use safer literal_eval but handle failures gracefully
+                if data in ("True", "False", "None") or (data.startswith(("[", "{"))):
+                    data = ast.literal_eval(data)
+            except (ValueError, SyntaxError):
                 pass
         return data
 
     def set_key(self, key, value, cache_only=False):
-        value = self._get_data(data=value)
-        self._cache[key] = value
+        processed_val = self._get_data(data=value)
+        self._cache[key] = (processed_val, time.time() + self._ttl)
         if cache_only:
             return
         return self.set(str(key), str(value))
