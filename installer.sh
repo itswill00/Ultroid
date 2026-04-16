@@ -341,6 +341,10 @@ declare -A IMPORT_MAP=(
     ["apscheduler"]="apscheduler"
     ["tabulate"]="tabulate"
     ["coloredlogs"]="coloredlogs"
+    ["localdb.json"]="localdb"
+    ["redis"]="redis"
+    ["pymongo"]="pymongo"
+    ["psycopg2-binary"]="psycopg2"
 )
 
 # Packages to SKIP entirely on Termux (too heavy, no pkg equivalent)
