@@ -296,8 +296,12 @@ async def _(event):
             thumb=thumb,
         )
         await event.edit(text, file=file.media, buttons=button)
-    await bash(f"rm {vid_id}.jpg")
-
+    
+    # Native Python I/O instead of OS Subprocess
+    try:
+        os.remove(f"{vid_id}.jpg")
+    except OSError:
+        pass
 
 @callback(re.compile("ytdl_back:(.*)"), owner=True)
 async def ytdl_back(event):

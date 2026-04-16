@@ -533,9 +533,14 @@ async def progress(current, total, event, start, type_of_ps, file_name=None):
     chat_id = event.chat_id
     msg_id = event.id
     
-    # Manage No_Flood to prevent memory leaks
+    # Timestamp-based memory pruning to prevent leaks without dropping active sessions
     if len(No_Flood) > 100:
-        No_Flood.clear()
+        for c_id in list(No_Flood.keys()):
+            for m_id in list(No_Flood[c_id].keys()):
+                if now - No_Flood[c_id][m_id] > 30:
+                    del No_Flood[c_id][m_id]
+            if not No_Flood[c_id]:
+                del No_Flood[c_id]
         
     if chat_id in No_Flood:
         if msg_id in No_Flood[chat_id]:
