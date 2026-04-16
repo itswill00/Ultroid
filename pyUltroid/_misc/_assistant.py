@@ -62,6 +62,15 @@ def asst_cmd(pattern=None, load=None, owner=False, **kwargs):
         asst.add_event_handler(handler, NewMessage(**kwargs))
         if load is not None:
             append_or_update(load, func, name, kwargs)
+            
+        # Hook into Help Engine registry to prevent "Not Valid Plugin" mismatch
+        if pattern:
+            from ..dB._core import LIST
+            import inspect
+            from pathlib import Path
+            file_stem = Path(inspect.stack()[1].filename).stem
+            # Prefix with '/' to distinguish assistant commands
+            LIST.setdefault(file_stem, []).append(f"/{pattern}")
 
     return ult
 

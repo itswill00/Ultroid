@@ -1,5 +1,15 @@
+"""
+★ Assistant-Exclusive Relay Module ★
+
+This module acts as a silent proxy. 
+Commands like .dl, .yta, and .ytv are captured here on the userbot side 
+and instantly relayed to the Assistant Bot to process the actual download, 
+keeping your main account clean and unaffected.
+"""
+
 # Ultroid - UserBot
 # Media Downloader Relay (Assistant Proxy)
+
 
 from pyUltroid import asst
 from assistant.media_dl import manual_downloader

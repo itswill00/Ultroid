@@ -1,3 +1,11 @@
+"""
+★ Universal Media Downloader ★
+
+Provides an interactive GUI format selection for TikTok, Instagram, Twitter, and YouTube links.
+Includes automatic chat listener functionality for completely seamless background downloads, 
+as well as manual `/dl`, `/yta`, and `/ytv` command triggers.
+"""
+
 # Ultroid Media Downloader Service
 # Automatic TikTok, Instagram, and More
 
