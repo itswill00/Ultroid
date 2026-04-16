@@ -328,6 +328,7 @@ declare -A IMPORT_MAP=(
     ["PyNaCl"]="nacl"
     ["psutil"]="psutil"
     ["hiredis"]="hiredis"
+    ["telethon-patch"]="telethonpatch"
 )
 
 # Packages to SKIP entirely on Termux (too heavy, no pkg equivalent)

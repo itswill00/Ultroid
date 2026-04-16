@@ -26,10 +26,14 @@ git clone https://github.com/itswill00/Ultroid && cd Ultroid && bash termux_setu
 ```
 
 ### Linux / VPS / WSL
+Optimized setup for high-performance deployments:
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid
-pip3 install -r requirements.txt
-python3 -m pyUltroid
+bash installer.sh
+```
+*To start the bot:*
+```bash
+bash run.sh
 ```
 
 ---
