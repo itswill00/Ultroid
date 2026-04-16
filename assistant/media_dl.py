@@ -20,7 +20,7 @@ from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE
-from pyUltroid.fns.helper import humanbytes, time_formatter, progress
+from pyUltroid.fns.helper import humanbytes, time_formatter, progress, uploadable
 from pyUltroid.fns.admins import admin_check
 from pyUltroid._misc._assistant import asst_cmd, callback
 
@@ -122,18 +122,17 @@ async def dler_process(event, url, fmt):
             return await status_msg.edit(f"`[DL ERROR] File too large ({humanbytes(total_size)}).`")
         
         # Hybrid Payload Router 
-        if total_size > 50 * 1024 * 1024:
-            await status_msg.edit(f"`[DL] Size ({humanbytes(total_size)}) exceeds Assistant limits limit. Relaying to Userbot Proxy...`")
-            sender_client = ultroid_bot
-        else:
-            sender_client = asst
-
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
         uploader = info.get("uploader") or info.get("uploader_id") or "Unknown"
         uploader_url = info.get("uploader_url") or url
         title = info.get("title") or info.get("description") or ""
         if len(title) > 150: title = title[:147] + "..."
-        
+
+        if total_size > 50 * 1024 * 1024:
+            sender_client = ultroid_bot
+        else:
+            sender_client = asst
+
         caption = (
             f"**[ {source} | {fmt.upper()} ]**\n"
             f"---"
@@ -142,11 +141,24 @@ async def dler_process(event, url, fmt):
             f"\n⏱️ **Duration:** `{duration}s`"
         )
         
+        # Define Upload Progress Hook
+        async def up_progress_hook(current, total):
+            await progress(current, total, status_msg, start_time, f"📤 Uploading {fmt.upper()} to Telegram...")
+
+        file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
+        
+        if total_size > 50 * 1024 * 1024 and isinstance(file_to_send, str):
+            # Speed up large single file uploads via FastTelethon
+            with open(file_to_send, 'rb') as f:
+                file_handle = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), progress_callback=up_progress_hook)
+            file_to_send = file_handle
+
         await sender_client.send_file(
             event.chat_id,
-            file=valid_files if len(valid_files) > 1 else valid_files[0],
+            file=file_to_send,
             caption=caption,
             reply_to=event.message_id if is_callback else event.id,
+            progress_callback=up_progress_hook if total_size <= 50 * 1024 * 1024 else None,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         await status_msg.delete()
