@@ -19,11 +19,6 @@ from datetime import datetime
 
 from . import HOSTED_ON, LOGS, ultroid_cmd, get_string, humanbytes
 
-try:
-    import speedtest
-except ImportError:
-    speedtest = None
-
 
 # ── Speedtest Engine (Asynchronous Wrapper) ──────────────────
 
@@ -46,8 +41,16 @@ def _run_speedtest(use_image=False):
 
 @ultroid_cmd(pattern="speedtest( (.*)|$)")
 async def turbo_speedtest(ult):
-    if not speedtest:
-        return await ult.eor("`'speedtest-cli' package not found! Please run installer again.`")
+    # Try dynamic import to allow detection without restart
+    try:
+        import speedtest
+    except ImportError:
+        return await ult.eor(
+            "`'speedtest-cli' package not found!`\n\n"
+            "**Fix:**\n"
+            "1. Run: `pip install speedtest-cli` in your terminal.\n"
+            "2. Restart the bot."
+        )
 
     match = ult.pattern_match.group(1).strip().lower()
     x = await ult.eor("`[ 🛰️ ] Sentinel: Finding best server...`")
