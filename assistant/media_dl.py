@@ -14,8 +14,9 @@ import re
 import time
 import uuid
 import asyncio
+import shutil
 from telethon import Button
-from pyUltroid import asst, udB, LOGS, _ult_cache
+from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE
@@ -81,12 +82,13 @@ async def dler_process(event, url, fmt):
     status_msg = await (event.edit if is_callback else event.reply)(f"`[DL] Processing {fmt.upper()}...`")
     
     valid_files = []
+    job_id = str(uuid.uuid4())[:8]
     try:
         info = await extractor.extract(url)
         if not info:
              return await status_msg.edit("`[DL ERROR] Failed to fetch metadata.`")
 
-        files = await extractor.download(url, format_type=fmt)
+        files = await extractor.download(url, format_type=fmt, job_id=job_id)
         duration = round(time.time() - start_time, 2)
         
         if not files:
@@ -99,6 +101,13 @@ async def dler_process(event, url, fmt):
         total_size = sum(os.path.getsize(f) for f in valid_files)
         if total_size > 2 * 1024 * 1024 * 1024:
             return await status_msg.edit(f"`[DL ERROR] File too large ({humanbytes(total_size)}).`")
+        
+        # Hybrid Payload Router 
+        if total_size > 50 * 1024 * 1024:
+            await status_msg.edit(f"`[DL] Size ({humanbytes(total_size)}) exceeds Assistant limits limit. Relaying to Userbot Proxy...`")
+            sender_client = ultroid_bot
+        else:
+            sender_client = asst
 
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
         uploader = info.get("uploader") or info.get("uploader_id") or "Unknown"
@@ -114,7 +123,7 @@ async def dler_process(event, url, fmt):
             f"\n⏱️ **Duration:** `{duration}s`"
         )
         
-        await asst.send_file(
+        await sender_client.send_file(
             event.chat_id,
             file=valid_files if len(valid_files) > 1 else valid_files[0],
             caption=caption,
@@ -127,10 +136,7 @@ async def dler_process(event, url, fmt):
         LOGS.error(f"Downloader Error: {e}")
         await status_msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
     finally:
-        for f in valid_files:
-            if os.path.exists(f): 
-                try: os.remove(f)
-                except: pass
+        shutil.rmtree(f"downloads/{job_id}", ignore_errors=True)
 
 # --------------------------------------------------------------------------
 # TOGGLE COMMAND
