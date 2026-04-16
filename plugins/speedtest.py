@@ -53,7 +53,10 @@ async def turbo_speedtest(ult):
             "2. Restart the bot."
         )
 
-    match = ult.pattern_match.group(1).strip().lower()
+    try:
+        match = ult.pattern_match.group(1).strip().lower()
+    except (IndexError, AttributeError):
+        match = ""
     x = await ult.eor("`Audit: Initializing network connectivity check...`")
     
     try:
