@@ -27,8 +27,13 @@ from datetime import datetime
 from telethon.tl.functions.account import (
     GetAuthorizationsRequest,
     ResetAuthorizationRequest,
-    ResetAuthorizationsRequest,
 )
+
+try:
+    from telethon.tl.functions.account import ResetAuthorizationsRequest
+except ImportError:
+    # Telethon rename/move fallback
+    from telethon.tl.functions.auth import ResetAuthorizationsRequest
 
 from . import udB, ultroid_bot, ultroid_cmd, LOGS
 

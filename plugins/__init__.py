@@ -38,7 +38,9 @@ OWNER_ID = ultroid_bot.uid
 ultroid_bot: UltroidClient
 asst: UltroidClient
 
+from pyUltroid._misc import refresh_all
 LOG_CHANNEL = udB.get_key("LOG_CHANNEL")
+call_back = refresh_all
 
 
 def inline_pic():

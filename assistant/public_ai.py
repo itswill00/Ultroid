@@ -3,7 +3,8 @@
 
 import re
 from telethon import Button
-from pyUltroid import asst, udB, LOGS, owner_and_sudos
+from pyUltroid import asst, udB, LOGS
+from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid._misc._assistant import asst_cmd, callback
 from pyUltroid.fns.helper import inline_mention
