@@ -47,13 +47,23 @@ async def show_dl_prompt(event, url):
     
     source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
     
-    buttons = [
-        [
-            Button.inline("🎬 Video", data=f"get_dl|video|{msg_id}"),
-            Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}")
-        ],
-        [Button.inline("🗑️ Dismiss", data="close_dl")]
-    ]
+    if "NSFW" in source or "Universal" in source:
+        buttons = [
+            [
+                Button.inline("🎬 1080p", data=f"get_dl|1080|{msg_id}"),
+                Button.inline("🎬 720p", data=f"get_dl|720|{msg_id}"),
+                Button.inline("🎬 480p", data=f"get_dl|480|{msg_id}")
+            ],
+            [Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}"), Button.inline("🗑️ Dismiss", data="close_dl")]
+        ]
+    else:
+        buttons = [
+            [
+                Button.inline("🎬 Video", data=f"get_dl|video|{msg_id}"),
+                Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}")
+            ],
+            [Button.inline("🗑️ Dismiss", data="close_dl")]
+        ]
     
     await asst.send_message(
         event.chat_id,
@@ -194,7 +204,7 @@ async def auto_media_downloader(event):
 # CALLBACK HANDLERS
 # --------------------------------------------------------------------------
 
-@callback(re.compile("get_dl\\|(video|audio)\\|(.*)"))
+@callback(re.compile(b"get_dl\\|(1080|720|480|video|audio)\\|(.*)"))
 async def process_media_selection(event):
     """Handles format selection for media downloads."""
     fmt = event.pattern_match.group(1).decode("utf-8")

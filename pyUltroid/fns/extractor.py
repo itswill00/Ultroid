@@ -44,6 +44,9 @@ class MediaExtractor:
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }]
+        elif format_type in ["1080", "720", "480"]:
+            opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]"
+            opts["merge_output_format"] = "mp4"
         else:
             opts["format"] = "bestvideo+bestaudio/best"
             opts["merge_output_format"] = "mp4"
