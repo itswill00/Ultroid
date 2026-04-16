@@ -142,25 +142,52 @@ async def ultroid(event):
             )
 
 
-@asst_cmd(pattern="help$", owner=True)
+@asst_cmd(pattern="help$", public=True)
 async def asst_help(event):
-    help_text = """**[Ultroid] Sudo Guide**
-
-You have been granted Sudo permissions for this Userbot. You can execute commands remotely by typing them in any group where the bot is active.
-
-**Capabilities:**
-» Execute standard utility commands.
-» Access AI integrations and media tools.
-» Handle basic automated moderation.
-
-**Vital Restrictions:**
-» No access to system remote code execution (`.bash`, `.eval`).
-» No access to internal Bot Configurations.
-» No access to Sudo Management.
-
-*Usage:* Simply send a command prefix (usually `.`) followed by the command name (e.g. `.ping`) in the chat."""
+    """Adaptive Help Interface for Sudo and Public tiers."""
+    sender_id = event.sender_id
+    is_owner_or_sudo = sender_id in owner_and_sudos()
     
-    await event.reply(help_text)
+    if is_owner_or_sudo:
+        # Tier A: Sudo Governance Guide
+        header = "🛡️ **Sudo Governance Protocol**"
+        content = (
+            "You have elevated system access. Management controls enabled."
+            "\n\n**[ Systems & Diagnostics ]**"
+            "\n• `/speedtest` - Network Statistics"
+            "\n• `/sysinfo` - Health Overview"
+            "\n• `/sysmon` - Real-time Hardware Monitor"
+            "\n\n**[ Administration ]**"
+            "\n• `/dlservice` - Auto-DL Governance"
+            "\n• `/stat` - Usage Metrics"
+            "\n• `/bcast` - Broadcast Relay"
+            "\n\n**[ Utilities ]**"
+            "\n• Access all Public Commands below."
+        )
+        buttons = [
+            [Button.inline("⚙️ System Settings", data="setter")],
+            [Button.inline("📊 Global Stats", data="stat")]
+        ]
+    else:
+        # Tier B: Public Service Guide
+        header = "🌐 **Public Connectivity Center**"
+        content = (
+            "Verified human access granted. Service tools enabled."
+            "\n\n**[ Media Services ]**"
+            "\n• `/dl <url>` - Universal Downloader"
+            "\n• `/ytv /yta` - Specialized Video/Audio"
+            "\n\n**[ Intelligence & Research ]**"
+            "\n• `/ask <query>` - Technical AI Relay"
+            "\n\n**[ Translation ]**"
+            "\n• `/tr <lang> <text>` - Universal Translation"
+            "\n\n**[ Identification Tools ]**"
+            "\n• `/id` - System Identification"
+            "\n• `/info` - Profile Information"
+        )
+        buttons = [[Button.inline("👤 System Identity", data="ownerinfo")]]
+
+    text = f"{header}\n---\n{content}\n\n---\n⚙️ `Documentation Ledger: Local Edition`"
+    await event.reply(text, buttons=buttons)
 
 
 @callback("itkkstyo", owner=True)
