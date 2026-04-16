@@ -31,13 +31,13 @@ async def ac(e):
         wut = mediainfo(wt.media)
         if wut.startswith(("pic", "gif")):
             dl = await e.client.download_media(wt.media)
-            m = upload_file(dl)
+            m = await upload_file(dl)
             os.remove(dl)
         elif wut == "video":
             if wt.media.document.size > 8 * 1000 * 1000:
                 return await e.eor(get_string("com_4"), time=5)
             dl = await e.client.download_media(wt.media)
-            m = upload_file(dl)
+            m = await upload_file(dl)
             os.remove(dl)
         else:
             m = utils.pack_bot_file_id(wt.media)

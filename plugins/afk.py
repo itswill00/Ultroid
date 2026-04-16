@@ -50,7 +50,7 @@ async def set_afk(event):
             media_type = mediainfo(reply.media)
             if media_type.startswith(("pic", "gif")):
                 file = await event.client.download_media(reply.media)
-                media = upload_file(file)
+                media = await upload_file(file)
             else:
                 media = reply.file.id
     await event.eor("`Done`", time=2)

@@ -21,11 +21,10 @@ try:
 except ImportError:
     GDriveManager = None
 from telethon import Button, events
-from catbox import CatboxUploader
 from telethon.tl.types import MessageMediaWebPage
 from telethon.utils import get_peer_id
 
-from pyUltroid.fns.helper import fast_download, progress
+from pyUltroid.fns.helper import fast_download, progress, catbox_upload
 from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
 from pyUltroid.dB.verify_db import add_verified, add_captcha_verified
 from pyUltroid.startup.loader import Loader
@@ -35,7 +34,6 @@ from . import *
 # --------------------------------------------------------------------#
 telegraph = telegraph_client()
 GDrive = GDriveManager() if GDriveManager else None
-uploader = CatboxUploader()
 # --------------------------------------------------------------------#
 
 def text_to_url(event):
@@ -827,12 +825,12 @@ async def media(event):
         else:
             media = await event.client.download_media(response, "alvpc")
             try:
-                url = uploader.upload_file(media)
+                url = await catbox_upload(media)
                 remove(media)
             except BaseException as er:
                 LOGS.exception(er)
                 return await conv.send_message(
-                    "Terminated.",
+                    f"**Upload Failed:**\n`{str(er)}`",
                     buttons=get_back_button("cbs_alvcstm"),
                 )
         await setit(event, var, url)
@@ -965,12 +963,12 @@ async def media(event):
             url = response.file.id
         else:
             try:
-                url = uploader.upload_file(media)
+                url = await catbox_upload(media)
                 remove(media)
             except BaseException as er:
                 LOGS.exception(er)
                 return await conv.send_message(
-                    "Terminated.",
+                    f"**Upload Failed:**\n`{str(er)}`",
                     buttons=get_back_button("cbs_pmcstm"),
                 )
         await setit(event, var, url)
@@ -1234,12 +1232,12 @@ async def media(event):
             url = text_to_url(response)
         else:
             try:
-                url = uploader.upload_file(media)
+                url = await catbox_upload(media)
                 remove(media)
             except BaseException as er:
                 LOGS.exception(er)
                 return await conv.send_message(
-                    "Terminated.",
+                    f"**Upload Failed:**\n`{str(er)}` Outreach Limit?",
                     buttons=get_back_button("setter"),
                 )
         await setit(event, var, url)

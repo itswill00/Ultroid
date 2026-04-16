@@ -606,6 +606,29 @@ async def shutdown(ult):
                 "`HEROKU_API` and `HEROKU_APP_NAME` is wrong! Kindly re-check in config vars."
             )
 
+async def catbox_upload(path: str):
+    """
+    Safely upload a file to Catbox with size validation (200MB limit).
+    Returns the URL on success, or raises an exception with a clear message.
+    """
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"File not found: {path}")
+
+    size = os.path.getsize(path)
+    # Catbox has a strict 200MB limit for guest uploads.
+    if size > 200 * 1024 * 1024:
+        raise ValueError(f"File too large ({humanbytes(size)}). Catbox guest limit is 200MB.")
+
+    try:
+        from catbox import CatboxUploader
+        uploader = CatboxUploader()
+        # upload_file is synchronous network I/O; must run in thread
+        return await run_async(uploader.upload_file)(path)
+    except Exception as e:
+        if "Failed to upload" in str(e):
+            raise Exception("Catbox server rejected the upload. It might be down or blocking the file type.") from e
+        raise e
+
 async def aexec(code, event):
     """
     Async execution for code blocks — used internally by helper utilities.

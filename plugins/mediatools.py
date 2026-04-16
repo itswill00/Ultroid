@@ -88,7 +88,7 @@ async def mi(e):
     makehtml = ""
     if naam.endswith((".jpg", ".png")):
         if os.path.exists(naam):
-            med = upload_file(naam)
+            med = await upload_file(naam)
         else:
             med = match
         makehtml += f"<img src='{med}'><br>"

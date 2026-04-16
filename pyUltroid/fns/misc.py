@@ -13,7 +13,6 @@ import string
 from logging import WARNING
 from random import choice, randrange, shuffle
 from traceback import format_exc
-from catbox import CatboxUploader
 
 from pyUltroid.exceptions import DependencyMissingError
 
@@ -33,7 +32,7 @@ if run_as_module:
     from ..dB._core import LIST
 
 from . import some_random_headers
-from .helper import async_searcher
+from .helper import async_searcher, catbox_upload
 from .tools import check_filename, json_parser
 
 try:
@@ -60,7 +59,7 @@ try:
 except ImportError:
     BeautifulSoup = None
 
-uploader = CatboxUploader()
+# Catbox uploader is now centralized in helper.py as catbox_upload (async)
 
 async def randomchannel(
     tochat, channel, range1, range2, caption=None, client=ultroid_bot
@@ -341,7 +340,7 @@ class Quotly:
         async def telegraph(file_):
             file = file_ + ".png"
             Image.open(file_).save(file, "PNG")
-            uri = uploader.upload_file(file)
+            uri = await catbox_upload(file)
             os.remove(file)
             os.remove(file_)
             return uri
