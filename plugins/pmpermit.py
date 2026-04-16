@@ -193,9 +193,39 @@ if udB.get_key("PMLOG"):
     )
     async def pmlog_handler(event):
         user = await event.get_sender()
-        if getattr(user, 'bot', None) or user.is_self or user.verified or Logm.contains(user.id):
+        if getattr(user, "bot", None) or user.is_self or user.verified or Logm.contains(user.id):
             return
-        await event.forward_to(udB.get_key("PMLOGGROUP") or LOG_CHANNEL)
+        target = udB.get_key("PMLOGGROUP") or LOG_CHANNEL
+        mention = inline_mention(user)
+        header = f"💌 **#PMLOG** from {mention} [`{user.id}`]"
+        buttons = [
+            [
+                Button.url("👤 View Profile", url=f"tg://user?id={user.id}"),
+                Button.inline("⛔ Block", data=f"block_{user.id}"),
+            ]
+        ]
+        try:
+            if event.media:
+                await asst.send_file(
+                    target,
+                    event.media,
+                    caption=f"{header}\n\n{event.text or ''}",
+                    buttons=buttons,
+                )
+            else:
+                await asst.send_message(
+                    target, f"{header}\n\n{event.text or ''}", buttons=buttons
+                )
+        except Exception as er:
+            LOGS.info(f"PMLogger Error: {er}")
+            try:
+                await asst.send_message(
+                    target,
+                    f"{header}\n\n**Content:**\n{event.text or '[Media/File]'}",
+                    buttons=buttons,
+                )
+            except Exception:
+                pass
 
 
 if udB.get_key("PMSETTING"):
