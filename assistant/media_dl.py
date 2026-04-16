@@ -101,15 +101,21 @@ async def dler_process(event, url, fmt):
     is_admin_or_sudo = event.sender_id in owner_and_sudos()
     
     try:
-        files = await asyncio.to_thread(extractor.extract, url, fmt=fmt, job_id=job_id)
-        if not files:
-            return await status_msg.edit("`[DL ERROR] No downloadable content found.`")
-            
-        # Check size for public users
         if not is_admin_or_sudo:
-            total_size = sum(os.path.getsize(f) for f in files)
-            if total_size > 100 * 1024 * 1024: # 100MB
-                return await status_msg.edit(f"⚠️ **Resource Limit Exceeded**\n\nPublic downloads are limited to **100 MB**. Found: `{humanbytes(total_size)}`.\n\n`Contact @{OWNER_ID} for elevated access.`")
+            # We must check size before the full download to protect resources.
+            info = await extractor.extract(url)
+            if info and "error" not in info:
+                # Approximate size in bytes
+                size = info.get("filesize") or info.get("filesize_approx") or 0
+                if size > 100 * 1024 * 1024:
+                    return await status_msg.edit(f"⚠️ **Resource Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nFound metadata size: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for elevated access.`")
+            elif info and "error" in info:
+                return await status_msg.edit(f"`[DL ERROR] Metadata extraction failed: {info['error']}`")
+
+        # Proceed to actual download
+        files = await extractor.download(url, format_type=fmt, job_id=job_id)
+        if not files:
+            return await status_msg.edit("`[DL ERROR] No downloadable content found or download failed.`")
     except Exception as e:
         LOGS.error(f"Downloader Metadata Error: {e}")
         return await status_msg.edit(f"`[DL ERROR] Resource extraction failed: {str(e)[:50]}`")
