@@ -39,6 +39,10 @@ if "media_dl" not in _ult_cache:
 if "cancel_jobs" not in _ult_cache:
     _ult_cache["cancel_jobs"] = set()
 
+# Tracker for Job Ownership (UID)
+if "job_owners" not in _ult_cache:
+    _ult_cache["job_owners"] = {}
+
 LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
 # --------------------------------------------------------------------------
@@ -205,6 +209,7 @@ async def dler_process(event, url, fmt):
             await status_msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
     finally:
         _ult_cache["cancel_jobs"].discard(job_id)
+        _ult_cache["job_owners"].pop(job_id, None)
         shutil.rmtree(f"downloads/{job_id}", ignore_errors=True)
 
 # --------------------------------------------------------------------------
@@ -296,6 +301,9 @@ async def process_media_selection(event):
         return await event.answer("Download prompt expired.", alert=True)
     
     url = data["url"]
+    # Register ownership for cancellation control
+    _ult_cache["job_owners"][job_id] = event.sender_id
+    
     # Deleting picker immediately for UI cleanup
     await event.delete()
     await dler_process(event, url, fmt)
@@ -307,8 +315,17 @@ async def close_media(event):
 
 @callback(re.compile(b"cancel_dl\\|(.*)"))
 async def process_media_cancel(event):
-    """Signals a background download job to terminate."""
+    """Signals a background download job to terminate with Auth Check."""
     job_id = event.pattern_match.group(1).decode("utf-8")
+    
+    # Authorization Check
+    owner_id = _ult_cache["job_owners"].get(job_id)
+    is_admin = await admin_check(event, require_admin=True)
+    is_sudo = event.sender_id in (owner_and_sudos())
+    
+    if owner_id and event.sender_id != owner_id and not (is_admin or is_sudo):
+        return await event.answer("❌ Access Denied: Only the requester or admins can cancel this task.", alert=True)
+
     _ult_cache["cancel_jobs"].add(job_id)
     await event.answer("❌ Cancellation signal sent. Stopping task...", alert=True)
     await event.edit("`[DL] Aborting task... Clearing temporary files.`")
