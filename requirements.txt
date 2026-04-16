@@ -28,4 +28,4 @@ oauth2client
 # Downloader Engine (Turbo Optimized)
 yt-dlp>=2026.3.17
 youtube-search-python
-aria2p # Python wrapper for aria2 (Speed optimization)
+aria2p
