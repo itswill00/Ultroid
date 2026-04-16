@@ -53,49 +53,49 @@ async def turbo_speedtest(ult):
         )
 
     match = ult.pattern_match.group(1).strip().lower()
-    x = await ult.eor("`[ 🛰️ ] Sentinel: Finding best server...`")
+    x = await ult.eor("`Audit: Initializing network connectivity check...`")
     
     try:
         # Step 1: Initialize
         loop = asyncio.get_running_loop()
         s = speedtest.Speedtest()
         
-        await x.edit("`[ 🛰️ ] Sentinel: Connecting to best server...`")
+        await x.edit("`Audit: Selecting optimal service node...`")
         best = await asyncio.to_thread(s.get_best_server)
         
         # Step 2: Download
-        await x.edit(f"`[ 📥 ] Sentinel: Sampling Download Speed...` \n**Server:** `{best['sponsor']} ({best['name']})`")
+        await x.edit(f"`Audit: Measuring download throughput...` \n**Node:** `{best['sponsor']} ({best['name']})`")
         await asyncio.to_thread(s.download)
         
         # Step 3: Upload
-        await x.edit("`[ 📤 ] Sentinel: Sampling Upload Speed...` \n**Ping:** `{:.2f} ms`".format(s.results.ping))
+        await x.edit("`Audit: Measuring upload throughput...` \n**Latency:** `{:.2f} ms`".format(s.results.ping))
         await asyncio.to_thread(s.upload)
         
         # Step 4: Finalize
         if "image" in match:
-            await x.edit("`[ 🖼️ ] Sentinel: Generating official result image...`")
+            await x.edit("`Audit: Exporting diagnostic report...`")
             share_url = await asyncio.to_thread(s.results.share)
         
         res = s.results.dict()
         
-        # UI Formatting (Professional Double-Box)
-        down = humanbytes(res['download'] / 8) + "/s" # Match humanbytes expectation
+        # UI Formatting (Professional & Neutral)
+        down = humanbytes(res['download'] / 8) + "/s" 
         up = humanbytes(res['upload'] / 8) + "/s"
         isp = res['client']['isp']
         server = f"{res['server']['sponsor']} ({res['server']['name']})"
         ping = f"{res['ping']:.2f} ms"
         
         text = (
-            f"🛡️ **Turbo Speedtest Sentinel**\n"
+            f"**Network Performance Audit**\n"
             f"---"
-            f"\n🌐 **ISP:** `{isp}`"
-            f"\n📍 **Server:** `{server}`"
+            f"\n**Service Provider:** `{isp}`"
+            f"\n**Assigned Node:** `{server}`"
             f"\n---"
-            f"\n📥 **Download:** `{down}`"
-            f"\n📤 **Upload:** `{up}`"
-            f"\n⏱️ **Latency:** `{ping}`"
+            f"\n**Download:** `{down}`"
+            f"\n**Upload:** `{up}`"
+            f"\n**Latency:** `{ping}`"
             f"\n---"
-            f"\n⚙️ `{HOSTED_ON}` | `{datetime.now().strftime('%H:%M:%S UTC')}`"
+            f"\n⚙️ `{HOSTED_ON}` | `{datetime.now().strftime('%H:%M %Z')}`"
         )
         
         if "image" in match and share_url:
