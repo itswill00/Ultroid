@@ -142,19 +142,21 @@ async def dler_process(event, url, fmt):
         )
         
         # Define Upload Progress Hook
-        async def up_progress_hook(current, total):
-            await progress(current, total, status_msg, start_time, f"📤 Uploading {fmt.upper()} to Telegram...")
+        async def up_progress_hook(current, total, header=None):
+            header = header or f"📤 Uploading {fmt.upper()} to Telegram..."
+            await progress(current, total, status_msg, start_time, header)
 
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
         
         # Shadow Proxy Protocol (For files > 50MB) 
         # Keeps Bot Identity while bypassing 50MB Limit
         if total_size > 50 * 1024 * 1024 and isinstance(file_to_send, str):
-            await status_msg.edit(f"`[DL] Size ({humanbytes(total_size)}) exceeds Assistant limits. Deploying Shadow Proxy Relay...`")
+            await status_msg.edit(f"`[🚀 Shadow Proxy] Size exceeds 50MB. Initializing Secure Parallel Relay...`")
             asst_me = await asst.get_me()
             # Userbot uploads to Assistant's PM (Private)
             with open(file_to_send, 'rb') as f:
-                uploaded_file = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), progress_callback=up_progress_hook)
+                uploaded_file = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), 
+                                                progress_callback=lambda c, t: up_progress_hook(c, t, "🚀 Shadow-Proxy Uploading..."))
             shadow_msg = await ultroid_bot.send_file(asst_me.id, file=uploaded_file)
             # Assistant sends the media handle to the Group
             file_to_send = shadow_msg.media
