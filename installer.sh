@@ -329,6 +329,10 @@ declare -A IMPORT_MAP=(
     ["psutil"]="psutil"
     ["hiredis"]="hiredis"
     ["telethon-patch"]="telethonpatch"
+    ["pytz"]="pytz"
+    ["apscheduler"]="apscheduler"
+    ["tabulate"]="tabulate"
+    ["coloredlogs"]="coloredlogs"
 )
 
 # Packages to SKIP entirely on Termux (too heavy, no pkg equivalent)

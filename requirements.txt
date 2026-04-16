@@ -10,6 +10,12 @@ gitpython
 telethon-patch
 python-decouple
 python-dotenv
+pytz
+psutil
+Pillow
+apscheduler
+tabulate
+coloredlogs
 telegraph
 enhancer
 requests
