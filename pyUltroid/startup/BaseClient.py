@@ -154,10 +154,14 @@ class UltroidClient(TelegramClient):
             "name": filename,
             "raw_file": raw_file,
         }
-        if self._cache.get("upload_cache"):
-            self._cache["upload_cache"].append(cache)
-        else:
-            self._cache.update({"upload_cache": [cache]})
+        # Bounded upload cache (max 20 entries, oldest-first eviction)
+        # Prevents unbounded memory growth on long-running bots.
+        _UPLOAD_CACHE_MAX = 20
+        uc = self._cache.get("upload_cache", [])
+        uc.append(cache)
+        if len(uc) > _UPLOAD_CACHE_MAX:
+            uc = uc[-_UPLOAD_CACHE_MAX:]  # keep most recent
+        self._cache["upload_cache"] = uc
         if to_delete:
             with contextlib.suppress(FileNotFoundError):
                 os.remove(file)

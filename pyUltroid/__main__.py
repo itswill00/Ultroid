@@ -42,9 +42,11 @@ def main():
 
     ultroid_bot.run_in_loop(startup_stuff())
 
-    ultroid_bot.me.phone = None
+    # Guard against None me (can happen in partial init failures)
+    if ultroid_bot.me:
+        ultroid_bot.me.phone = None
 
-    if not ultroid_bot.me.bot:
+    if ultroid_bot.me and not ultroid_bot.me.bot:
         udB.set_key("OWNER_ID", ultroid_bot.uid)
 
     LOGS.info("Initialising...")
@@ -80,6 +82,12 @@ def main():
         await autopilot()
         # Customize Ultroid Assistant...
         await customize()
+        # Warm up bot ID cache for media_dl auto-listener (avoids get_me() per message)
+        try:
+            from assistant.media_dl import _init_bot_id_cache
+            await _init_bot_id_cache()
+        except Exception:
+            pass
         # for channel plugins
         plugin_channels = udB.get_key("PLUGIN_CHANNEL")
         if plugin_channels:

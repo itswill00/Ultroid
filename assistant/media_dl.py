@@ -43,6 +43,27 @@ if "cancel_jobs" not in _ult_cache:
 if "job_owners" not in _ult_cache:
     _ult_cache["job_owners"] = {}
 
+# Cache bot IDs at module load time — avoids get_me() API call PER MESSAGE
+# in auto_media_downloader. These IDs are constant for the lifetime of the process.
+_ASST_ID: int | None = None
+_USERBOT_ID: int | None = None
+
+async def _init_bot_id_cache():
+    """Populate bot ID cache once after clients are ready."""
+    global _ASST_ID, _USERBOT_ID
+    try:
+        if asst and _ASST_ID is None:
+            _me = await asst.get_me()
+            _ASST_ID = _me.id
+    except Exception:
+        pass
+    try:
+        if ultroid_bot and _USERBOT_ID is None:
+            _me = await ultroid_bot.get_me()
+            _USERBOT_ID = _me.id
+    except Exception:
+        pass
+
 LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
 # --------------------------------------------------------------------------
@@ -51,11 +72,17 @@ LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
 async def show_dl_prompt(event, url):
     """Sends format selection choice."""
+    # Prune stale prompts (>10 min) to prevent unbounded cache growth.
+    _now = time.time()
+    stale = [k for k, v in _ult_cache["media_dl"].items() if _now - v.get("time", 0) > 600]
+    for k in stale:
+        _ult_cache["media_dl"].pop(k, None)
+
     msg_id = str(uuid.uuid4())[:8]
     _ult_cache["media_dl"][msg_id] = {
         "url": url,
         "sender": event.sender_id,
-        "time": time.time()
+        "time": _now
     }
     
     source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
@@ -198,8 +225,7 @@ async def dler_process(event, url, fmt):
             blocking the MTProto senders. Fires at most once per 3 seconds."""
             if job_id in _ult_cache["cancel_jobs"]:
                 raise Exception("Upload aborted by user.")
-            import time as _t
-            now = _t.time()
+            now = time.time()  # `time` already imported at module top
             if now - last_upload_edit[0] < 3.0:
                 return
             last_upload_edit[0] = now
@@ -333,9 +359,12 @@ async def manual_downloader(event):
 async def auto_media_downloader(event):
     """Listens for media links in groups."""
     # Self-Ignore Filter (Anti-Loop)
-    asst_me = await asst.get_me()
-    userbot_me = await ultroid_bot.get_me()
-    if event.sender_id in [asst_me.id, userbot_me.id]:
+    # Use cached IDs instead of get_me() API calls per message.
+    # Cache is populated at startup by _init_bot_id_cache().
+    _sender = event.sender_id
+    if _ASST_ID and _sender == _ASST_ID:
+        return
+    if _USERBOT_ID and _sender == _USERBOT_ID:
         return
 
     if not event.text or event.text.startswith("/") or DisabledDL.contains(event.chat_id):

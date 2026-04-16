@@ -19,26 +19,57 @@ class MediaExtractor:
         self.download_path = download_path
         if not os.path.exists(download_path):
             os.makedirs(download_path)
-        
+
         try:
             import yt_dlp
             LOGS.info(f"Extractor | Engine: yt-dlp v{yt_dlp.version.__version__}")
         except Exception:
             LOGS.warning("Extractor | Could not determine yt-dlp version.")
 
+        # --- One-time startup checks (cached as instance attributes) ---
+        # Node detection: done ONCE at init, not on every get_opts() call.
+        import shutil as _shutil
+        _node_paths = [
+            _shutil.which("node"),
+            "/usr/bin/node",
+            "/usr/local/bin/node",
+            "/root/.nvm/versions/node/v24.15.0/bin/node",
+        ]
+        self._js_runtime = next((p for p in _node_paths if p and os.path.exists(p)), None)
+        if self._js_runtime:
+            LOGS.info(f"Extractor | JS Runtime: {self._js_runtime}")
+        else:
+            LOGS.warning(f"Extractor | No JS runtime found. Searched: {_node_paths}")
+
+        # Cookie validation: done ONCE at init.
+        self._cookie_file = None
+        if os.path.exists("cookies.txt"):
+            try:
+                with open("cookies.txt", "r") as _f:
+                    _content = _f.read(500)
+                if "# Netscape" not in _content:
+                    LOGS.warning("Extractor | cookies.txt is NOT in Netscape format!")
+                elif "\t" not in _content and "  " in _content:
+                    LOGS.error("Extractor | cookies.txt has SPACE-indentation instead of TABS (paste error).")
+                else:
+                    self._cookie_file = "cookies.txt"
+                    LOGS.info("Extractor | cookies.txt loaded.")
+            except Exception as _e:
+                LOGS.warning(f"Extractor | Cookie integrity check failed: {_e}")
+        else:
+            LOGS.warning("Extractor | No cookies.txt found in root directory.")
+
+        # PoToken / VisitorData — read once at init.
+        _po = os.getenv("PO_TOKEN")
+        _vd = os.getenv("VISITOR_DATA")
+        self._yt_extractor_args: dict = {"player_client": ["tv_embedded", "web"]}
+        if _po:
+            self._yt_extractor_args["po_token"] = [f"web+{_po}"]
+        if _vd:
+            self._yt_extractor_args["visitor_data"] = [_vd]
+
     def get_opts(self, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
         out_path = f"{self.download_path}{job_id}/" if job_id else self.download_path
-
-        # Build YouTube extractor_args with the correct yt-dlp po_token format.
-        # yt-dlp expects po_token as a list of "client_name+token" strings.
-        # Only include keys if the env vars are actually set (never pass None).
-        _po_token = os.getenv("PO_TOKEN")
-        _visitor_data = os.getenv("VISITOR_DATA")
-        _yt_extractor_args = {"player_client": ["tv_embedded", "web"]}
-        if _po_token:
-            _yt_extractor_args["po_token"] = [f"web+{_po_token}"]
-        if _visitor_data:
-            _yt_extractor_args["visitor_data"] = [_visitor_data]
 
         opts = {
             "outtmpl": f"{out_path}%(title).20s_%(id)s.%(ext)s",
@@ -50,53 +81,20 @@ class MediaExtractor:
             "geo_bypass": True,
             "nocheckcertificate": True,
             "concurrent_fragment_downloads": 10,
-            "buffersize": 1048576,  # 1MB Buffer for VPS Throughput
-            "extractor_args": {"youtube": _yt_extractor_args},
+            "buffersize": 1048576,  # 1 MB buffer for VPS throughput
+            "extractor_args": {"youtube": self._yt_extractor_args},
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.9",
-            }
+            },
         }
-        
-        # Hardened Node Detection for VPS
-        import shutil
-        standard_paths = [
-            shutil.which("node"),
-            "/usr/bin/node",
-            "/usr/local/bin/node",
-            "/root/.nvm/versions/node/v24.15.0/bin/node"
-        ]
-        
-        found_node = None
-        for p in standard_paths:
-            if p and os.path.exists(p):
-                found_node = p
-                break
-        
-        if found_node:
-            opts["js_runtime"] = found_node
-            LOGS.info(f"Extractor | JS Runtime found at: {found_node}")
-        else:
-            LOGS.warning("Extractor | NO JS RUNTIME FOUND! Search paths: " + str(standard_paths))
-        
-        # Check for Local Cookies to bypass YouTube bot detection
-        if os.path.exists("cookies.txt"):
-            try:
-                with open("cookies.txt", "r") as f:
-                    content = f.read(500)
-                    if "# Netscape" not in content:
-                        LOGS.warning("Extractor | cookies.txt is NOT in Netscape format!")
-                    elif "\t" not in content and "  " in content:
-                        LOGS.error("Extractor | cookies.txt detected SPACE-indentation instead of TABS! (Paste Error)")
-                        LOGS.warning("Extractor | Re-upload cookies.txt via FTP/SFTP to preserve TABS.")
-            except Exception as e:
-                LOGS.warning(f"Extractor | Could not perform cookie integrity check: {e}")
 
-            opts["cookiefile"] = "cookies.txt"
-            LOGS.info("Extractor | cookies.txt detected and loaded.")
-        else:
-            LOGS.warning("Extractor | No cookies.txt found in root directory.")
+        # Apply cached one-time results
+        if self._js_runtime:
+            opts["js_runtime"] = self._js_runtime
+        if self._cookie_file:
+            opts["cookiefile"] = self._cookie_file
         
         if format_type == "audio":
             opts["format"] = "bestaudio/best"
@@ -162,6 +160,30 @@ class MediaExtractor:
                 LOGS.warning(f"Extraction failed for {url}: {err_msg}")
                 return {"error": err_msg}
 
+    @staticmethod
+    def _resolve_filename(ydl, info: dict) -> str:
+        """Resolve actual file path after yt-dlp post-processing.
+
+        `prepare_filename()` returns the name BEFORE post-processors run
+        (e.g. FFmpeg can rename .webm → .mp4 after merge). This helper
+        checks common extension variants so we always return an existing path.
+        """
+        raw = ydl.prepare_filename(info)
+        if os.path.exists(raw):
+            return raw
+
+        # The file may have been renamed by a post-processor (e.g. FFmpeg merge)
+        base, _ = os.path.splitext(raw)
+        for ext in (".mp4", ".mkv", ".webm", ".m4a", ".mp3", ".ogg", ".opus"):
+            candidate = base + ext
+            if os.path.exists(candidate):
+                LOGS.debug(f"Extractor | Resolved post-processed file: {candidate}")
+                return candidate
+
+        # Fallback: return the raw name and let the caller handle missing file
+        LOGS.warning(f"Extractor | Could not resolve file after post-processing: {raw}")
+        return raw
+
     @run_async
     def download(self, url, format_type="video", job_id=None, progress_callback=None):
         """Download media and return the file path(s)."""
@@ -173,17 +195,17 @@ class MediaExtractor:
                 info = ydl.extract_info(url, download=True)
                 if not info:
                     return None
-                
+
                 # Handle single file
                 if "entries" not in info:
-                    return [ydl.prepare_filename(info)]
-                
-                # Handle multi-file (like TikTok slides or IG Carousel)
+                    return [self._resolve_filename(ydl, info)]
+
+                # Handle multi-file (TikTok slides, IG Carousel, etc.)
                 files = []
-                for entry in info["entries"]:
+                for entry in info.get("entries") or []:
                     if entry:
-                        files.append(ydl.prepare_filename(entry))
-                return files
+                        files.append(self._resolve_filename(ydl, entry))
+                return files or None
             except Exception as e:
                 LOGS.error(f"Download failed for {url}: {e}")
                 return None
