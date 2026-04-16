@@ -3,6 +3,13 @@ groq
 beautifulsoup4
 duckduckgo_search
 lxml
+localdb.json
+
+# Database Backends
+redis
+hiredis
+pymongo[srv]
+psycopg2-binary
 
 # System Requirements
 telethon
