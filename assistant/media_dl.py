@@ -174,16 +174,15 @@ async def dler_process(event, url, fmt):
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
         
         # Hybrid Payload Router 
-        # For files > 50MB, the Userbot MUST be the sender (Bot API limit)
-        if total_size > 50 * 1024 * 1024:
-            sender_client = ultroid_bot
-            if isinstance(file_to_send, str):
-                await status_msg.edit(f"`[🚀 Turbo Relay] Size: {humanbytes(total_size)}. Initializing High-Speed Parallel Upload...`")
-                with open(file_to_send, 'rb') as f:
-                    file_to_send = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), 
-                                                progress_callback=lambda c, t: asyncio.run_coroutine_threadsafe(up_progress_hook(c, t, "🚀 Turbo-Relay Uploading..."), loop))
-        else:
-            sender_client = asst
+        # For files > 50MB, the Assistant performs a Self-Upload via MTProto (bypassing 50MB Bot API limit)
+        sender_client = asst
+        if total_size > 50 * 1024 * 1024 and isinstance(file_to_send, str):
+            await status_msg.edit(f"`[🚀 Bot-Turbo] Size: {humanbytes(total_size)}. Initializing Direct Bot-Upload...`")
+            with open(file_to_send, 'rb') as f:
+                file_to_send = await uploadable(asst, f, os.path.basename(file_to_send), 
+                                               progress_callback=lambda c, t: asyncio.run_coroutine_threadsafe(up_progress_hook(c, t, "🚀 Bot-Turbo Uploading..."), loop))
+        elif total_size > 50 * 1024 * 1024:
+             return await status_msg.edit(f"`[DL ERROR] Cannot proxy large media objects. Direct file upload required.`")
 
         await sender_client.send_file(
             event.chat_id,
