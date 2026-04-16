@@ -348,7 +348,8 @@ async def _intel_chat_action(event):
             asyncio.create_task(_handle_join_batch(chat_id, group_title))
 
         if len(buf) < JOIN_BATCH_MIN:
-            via = "link" if isinstance(event.action, types.ChatAddByLink) else "added"
+            action = getattr(event, "action", None)
+            via = "link" if isinstance(action, types.ChatAddByLink) else "added"
             body = (
                 f"👤 **User:** {_format_user(user)}\n"
                 f"🔗 **Via:** {via}"
