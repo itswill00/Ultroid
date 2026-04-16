@@ -1094,7 +1094,29 @@ async def hhh(e):
             return await conv.send_message(
                 "Terminated!", buttons=get_back_button("cbs_chatbot")
             )
-        udB.set_key("STARTMEDIA", msg.file.id)
+        
+        # Phase 4 Bugfix: Bypass Telethon's PhotoSize ID generation bug
+        if (
+            not (msg.text).startswith("/")
+            and msg.text != ""
+            and (not msg.media or isinstance(msg.media, MessageMediaWebPage))
+        ):
+            url = text_to_url(msg)
+        elif msg.sticker:
+            url = msg.file.id
+        else:
+            media = await event.client.download_media(msg, "startmedia")
+            try:
+                url = await catbox_upload(media)
+                remove(media)
+            except BaseException as er:
+                LOGS.exception(er)
+                return await conv.send_message(
+                    f"**Upload Failed:**\n`{str(er)}`",
+                    buttons=get_back_button("cbs_chatbot"),
+                )
+        
+        udB.set_key("STARTMEDIA", url)
         await conv.send_message("Done!", buttons=get_back_button("cbs_chatbot"))
 
 
