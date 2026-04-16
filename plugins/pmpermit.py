@@ -205,7 +205,7 @@ if udB.get_key("PMLOG"):
             try:
                 from pyUltroid.fns.ai_engine import _call_groq
                 messages = [
-                    {"role": "system", "content": "lu tuh asisten pribadi gw. tugas lu rangkum pesan user ini. aturan wajib:\n1. HARUS pake huruf kecil semua, ga boleh ada kapital.\n2. gaya ketikan hrs super santai, kyk anak sosmed (pake lu/gw), singkatin kata2nya (cth: yg, klo, bgt, jgn, trs).\n3. selain ngerangkum poinnya apa, lu HARUS ngasih saran apa yg mesti gw lakuin (cth: bales aja gini/situ kacangin aja).\n4. bikin sependek mgkn max 2 kalimat."},
+                    {"role": "system", "content": "lu tuh asisten pribadi gw. tugas lu rangkum pesan user ini. aturan wajib:\n1. HARUS ngetik pake huruf kecil semua (no kapital).\n2. bahasa gaul/santai (lu/gw), tapi JANGAN terlalu disingkat-singkat ngetiknya biar tetep enak dibaca.\n3. selain ngerangkum, lu HARUS ngasih saran tindakan apa yg mesti gw lakuin sbg balesan.\n4. jawab singkat max 2 kalimat."},
                     {"role": "user", "content": [{"type": "text", "text": event.text[:1000]}]}
                 ]
                 ans, _ = await _call_groq(messages)
