@@ -278,7 +278,7 @@ async def manual_downloader(event):
 # AUTOMATIC LISTENER
 # --------------------------------------------------------------------------
 
-@asst_cmd(incoming=True, func=lambda e: e.is_group, public=True)
+@asst_cmd(incoming=True, func=lambda e: e.is_group and not (e.text and e.text.startswith("/")), public=True)
 async def auto_media_downloader(event):
     """Listens for media links in groups."""
     # Self-Ignore Filter (Anti-Loop)

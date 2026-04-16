@@ -33,7 +33,7 @@ CACHE = {}
 @asst_cmd(
     load=AST_PLUGINS,
     incoming=True,
-    func=lambda e: e.is_private and not botb.contains(e.sender_id),
+    func=lambda e: e.is_private and not botb.contains(e.sender_id) and not (e.text and e.text.startswith("/")),
 )
 async def on_new_mssg(event):
     who = event.sender_id

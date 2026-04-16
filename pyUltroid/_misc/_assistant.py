@@ -63,6 +63,16 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
             
             # --- Verification Gateway (Identity & Logic Challenge) ---
             if not is_owner_or_sudo:
+                is_command = event.text and event.text.startswith("/")
+                # If this is a generic listener (no pattern) and NOT a command,
+                # we bypass verification to allow background services (PMBot, Auto-DL) to function.
+                if not pattern and not is_command:
+                    try:
+                        return await func(event)
+                    except Exception as er:
+                        LOGS.exception(er)
+                        return
+
                 # Gate 1: Identity Verify (Click Button)
                 if not is_verified(sender_id):
                     auth_text = (
