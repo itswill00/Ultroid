@@ -53,11 +53,26 @@ class MediaExtractor:
             }
         }
         
-        # Explicit Node Detection
+        # Hardened Node Detection for VPS
         import shutil
-        node_path = shutil.which("node") or "/root/.nvm/versions/node/v24.15.0/bin/node"
-        if os.path.exists(node_path):
-            opts["js_runtime"] = node_path
+        standard_paths = [
+            shutil.which("node"),
+            "/usr/bin/node",
+            "/usr/local/bin/node",
+            "/root/.nvm/versions/node/v24.15.0/bin/node"
+        ]
+        
+        found_node = None
+        for p in standard_paths:
+            if p and os.path.exists(p):
+                found_node = p
+                break
+        
+        if found_node:
+            opts["js_runtime"] = found_node
+            LOGS.info(f"Extractor | JS Runtime found at: {found_node}")
+        else:
+            LOGS.warning("Extractor | NO JS RUNTIME FOUND! Search paths: " + str(standard_paths))
         
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
