@@ -27,6 +27,7 @@ from telethon.utils import get_peer_id
 
 from pyUltroid.fns.helper import fast_download, progress
 from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
+from pyUltroid.dB.verify_db import add_verified
 from pyUltroid.startup.loader import Loader
 
 from . import *
@@ -1309,3 +1310,19 @@ async def fdroid_dler(event):
     if msg and hasattr(msg, "media"):
         FD_MEDIA.update({uri: msg.media})
     os.remove(thumb)
+@callback(re.compile(b"verify_user\\|(.*)"))
+async def process_verification(event):
+    """Signals success for identity audit."""
+    user_id = int(event.pattern_match.group(1).decode("utf-8"))
+    
+    if event.sender_id != user_id:
+        return await event.answer("❌ This verification is not for you.", alert=True)
+    
+    add_verified(user_id)
+    await event.answer("✅ Identity Verified. You can now use all bot commands.", alert=True)
+    await event.edit(
+        f"🛡️ **Identity Audit: Verified**\n"
+        f"---"
+        f"User `{user_id}` has been authorized for public command access.\n\n"
+        f"⚙️ `Secure Identity Ledger Updated`"
+    )

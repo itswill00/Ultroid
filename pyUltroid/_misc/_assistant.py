@@ -16,6 +16,7 @@ from telethon.tl.types import InputWebDocument
 
 from .. import LOGS, asst, udB, ultroid_bot
 from ..fns.admins import admin_check
+from ..dB.verify_db import is_verified
 from . import append_or_update, owner_and_sudos
 
 OWNER = ultroid_bot.full_name
@@ -52,8 +53,31 @@ def asst_cmd(pattern=None, load=None, owner=False, **kwargs):
             kwargs["pattern"] = re.compile(f"^/{pattern}")
 
         async def handler(event):
-            if owner and event.sender_id not in owner_and_sudos():
+            sender_id = event.sender_id
+            is_owner_or_sudo = sender_id in owner_and_sudos()
+            
+            if owner and not is_owner_or_sudo:
                 return
+            
+            # --- Security Gateway (Identity Audit) ---
+            if not is_owner_or_sudo:
+                if not is_verified(sender_id):
+                    # Prompt for verification
+                    auth_text = (
+                        f"🛡️ **Access Verification Required**\n"
+                        f"---"
+                        f"\nTo ensure system stability, public users must complete a one-time identity audit."
+                        f"\n\n**User:** `{sender_id}`"
+                    )
+                    buttons = [
+                        [Button.inline("🛡️ Verify Identity", data=f"verify_user|{sender_id}")]
+                    ]
+                    try:
+                        return await event.reply(auth_text, buttons=buttons)
+                    except Exception:
+                        return
+            # ----------------------------------------
+
             try:
                 await func(event)
             except Exception as er:

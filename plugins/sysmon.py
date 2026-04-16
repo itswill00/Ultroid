@@ -26,7 +26,7 @@ import platform
 import time
 from datetime import datetime, timedelta
 
-from . import udB, ultroid_cmd, LOGS
+from . import udB, ultroid_cmd, LOGS, asst_cmd
 
 help_sysmon = __doc__
 
@@ -179,6 +179,7 @@ def _build_snapshot() -> str:
 
 # Commands
 
+@asst_cmd(pattern="sysmon")
 @ultroid_cmd(pattern="sysmon( (.*)|$)")
 async def sys_monitor(e):
     match = e.pattern_match.group(1).strip()
@@ -199,6 +200,7 @@ async def sys_monitor(e):
         await e.eor(_build_snapshot())
 
 
+@asst_cmd(pattern="sysinfo")
 @ultroid_cmd(pattern="sysinfo$")
 async def sys_info(e):
     uname = platform.uname()

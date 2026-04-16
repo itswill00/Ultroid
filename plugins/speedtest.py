@@ -17,7 +17,7 @@
 import asyncio
 from datetime import datetime
 
-from . import HOSTED_ON, LOGS, ultroid_cmd, get_string, humanbytes
+from . import HOSTED_ON, LOGS, ultroid_cmd, get_string, humanbytes, asst_cmd
 
 
 # ── Speedtest Engine (Asynchronous Wrapper) ──────────────────
@@ -39,6 +39,7 @@ def _run_speedtest(use_image=False):
         return {"error": str(e)}
 
 
+@asst_cmd(pattern="speedtest")
 @ultroid_cmd(pattern="speedtest( (.*)|$)")
 async def turbo_speedtest(ult):
     # Try dynamic import to allow detection without restart
