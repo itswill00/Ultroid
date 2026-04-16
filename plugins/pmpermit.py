@@ -198,6 +198,22 @@ if udB.get_key("PMLOG"):
         target = udB.get_key("PMLOGGROUP") or LOG_CHANNEL
         mention = inline_mention(user)
         header = f"💌 **#PMLOG** from {mention} [`{user.id}`]"
+        
+        # Phase 3: AI PM Summarizer
+        ai_summary = ""
+        if event.text and len(event.text) > 150:
+            try:
+                from pyUltroid.fns.ai_engine import _call_groq
+                messages = [
+                    {"role": "system", "content": "You are an assistant. Summarize the user's message into one very short, direct sentence."},
+                    {"role": "user", "content": [{"type": "text", "text": event.text[:1000]}]}
+                ]
+                ans, _ = await _call_groq(messages)
+                if ans:
+                    ai_summary = f"\n\n🤖 **AI Summary:** `{ans.strip()}`"
+            except Exception as e:
+                LOGS.warning(f"PM Summarizer failed: {e}")
+
         buttons = [
             [
                 Button.url("👤 View Profile", url=f"tg://user?id={user.id}"),
@@ -209,19 +225,19 @@ if udB.get_key("PMLOG"):
                 await asst.send_file(
                     target,
                     event.media,
-                    caption=f"{header}\n\n{event.text or ''}",
+                    caption=f"{header}{ai_summary}\n\n{event.text or ''}",
                     buttons=buttons,
                 )
             else:
                 await asst.send_message(
-                    target, f"{header}\n\n{event.text or ''}", buttons=buttons
+                    target, f"{header}{ai_summary}\n\n{event.text or ''}", buttons=buttons
                 )
         except Exception as er:
             LOGS.info(f"PMLogger Error: {er}")
             try:
                 await asst.send_message(
                     target,
-                    f"{header}\n\n**Content:**\n{event.text or '[Media/File]'}",
+                    f"{header}{ai_summary}\n\n**Content:**\n{event.text or '[Media/File]'}",
                     buttons=buttons,
                 )
             except Exception:

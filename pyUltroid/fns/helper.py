@@ -629,6 +629,33 @@ async def catbox_upload(path: str):
             raise Exception("Catbox server rejected the upload. It might be down or blocking the file type.") from e
         raise e
 
+def time_cache(ttl=60):
+    """
+    Unified Command Caching
+    Memoizes function results for `ttl` seconds to reduce CPU/IO load.
+    Use for expensive system calls or repeated DB queries.
+    """
+    def decorator(func):
+        cache = {}
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            key = str(args) + str(kwargs)
+            now = time.time()
+            if key in cache:
+                result, timestamp = cache[key]
+                if now - timestamp < ttl:
+                    return result
+            # Assuming the function is either async or sync
+            if asyncio.iscoroutinefunction(func):
+                result = await func(*args, **kwargs)
+            else:
+                result = func(*args, **kwargs)
+            cache[key] = (result, now)
+            return result
+        return async_wrapper
+    return decorator
+
+
 async def aexec(code, event):
     """
     Async execution for code blocks — used internally by helper utilities.

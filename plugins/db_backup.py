@@ -346,3 +346,57 @@ async def cb_restore_cancel(event):
         await event.edit("`❌ Restore dibatalkan.`", buttons=None)
     except Exception:
         await event.answer("Restore dibatalkan.", alert=True)
+
+
+# ──────────────────────────────────────────────────────────────
+# Background Tasks (Self-Healing Backup)
+# ──────────────────────────────────────────────────────────────
+import asyncio
+
+async def auto_backup_loop():
+    """Jalankan backup otomatis setiap 24 jam."""
+    while True:
+        await asyncio.sleep(86400)  # 24 Jam
+        try:
+            log_ch = udB.get_key("LOG_CHANNEL")
+            if not log_ch:
+                continue
+
+            data = _export_db()
+            if len(data) == 0:
+                continue
+
+            buf = _build_backup_bytes(data)
+            timestamp = datetime.utcnow().strftime("%d %b %Y %H:%M UTC")
+
+            caption = (
+                f"**🔄 Auto-Backup Database**\n\n"
+                f"**DB:** `{udB.name}`\n"
+                f"**Keys:** `{len(data)}`\n"
+                f"**Waktu:** `{timestamp}`\n\n"
+                f"▸ Reply file ini dengan `{HNDLR}restore` untuk memulihkan."
+            )
+
+            await asst.send_file(
+                log_ch,
+                file=buf,
+                caption=caption,
+                buttons=[[Button.inline("📋 Info Keys", data="dbinfo")]],
+                force_document=True,
+                silent=True, # Jangan ganggu user dengan suara notifikasi
+            )
+            LOGS.info("Auto-Backup: Database successfully backed up to Log Channel.")
+        except Exception as e:
+            LOGS.warning(f"Auto-Backup failed: {e}")
+
+# Start background backup if not already running
+if not hasattr(udB, "_autobackup_started"):
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(auto_backup_loop())
+        else:
+            asyncio.ensure_future(auto_backup_loop())
+    except Exception:
+        pass
+    udB._autobackup_started = True
