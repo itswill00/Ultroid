@@ -175,35 +175,88 @@ async def dler_process(event, url, fmt):
             f"\n📦 **Size:** `{humanbytes(total_size)}`"
         )
         
-        # Define Upload Progress Hook
-        async def up_progress_hook(current, total, header=None):
-            # Also check cancellation during upload phase
+        # --- Upload Progress Hooks ---
+        # IMPORTANT: Two separate hooks are needed to avoid the double-callback
+        # bottleneck. Calling event.edit() inside the FastTelethon upload loop
+        # blocks the asyncio event loop per-chunk, severely throttling throughput.
+        #
+        # Strategy:
+        #  - _upload_status_hook: used during uploadable() (FastTelethon phase).
+        #    It only fires a lightweight edit; heavy throttling via No_Flood (1.1s)
+        #    prevents it from blocking the upload data path.
+        #  - up_progress_hook: used during send_file() for small files (<10MB)
+        #    that skip uploadable() and go directly through Telethon's own sender.
+        #  - Files already processed by uploadable() become InputFileBig objects;
+        #    send_file() on an InputFileBig is a near-instant server-side commit,
+        #    so NO progress callback is needed there.
+
+        last_upload_edit = [0.0]
+
+        async def _upload_status_hook(current, total, header=None):
+            """Lightweight hook for the FastTelethon upload phase.
+            Does NOT await a full progress() edit on every chunk to avoid
+            blocking the MTProto senders. Fires at most once per 3 seconds."""
             if job_id in _ult_cache["cancel_jobs"]:
-                # For uploads we can just stop the task
                 raise Exception("Upload aborted by user.")
-            
+            import time as _t
+            now = _t.time()
+            if now - last_upload_edit[0] < 3.0:
+                return
+            last_upload_edit[0] = now
+            pct = int(current * 100 / total) if total else 0
+            spd = current / max(now - start_time, 0.1)
+            eta_s = int((total - current) / spd) if spd > 0 else 0
+            try:
+                await status_msg.edit(
+                    f"`[📤 Uploading {fmt.upper()}] {pct}% — "
+                    f"{humanbytes(spd)}/s — ETA {eta_s}s`",
+                    buttons=cancel_btn
+                )
+            except Exception:
+                pass
+
+        async def up_progress_hook(current, total, header=None):
+            """Full progress hook for the send_file() phase (small files only)."""
+            if job_id in _ult_cache["cancel_jobs"]:
+                raise Exception("Upload aborted by user.")
             header = header or f"📤 Uploading {fmt.upper()} to Telegram..."
             await progress(current, total, status_msg, start_time, header, buttons=cancel_btn)
 
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
-        
-        # Hybrid Payload Router 
-        # For files > 10MB, the Assistant performs a Parallel-Upload via MTProto (bypassing 50MB Bot API limit and speeding up transit)
+
+        # Hybrid Payload Router
+        # For files > 10MB: use FastTelethon parallel MTProto upload for maximum
+        # VPS-to-Telegram throughput (bypasses Bot API 50MB limit, uses 8-20
+        # parallel senders). The resulting InputFileBig is then committed via
+        # send_file() WITHOUT a progress callback (it's instant at that point).
         sender_client = asst
+        already_uploaded = False
         if total_size > 10 * 1024 * 1024 and isinstance(file_to_send, str):
-            await status_msg.edit(f"`[🚀 Turbo-Upload] Size: {humanbytes(total_size)}. Initializing High-Speed Transfer...`")
+            await status_msg.edit(
+                f"`[🚀 Turbo-Upload] {humanbytes(total_size)} — Opening parallel MTProto senders...`"
+            )
             with open(file_to_send, 'rb') as f:
-                file_to_send = await uploadable(asst, f, os.path.basename(file_to_send), 
-                                               progress_callback=up_progress_hook)
+                file_to_send = await uploadable(
+                    asst, f, os.path.basename(file_to_send),
+                    progress_callback=_upload_status_hook  # lightweight, non-blocking
+                )
+            already_uploaded = True
+            await status_msg.edit("`[📤] Upload complete. Committing to chat...`")
         elif total_size > 50 * 1024 * 1024:
-             return await status_msg.edit(f"`[Error] Cannot proxy large media objects. Direct file upload required.`")
+            return await status_msg.edit(
+                f"`[Error] Cannot send large media directly. Use Turbo-Upload path (>10MB trigger failed).`"
+            )
 
         await sender_client.send_file(
             event.chat_id,
             file=file_to_send,
             caption=caption,
             reply_to=event.message_id if is_callback else event.id,
-            progress_callback=up_progress_hook if total_size <= 50 * 1024 * 1024 else None,
+            # Do NOT pass progress_callback if file was already uploaded via
+            # uploadable() — send_file() on InputFileBig is a server-side commit
+            # with no data transfer, so a callback here would never fire meaningfully
+            # and only adds API overhead.
+            progress_callback=None if already_uploaded else up_progress_hook,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         await status_msg.delete()
