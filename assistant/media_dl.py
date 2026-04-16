@@ -147,11 +147,22 @@ async def dler_process(event, url, fmt):
 
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
         
+        # Shadow Proxy Protocol (For files > 50MB) 
+        # Keeps Bot Identity while bypassing 50MB Limit
         if total_size > 50 * 1024 * 1024 and isinstance(file_to_send, str):
-            # Speed up large single file uploads via FastTelethon
+            await status_msg.edit(f"`[DL] Size ({humanbytes(total_size)}) exceeds Assistant limits. Deploying Shadow Proxy Relay...`")
+            asst_me = await asst.get_me()
+            # Userbot uploads to Assistant's PM (Private)
             with open(file_to_send, 'rb') as f:
-                file_handle = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), progress_callback=up_progress_hook)
-            file_to_send = file_handle
+                uploaded_file = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), progress_callback=up_progress_hook)
+            shadow_msg = await ultroid_bot.send_file(asst_me.id, file=uploaded_file)
+            # Assistant sends the media handle to the Group
+            file_to_send = shadow_msg.media
+            sender_client = asst # Always use Assistant for the group delivery
+            # Clean up the shadow message in PM
+            await shadow_msg.delete()
+        else:
+            sender_client = asst
 
         await sender_client.send_file(
             event.chat_id,
@@ -228,6 +239,12 @@ async def manual_downloader(event):
 @asst_cmd(incoming=True, func=lambda e: e.is_group)
 async def auto_media_downloader(event):
     """Listens for media links in groups."""
+    # Self-Ignore Filter (Anti-Loop)
+    asst_me = await asst.get_me()
+    userbot_me = await ultroid_bot.get_me()
+    if event.sender_id in [asst_me.id, userbot_me.id]:
+        return
+
     if not event.text or event.text.startswith("/") or DisabledDL.contains(event.chat_id):
         return
     
@@ -252,6 +269,8 @@ async def process_media_selection(event):
         return await event.answer("Download prompt expired.", alert=True)
     
     url = data["url"]
+    # Deleting picker immediately for UI cleanup
+    await event.delete()
     await dler_process(event, url, fmt)
     _ult_cache["media_dl"].pop(msg_id, None)
 
