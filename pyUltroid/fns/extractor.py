@@ -19,6 +19,12 @@ class MediaExtractor:
         self.download_path = download_path
         if not os.path.exists(download_path):
             os.makedirs(download_path)
+        
+        try:
+            import yt_dlp
+            LOGS.info(f"Extractor | Engine: yt-dlp v{yt_dlp.version.__version__}")
+        except Exception:
+            LOGS.warning("Extractor | Could not determine yt-dlp version.")
 
     def get_opts(self, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
         out_path = f"{self.download_path}{job_id}/" if job_id else self.download_path
@@ -49,6 +55,9 @@ class MediaExtractor:
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
             opts["cookiefile"] = "cookies.txt"
+            LOGS.info("Extractor | cookies.txt detected and loaded.")
+        else:
+            LOGS.warning("Extractor | No cookies.txt found in root directory.")
         
         if format_type == "audio":
             opts["format"] = "bestaudio/best"
@@ -79,13 +88,31 @@ class MediaExtractor:
     @run_async
     def extract(self, url):
         """Extract metadata without downloading."""
-        # Use 'extract' type for a more neutral format query during info-check
-        with YoutubeDL(self.get_opts(format_type="extract")) as ydl:
+        # Use more verbose options for metadata to catch VPS-specific blocks
+        opts = self.get_opts(format_type="extract")
+        opts.update({"quiet": False, "no_warnings": False})
+        
+        with YoutubeDL(opts) as ydl:
             try:
                 info = ydl.extract_info(url, download=False)
+                if not info:
+                    LOGS.error(f"Extractor | Null info returned for {url}")
+                    return {"error": "YouTube returned no metadata (Empty)."}
                 return info
             except Exception as e:
                 err_msg = str(e)
+                # If specifically format error, try to list what WAS found
+                if "Requested format is not available" in err_msg:
+                    LOGS.error(f"Extractor | Format error for {url}. Attempting raw dump...")
+                    try:
+                        # Re-run with even looser opts to see what formats DO exist
+                        info_raw = ydl.extract_info(url, download=False, process=False)
+                        f_list = [f.get('format_id') for f in info_raw.get('formats', [])]
+                        LOGS.info(f"Extractor | Available formats on VPS: {f_list}")
+                        err_msg += f" | Available IDs: {f_list[:10]}"
+                    except:
+                        pass
+                
                 if "Sign in to confirm" in err_msg:
                     err_msg = "YouTube blocked this IP (Needs Cookies)."
                 elif "403" in err_msg:

@@ -133,7 +133,8 @@ async def dler_process(event, url, fmt):
             return await status_msg.edit("`[Error] Failed to fetch metadata (Timeout/Empty).`")
         if "error" in info:
             err = info.get("error", "Unknown error.")
-            return await status_msg.edit(f"`[Error] {err}`")
+            import yt_dlp
+            return await status_msg.edit(f"`[Error] {err}`\n\n`Engine: yt-dlp v{yt_dlp.version.__version__}`")
 
         # Step 2: Governance Check (100MB Public Limit)
         if not is_admin_or_sudo:
