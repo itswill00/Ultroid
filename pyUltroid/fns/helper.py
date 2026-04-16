@@ -625,6 +625,7 @@ async def catbox_upload(path: str):
         return await run_async(uploader.upload_file)(path)
     except Exception as e:
         if "Failed to upload" in str(e):
+            from .. import LOGS
             LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to transfer.sh...")
             # Fallback to transfer.sh
             filename = os.path.basename(path)
