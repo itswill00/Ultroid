@@ -2,7 +2,7 @@
 
 import os
 from telethon import events
-from . import asst, asst_cmd, udB, OWNER
+from . import asst, asst_cmd, udB, OWNER_NAME
 from pyUltroid.fns.tools import async_searcher
 
 @asst_cmd(pattern="tr( (.*)|$)", public=True)
@@ -74,7 +74,7 @@ async def assistant_ask_ai(event):
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": f"You are a professional technical assistant for the {OWNER} project. Provide concise, expert-level auditing and technical advice. No fluff."},
+                {"role": "system", "content": f"You are a professional technical assistant for the {OWNER_NAME} project. Provide concise, expert-level auditing and technical advice. No fluff."},
                 {"role": "user", "content": query}
             ],
         )

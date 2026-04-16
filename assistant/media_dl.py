@@ -110,6 +110,9 @@ async def dler_process(event, url, fmt):
             total_size = sum(os.path.getsize(f) for f in files)
             if total_size > 100 * 1024 * 1024: # 100MB
                 return await status_msg.edit(f"⚠️ **Resource Limit Exceeded**\n\nPublic downloads are limited to **100 MB**. Found: `{humanbytes(total_size)}`.\n\n`Contact @{OWNER_ID} for elevated access.`")
+    except Exception as e:
+        LOGS.error(f"Downloader Metadata Error: {e}")
+        return await status_msg.edit(f"`[DL ERROR] Resource extraction failed: {str(e)[:50]}`")
     # -----------------------------------------------------
 
     loop = asyncio.get_running_loop()
