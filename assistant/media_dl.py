@@ -173,21 +173,15 @@ async def dler_process(event, url, fmt):
 
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
         
-        # Shadow Proxy Protocol (For files > 50MB) 
-        # Keeps Bot Identity while bypassing 50MB Limit
-        if total_size > 50 * 1024 * 1024 and isinstance(file_to_send, str):
-            await status_msg.edit(f"`[🚀 Shadow Proxy] Size exceeds 50MB. Initializing Secure Parallel Relay...`")
-            asst_me = await asst.get_me()
-            # Userbot uploads to Assistant's PM (Private)
-            with open(file_to_send, 'rb') as f:
-                uploaded_file = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), 
-                                                progress_callback=lambda c, t: asyncio.run_coroutine_threadsafe(up_progress_hook(c, t, "🚀 Shadow-Proxy Uploading..."), loop))
-            shadow_msg = await ultroid_bot.send_file(asst_me.id, file=uploaded_file)
-            # Assistant sends the media handle to the Group
-            file_to_send = shadow_msg.media
-            sender_client = asst # Always use Assistant for the group delivery
-            # Clean up the shadow message in PM
-            await shadow_msg.delete()
+        # Hybrid Payload Router 
+        # For files > 50MB, the Userbot MUST be the sender (Bot API limit)
+        if total_size > 50 * 1024 * 1024:
+            sender_client = ultroid_bot
+            if isinstance(file_to_send, str):
+                await status_msg.edit(f"`[🚀 Turbo Relay] Size: {humanbytes(total_size)}. Initializing High-Speed Parallel Upload...`")
+                with open(file_to_send, 'rb') as f:
+                    file_to_send = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), 
+                                                progress_callback=lambda c, t: asyncio.run_coroutine_threadsafe(up_progress_hook(c, t, "🚀 Turbo-Relay Uploading..."), loop))
         else:
             sender_client = asst
 
