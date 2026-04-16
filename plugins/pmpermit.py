@@ -191,7 +191,7 @@ if udB.get_key("PMLOG"):
             func=lambda e: e.is_private,
         ),
     )
-    async def permitpm(event):
+    async def pmlog_handler(event):
         user = await event.get_sender()
         if getattr(user, 'bot', None) or user.is_self or user.verified or Logm.contains(user.id):
             return
@@ -255,7 +255,7 @@ if udB.get_key("PMSETTING"):
             and not e.sender.verified,
         )
     )
-    async def permitpm(event):
+    async def pm_security_handler(event):
         inline_pm = Redis("INLINE_PM") or False
         user = event.sender
         if not keym.contains(user.id) and event.text != UND:
