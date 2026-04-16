@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 #   Ultroid Optimized — Smart Installer v2
-#   Platform-aware: Termux, Linux/VPS, WSL, Docker
+#   Platform-aware: Mobile, Server, Integrated, Container
 #
 #   Key behaviors:
 #     - Skip packages that are already importable
@@ -36,15 +36,15 @@ echo "────────────────────────�
 # ── Platform Detection ────────────────────────────────────────
 detect_platform() {
     if [ -d "/data/data/com.termux/files/usr" ]; then
-        PLATFORM="termux"
+        PLATFORM="Mobile Client"
     elif [ -f "/.dockerenv" ]; then
-        PLATFORM="docker"
+        PLATFORM="Containerized"
     elif [ -f "/proc/sys/fs/binfmt_misc/WSLInterop" ]; then
-        PLATFORM="wsl"
+        PLATFORM="Integrated Host"
     elif uname -s 2>/dev/null | grep -qi darwin; then
-        PLATFORM="macos"
+        PLATFORM="Station"
     else
-        PLATFORM="linux"
+        PLATFORM="Production Server"
     fi
     ok "Platform: ${PLATFORM}"
 }

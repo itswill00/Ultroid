@@ -103,11 +103,11 @@ async def heroku_usage():
             "'psutil' not installed!\nPlease Install it to use this.\n`pip3 install psutil`",
         )
     if not (HEROKU_API and HEROKU_APP_NAME):
-        if HOSTED_ON == "heroku":
-            return False, "Please fill `HEROKU_API` and `HEROKU_APP_NAME`"
+        if HOSTED_ON == "Cloud Deploy":
+            return False, "Please fill `API` and `APP_NAME` for Cloud Services."
         return (
             False,
-            f"`This command is only for Heroku Users, You are using {HOSTED_ON}`",
+            f"`This command is only for Cloud Instances, You are using {HOSTED_ON}`",
         )
     user_id = Heroku.account().id
     headers = {

@@ -22,22 +22,22 @@ else:
 
 def where_hosted():
     if os.getenv("DYNO"):
-        return "heroku"
+        return "Cloud Deploy"
     if os.getenv("RAILWAY_STATIC_URL"):
-        return "railway"
+        return "Cloud Instance"
     if os.getenv("OKTETO_TOKEN"):
-        return "okteto"
+        return "Managed Instance"
     if os.getenv("KUBERNETES_PORT"):
-        return "qovery | kubernetes"
+        return "Clusterized"
     if os.getenv("RUNNER_USER") or os.getenv("HOSTNAME"):
         if os.getenv("USER") == "codespace":
-            return "codespace"
-        return "github actions"
+            return "Dev Space"
+        return "Cloud Action"
     if os.getenv("ANDROID_ROOT"):
-        return "termux"
+        return "Mobile Client"
     if os.getenv("FLY_APP_NAME"):
-        return "fly.io"
-    return "local"
+        return "Cloud Instance"
+    return "Production Server"
 
 
 if run_as_module:

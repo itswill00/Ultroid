@@ -16,7 +16,7 @@
 • `{i}sysinfo`
     Full system information: OS, Python version, architecture, uptime.
 
-NOTE: Works with or without psutil. On Termux, install via:
+NOTE: Works with or without psutil. On Mobile versions, install via:
   pkg install python-psutil
 """
 
@@ -154,7 +154,7 @@ def _build_snapshot() -> str:
             net_str = "N/A"
         uptime = _proc_uptime()
     else:
-        # /proc fallback (Termux-safe)
+        # /proc fallback (Low-resource mode)
         cpu = _proc_cpu()
         ram_pct, ram_used, ram_total = _proc_mem()
         disk_pct, disk_used, disk_total = _disk_usage()
@@ -226,7 +226,7 @@ async def sys_info(e):
     except Exception:
         pass
 
-    backend = "psutil" if _HAS_PSUTIL else "/proc (Termux-safe)"
+    backend = "psutil" if _HAS_PSUTIL else "/proc (Low-resource mode)"
     text = (
         f"🖥️ **System Info**\n"
         f"---"

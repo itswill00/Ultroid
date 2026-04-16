@@ -21,7 +21,7 @@ def _fix_logging(handler):
 
 
 def _ask_input():
-    # Ask for Input even on Vps and other platforms.
+    # Ask for Input even on Servers and other platforms.
     def new_input(*args, **kwargs):
         raise EOFError("args=" + str(args) + ", kwargs=" + str(kwargs))
 

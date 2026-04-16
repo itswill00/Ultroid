@@ -16,15 +16,15 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 # --- Detect environment ---
 detect_env() {
     if [ -d "/data/data/com.termux/files/usr" ]; then
-        ENV_TYPE="Termux"
-    elif [ -f "/proc/sys/fs/binfmt_misc/WSLInterop" ]; then
-        ENV_TYPE="WSL"
+        PLATFORM="Mobile Client"
     elif [ -f "/.dockerenv" ]; then
-        ENV_TYPE="Docker"
+        PLATFORM="Containerized"
+    elif [ -f "/proc/sys/fs/binfmt_misc/WSLInterop" ]; then
+        PLATFORM="Integrated Host"
     else
-        ENV_TYPE="VPS/Linux"
+        PLATFORM="Standard Server"
     fi
-    echo "Platform: ${ENV_TYPE}"
+    echo "Platform: ${PLATFORM}"
 }
 
 # --- Check .env file ---

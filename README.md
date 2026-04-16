@@ -35,14 +35,14 @@ Deeply integrated large language models for productivity.
 
 ## ⚡ Quick Deployment
 
-### Termux (Android)
+### Mobile Edition
 One-step installation for a native mobile experience:
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid && bash termux_setup.sh
 ```
 
-### Linux / VPS / WSL
-Standard deployment for production stability:
+### Production Environment
+Standard deployment for performance and stability:
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid
 bash installer.sh
@@ -64,7 +64,7 @@ docker-compose up -d
 | **Admin** | `.dlservice` | Toggle the autonomous group listener. |
 | **Logic** | `.ask <query>` | Context-aware AI technical search. |
 | **System** | `.health` | Real-time system diagnostics and memory audit. |
-| **Security**| `.sessions` | Audit and lock down account access. |
+| **Universal** | **Runs flawlessly on Mobile, Server, and Local hosts.** |
 
 ---
 
