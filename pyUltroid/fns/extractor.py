@@ -61,8 +61,10 @@ class MediaExtractor:
             opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]"
             opts["merge_output_format"] = "mp4"
         elif format_type == "extract":
-            opts["format"] = "best/bestvideo+bestaudio"
+            # For metadata extraction, 'best' is the safest to avoid format errors
+            opts["format"] = "best"
         else:
+            # Default to best quality available, preferring mp4 container
             opts["format"] = "bestvideo+bestaudio/best"
             opts["merge_output_format"] = "mp4"
 
