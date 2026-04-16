@@ -130,8 +130,8 @@ class UploadSender:
         self.request.bytes = data
         await self.client._call(self.sender, self.request)
         self.request.file_part += self.stride
-        if hasattr(self.client, '_uploader_sent_bytes'):
-            self.client._uploader_sent_bytes += len(data)
+        if hasattr(self.sender, '_uploader_sent_bytes'):
+            self.sender._uploader_sent_bytes += len(data)
 
     async def disconnect(self) -> None:
         if self.previous:
@@ -240,12 +240,12 @@ class ParallelTransferrer:
             ),
         ]
 
-    async def _create_upload_sender(
-        self, file_id: int, part_count: int, big: bool, index: int, stride: int
-    ) -> UploadSender:
+    async def _create_upload_sender(self, file_id: int, part_count: int, big: bool, index: int, stride: int) -> UploadSender:
+        sender = await self._create_sender()
+        sender._uploader_sent_bytes = 0 # Initialize local sender counter
         return UploadSender(
             self.client,
-            await self._create_sender(),
+            sender,
             file_id,
             part_count,
             big,
@@ -342,7 +342,6 @@ async def _internal_transfer_to_telegram(
 ) -> Tuple[TypeInputFile, int]:
     file_id = helpers.generate_random_long()
     file_size = os.path.getsize(response.name)
-    client._uploader_sent_bytes = 0
 
     hash_md5 = hashlib.md5()
     uploader = ParallelTransferrer(client)
@@ -353,7 +352,9 @@ async def _internal_transfer_to_telegram(
         while uploader.senders is not None:
             if progress_callback:
                 try:
-                    await _maybe_await(progress_callback(client._uploader_sent_bytes, file_size))
+                    # Sum all bytes sent across parallel senders
+                    current_sent = sum(getattr(s.sender, '_uploader_sent_bytes', 0) for s in uploader.senders)
+                    await _maybe_await(progress_callback(current_sent, file_size))
                 except:
                     pass
             await asyncio.sleep(2) # Refresh rate

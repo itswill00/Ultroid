@@ -79,7 +79,7 @@ async def dler_process(event, url, fmt):
     # If the event is a callback, edit it. If it's a message, reply/send.
     is_callback = hasattr(event, "answer")
     
-    status_msg = await (event.edit if is_callback else event.reply)(f"`[DL] Processing {fmt.upper()}...`")
+    status_msg = await asst.send_message(event.chat_id, f"`[DL] Processing {fmt.upper()}...`")
     
     valid_files = []
     job_id = str(uuid.uuid4())[:8]
@@ -98,7 +98,7 @@ async def dler_process(event, url, fmt):
                         asyncio.run_coroutine_threadsafe(
                             progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}..."),
                             loop
-                        ).result(timeout=1) # check for immediate errors
+                        )
                     except:
                         pass
 
@@ -156,7 +156,7 @@ async def dler_process(event, url, fmt):
             # Userbot uploads to Assistant's PM (Private)
             with open(file_to_send, 'rb') as f:
                 uploaded_file = await uploadable(ultroid_bot, f, os.path.basename(file_to_send), 
-                                                progress_callback=lambda c, t: up_progress_hook(c, t, "🚀 Shadow-Proxy Uploading..."))
+                                                progress_callback=lambda c, t: asyncio.run_coroutine_threadsafe(up_progress_hook(c, t, "🚀 Shadow-Proxy Uploading..."), loop))
             shadow_msg = await ultroid_bot.send_file(asst_me.id, file=uploaded_file)
             # Assistant sends the media handle to the Group
             file_to_send = shadow_msg.media
