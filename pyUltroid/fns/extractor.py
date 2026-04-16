@@ -42,7 +42,8 @@ class MediaExtractor:
             "buffersize": 1048576, # 1MB Buffer for VPS Throughput
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["tv", "ios", "web"],
+                    "player_client": ["tv", "ios"],
+                    "include_dash_manifest": False,
                 }
             },
             "http_headers": {
