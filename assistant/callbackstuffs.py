@@ -313,7 +313,7 @@ async def update(eve):
         await eve.edit("`Successfully Updated!\nRestarting, please wait...`")
     else:
         await eve.edit(get_string("clst_1"))
-        call_back()
+        repo.__del__()
         await bash("git pull && pip3 install -r requirements.txt")
         await bash("pip3 install -r requirements.txt --break-system-packages")
         execl(sys.executable, sys.executable, "-m", "pyUltroid")
