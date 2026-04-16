@@ -26,7 +26,7 @@ class MediaExtractor:
             "outtmpl": f"{out_path}%(title).20s_%(id)s.%(ext)s",
             "quiet": True,
             "no_warnings": True,
-            "ignoreerrors": True,
+            "ignoreerrors": False,
             "noplaylist": True,
             "age_limit": 21,
             "geo_bypass": True,
