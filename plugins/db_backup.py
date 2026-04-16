@@ -198,19 +198,35 @@ async def cmd_restore(event):
         # Simpan untuk dipakai saat tombol dikonfirmasi
         _PENDING_RESTORE[event.sender_id] = payload
 
-        await msg.edit(
+        # Tampilkan konfirmasi
+        text = (
             f"**⚠️ Konfirmasi Restore**\n\n"
             f"**DB Asal:** `{db_name}`\n"
             f"**Waktu Backup:** `{exported_at}`\n"
             f"**Jumlah Keys:** `{total_keys}`\n\n"
-            f"⚠️ **Ini akan menimpa data aktif!** Lanjutkan?",
-            buttons=[
-                [
-                    Button.inline("✅ Ya, Restore", data="restore_confirm"),
-                    Button.inline("❌ Batal", data="restore_cancel"),
-                ],
-            ],
+            f"⚠️ **Ini akan menimpa data aktif!** Lanjutkan?"
         )
+        buttons = [
+            [
+                Button.inline("✅ Ya, Restore", data="restore_confirm"),
+                Button.inline("❌ Batal", data="restore_cancel"),
+            ],
+        ]
+
+        if asst and asst.me.bot:
+            # Gunakan Assistant Bot supaya tombol muncul (Userbot gak bisa tombol inline)
+            await msg.delete()
+            await asst.send_message(
+                event.chat_id,
+                text,
+                buttons=buttons,
+                reply_to=reply.id,
+            )
+        else:
+            # Fallback jika asisten gak aktif (jarang terjadi di Dual Mode)
+            await msg.edit(
+                text + f"\n\n_Asisten tidak aktif. Gunakan `{HNDLR}ya` untuk konfirmasi manual._"
+            )
 
     except json.JSONDecodeError:
         await msg.edit("`❌ File bukan JSON valid. Pastikan file adalah backup Ultroid.`")
