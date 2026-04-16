@@ -327,7 +327,7 @@ parallel_transfer_locks: DefaultDict[int, asyncio.Lock] = defaultdict(
 )
 
 
-def stream_file(file_to_stream: BinaryIO, chunk_size=1024):
+def stream_file(file_to_stream: BinaryIO, chunk_size=524288): # Default to 512KB for VPS throughput
     while True:
         data_read = file_to_stream.read(chunk_size)
         if not data_read:
@@ -358,13 +358,14 @@ async def _internal_transfer_to_telegram(
                     await _maybe_await(progress_callback(current_sent, file_size))
                 except:
                     pass
-            await asyncio.sleep(2) # Refresh rate
+            await asyncio.sleep(1) # Faster refresh rate for VPS speed
 
     reporter_task = asyncio.create_task(progress_reporter())
     
     buffer = bytearray()
     try:
-        for data in stream_file(response):
+        # Use part_size as chunk_size for perfect alignment
+        for data in stream_file(response, chunk_size=part_size):
             if not is_large:
                 hash_md5.update(data)
             if len(buffer) == 0 and len(data) == part_size:
