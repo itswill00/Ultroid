@@ -23,7 +23,7 @@ from telethon import Button
 from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
-from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE
+from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE, YOUTUBE_RE
 from pyUltroid.fns.helper import humanbytes, time_formatter, progress, uploadable
 from pyUltroid.fns.admins import admin_check
 from pyUltroid._misc._assistant import asst_cmd, callback
@@ -186,8 +186,15 @@ async def dler_process(event, url, fmt):
         if total_size > 2 * 1024 * 1024 * 1024:
             return await status_msg.edit(f"`[DL ERROR] File too large ({humanbytes(total_size)}).`")
         
-        # Hybrid Payload Router 
-        source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
+        # Hybrid Payload Router
+        source = (
+            "TikTok" if "tiktok" in url else
+            "Instagram" if "instagram" in url else
+            "Twitter/X" if ("twitter" in url or "/x.com" in url) else
+            "YouTube" if ("youtube" in url or "youtu.be" in url) else
+            "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else
+            "🌐 Universal Media"
+        )
         uploader = info.get("uploader") or info.get("uploader_id") or "Unknown"
         uploader_url = info.get("uploader_url") or url
         title = info.get("title") or info.get("description") or ""
@@ -371,7 +378,13 @@ async def auto_media_downloader(event):
         return
     
     text = event.text
-    match = TIKTOK_RE.search(text) or INSTAGRAM_RE.search(text) or TWITTER_RE.search(text) or ADULT_RE.search(text)
+    match = (
+        TIKTOK_RE.search(text)
+        or INSTAGRAM_RE.search(text)
+        or TWITTER_RE.search(text)
+        or YOUTUBE_RE.search(text)
+        or ADULT_RE.search(text)
+    )
     
     if match:
         await show_dl_prompt(event, match.group(0))

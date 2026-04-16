@@ -72,7 +72,9 @@ _shared_executor = ThreadPoolExecutor(
 def run_async(function):
     @wraps(function)
     async def wrapper(*args, **kwargs):
-        return await asyncio.get_event_loop().run_in_executor(
+        # asyncio.get_running_loop() is the correct call inside an async context.
+        # get_event_loop() is deprecated in Python 3.10+ when called outside a loop.
+        return await asyncio.get_running_loop().run_in_executor(
             _shared_executor,
             partial(function, *args, **kwargs),
         )
@@ -321,14 +323,8 @@ async def uploader(file, name, taime, event, msg):
             client=event.client,
             file=f,
             filename=name,
-            progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                progress(
-                    d,
-                    t,
-                    event,
-                    taime,
-                    msg,
-                ),
+            progress_callback=lambda d, t: asyncio.get_running_loop().create_task(
+                progress(d, t, event, taime, msg)
             ),
         )
     return result
@@ -340,14 +336,8 @@ async def downloader(filename, file, event, taime, msg):
             client=event.client,
             location=file,
             out=fk,
-            progress_callback=lambda d, t: asyncio.get_event_loop().create_task(
-                progress(
-                    d,
-                    t,
-                    event,
-                    taime,
-                    msg,
-                ),
+            progress_callback=lambda d, t: asyncio.get_running_loop().create_task(
+                progress(d, t, event, taime, msg)
             ),
         )
     return result
@@ -526,23 +516,25 @@ def numerize(number):
 
 
 No_Flood = {}
+_NO_FLOOD_PRUNE_THRESHOLD = 80
 
 
 async def progress(current, total, event, start, type_of_ps, file_name=None, buttons=None):
-    """Universal progress bar with button support."""
+    """Universal progress bar with button support and flood protection."""
     now = time.time()
     chat_id = event.chat_id
     msg_id = event.id
-    
-    # Timestamp-based memory pruning to prevent leaks without dropping active sessions
-    if len(No_Flood) > 100:
+
+    # Lazy pruning: only scan and evict when the dict grows large.
+    # Avoids O(n) scan on every call in normal operation.
+    if len(No_Flood) > _NO_FLOOD_PRUNE_THRESHOLD:
         for c_id in list(No_Flood.keys()):
             for m_id in list(No_Flood[c_id].keys()):
                 if now - No_Flood[c_id][m_id] > 30:
                     del No_Flood[c_id][m_id]
             if not No_Flood[c_id]:
                 del No_Flood[c_id]
-        
+
     if chat_id in No_Flood:
         if msg_id in No_Flood[chat_id]:
             if (now - No_Flood[chat_id][msg_id]) < 1.1:
@@ -552,24 +544,23 @@ async def progress(current, total, event, start, type_of_ps, file_name=None, but
         No_Flood[chat_id] = {msg_id: now}
 
     diff = now - start
-    if True: # Removed 10s throttling to allow smoother UI updates via No_Flood
-        percentage = current * 100 / total
-        speed = current / diff if diff > 0 else 0
-        eta = round((total - current) / speed) * 1000 if speed > 0 else 0
-        
-        filled = math.floor(percentage / 5)
-        progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
+    percentage = current * 100 / total
+    speed = current / diff if diff > 0 else 0
+    eta = round((total - current) / speed) * 1000 if speed > 0 else 0
 
-        tmp = (
-            f"{progress_str}\n\n"
-            f"`{humanbytes(current)} of {humanbytes(total)}`\n\n"
-            f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
-            f"`✦ ETA: {time_formatter(eta)}`"
-        )
-        caption = f"`✦ {type_of_ps}`\n\n"
-        if file_name:
-            caption += f"`File Name: {file_name}`\n\n"
-        await event.edit(caption + tmp, buttons=buttons)
+    filled = math.floor(percentage / 5)
+    progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
+
+    tmp = (
+        f"{progress_str}\n\n"
+        f"`{humanbytes(current)} of {humanbytes(total)}`\n\n"
+        f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
+        f"`✦ ETA: {time_formatter(eta)}`"
+    )
+    caption = f"`✦ {type_of_ps}`\n\n"
+    if file_name:
+        caption += f"`File Name: {file_name}`\n\n"
+    await event.edit(caption + tmp, buttons=buttons)
 
 
 # ------------------System\\Heroku stuff----------------

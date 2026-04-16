@@ -13,6 +13,7 @@ TIKTOK_RE = re.compile(r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/\S+")
 INSTAGRAM_RE = re.compile(r"https?://(?:www\.)?instagram\.com/(?:p|reels|reel|tv)/\S+")
 TWITTER_RE = re.compile(r"https?://(?:www\.|mobile\.)?(?:twitter|x)\.com/\S+")
 ADULT_RE = re.compile(r"https?://(?:www\.)?(?:pornhub\.com|xvideos\.com|xhamster\.com|xnxx\.com|spankbang\.com|eporner\.com)/\S+")
+YOUTUBE_RE = re.compile(r"https?://(?:www\.)?(?:youtube\.com/(?:watch|shorts|live)\S*|youtu\.be/\S+)")
 
 class MediaExtractor:
     def __init__(self, download_path="downloads/"):
@@ -125,10 +126,11 @@ class MediaExtractor:
     @run_async
     def extract(self, url):
         """Extract metadata without downloading."""
-        # Use more verbose options for metadata to catch VPS-specific blocks
         opts = self.get_opts(format_type="extract")
-        opts.update({"quiet": False, "no_warnings": False})
-        
+        # Keep quiet=True to avoid yt-dlp spam in production logs.
+        # Only log warnings/errors that are actionable.
+        opts["ignoreerrors"] = False  # We handle errors ourselves via try/except
+
         with YoutubeDL(opts) as ydl:
             try:
                 info = ydl.extract_info(url, download=False)

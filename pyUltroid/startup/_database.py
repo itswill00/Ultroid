@@ -58,7 +58,19 @@ else:
 class _BaseDatabase:
     def __init__(self, *args, **kwargs):
         self._cache = {}
-        self._ttl = 3600  # Default 1 hour TTL
+        self._ttl = 3600       # Default 1-hour TTL for general config
+        self._short_ttl = 300  # 5-minute TTL for security-sensitive keys
+        # Keys that control authorization — must not be stale for long.
+        self._security_keys = frozenset({
+            "SUDOS", "FULLSUDO", "SUDO_SCOPE", "SUDO",
+            "OWNER_ID", "BOT_TOKEN", "API_ID", "API_HASH",
+        })
+
+    def _get_ttl(self, key: str) -> float:
+        """Return appropriate TTL for a given key.
+        Security-sensitive keys use a shorter TTL to minimize window
+        where stale authorization data could be acted upon."""
+        return self._short_ttl if key in self._security_keys else self._ttl
 
     def get_key(self, key):
         now = time.time()
@@ -66,10 +78,10 @@ class _BaseDatabase:
             val, expiry = self._cache[key]
             if now < expiry:
                 return val
-        
+
         # Cache miss or expired
         value = self._get_data(key)
-        self._cache[key] = (value, now + self._ttl)
+        self._cache[key] = (value, now + self._get_ttl(key))
         return value
 
     def re_cache(self):
@@ -110,7 +122,7 @@ class _BaseDatabase:
 
     def set_key(self, key, value, cache_only=False):
         processed_val = self._get_data(data=value)
-        self._cache[key] = (processed_val, time.time() + self._ttl)
+        self._cache[key] = (processed_val, time.time() + self._get_ttl(key))
         if cache_only:
             return
         return self.set(str(key), str(value))
