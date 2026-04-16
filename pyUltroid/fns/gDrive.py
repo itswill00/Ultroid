@@ -5,6 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
+import math
 import time
 from io import FileIO
 from logging import WARNING
@@ -18,7 +19,7 @@ from oauth2client.client import logger as _logger
 from oauth2client.file import Storage
 
 from .. import udB
-from .helper import humanbytes, time_formatter
+from .helper import humanbytes, time_formatter, run_async, No_Flood, _NO_FLOOD_PRUNE_THRESHOLD
 
 for log in [LOGGER, logger, _logger]:
     log.setLevel(WARNING)
@@ -81,25 +82,27 @@ class GDriveManager:
     def _build(self):
         return build("drive", "v2", http=self._http, cache_discovery=False)
 
-    def _set_permissions(self, fileId: str):
+    async def _set_permissions(self, fileId: str):
         _permissions = {
             "role": "reader",
             "type": "anyone",
             "value": None,
             "withLink": True,
         }
-        self._build.permissions().insert(
+        # execute() is blocking, must run in thread
+        await run_async(self._build.permissions().insert(
             fileId=fileId, body=_permissions, supportsAllDrives=True
-        ).execute(http=self._http)
+        ).execute)(http=self._http)
 
     async def _upload_file(
         self, event, path: str, filename: str = None, folder_id: str = None
     ):
-        last_txt = ""
         if not filename:
             filename = path.split("/")[-1]
         mime_type = guess_type(path)[0] or "application/octet-stream"
-        media_body = MediaFileUpload(path, mimetype=mime_type, resumable=True)
+        
+        # 25MB chunksize optimized for high-speed VPS bandwidth saturation
+        media_body = MediaFileUpload(path, mimetype=mime_type, resumable=True, chunksize=25*1024*1024)
         body = {
             "title": filename,
             "description": "Uploaded using Ultroid Userbot",
@@ -109,39 +112,64 @@ class GDriveManager:
             body["parents"] = [{"id": folder_id}]
         elif self.folder_id:
             body["parents"] = [{"id": self.folder_id}]
-        upload = self._build.files().insert(
+        
+        insert_op = self._build.files().insert(
             body=body, media_body=media_body, supportsAllDrives=True
         )
+        
         start = time.time()
         _status = None
         while not _status:
-            _progress, _status = upload.next_chunk(num_retries=3)
+            # next_chunk() is blocking and does the actual network I/O
+            _progress, _status = await run_async(insert_op.next_chunk)(num_retries=3)
             if _progress:
-                diff = time.time() - start
+                now = time.time()
+                chat_id = event.chat_id
+                msg_id = event.id
+
+                # Universal progress throttle logic (No_Flood)
+                if len(No_Flood) > _NO_FLOOD_PRUNE_THRESHOLD:
+                    for c_id in list(No_Flood.keys()):
+                        for m_id in list(No_Flood[c_id].keys()):
+                            if now - No_Flood[c_id][m_id] > 30:
+                                del No_Flood[c_id][m_id]
+                        if not No_Flood[c_id]: del No_Flood[c_id]
+                
+                if chat_id in No_Flood:
+                    if msg_id in No_Flood[chat_id] and (now - No_Flood[chat_id][msg_id]) < 1.1:
+                        continue
+                    No_Flood[chat_id][msg_id] = now
+                else:
+                    No_Flood[chat_id] = {msg_id: now}
+
+                diff = now - start
                 completed = _progress.resumable_progress
                 total_size = _progress.total_size
-                percentage = round((completed / total_size) * 100, 2)
-                speed = round(completed / diff, 2)
-                eta = round((total_size - completed) / speed, 2) * 1000
-                crnt_txt = (
-                    f"`Uploading {filename} to GDrive...\n\n"
-                    + f"Status: {humanbytes(completed)}/{humanbytes(total_size)} »» {percentage}%\n"
-                    + f"Speed: {humanbytes(speed)}/s\n"
-                    + f"ETA: {time_formatter(eta)}`"
+                percentage = (completed / total_size) * 100
+                speed = completed / diff if diff > 0 else 0
+                eta = round((total_size - completed) / speed) * 1000 if speed > 0 else 0
+                
+                filled = math.floor(percentage / 5)
+                progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
+                
+                tmp = (
+                    f"{progress_str}\n\n"
+                    f"`{humanbytes(completed)} of {humanbytes(total_size)}`\n\n"
+                    f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
+                    f"`✦ ETA: {time_formatter(eta)}`"
                 )
-                if round((diff % 10.00) == 0) or last_txt != crnt_txt:
-                    await event.edit(crnt_txt)
-                    last_txt = crnt_txt
+                await event.edit(f"`✦ Uploading to GDrive...`\n\n`File Name: {filename}`\n\n" + tmp)
+
         fileId = _status.get("id")
         try:
-            self._set_permissions(fileId=fileId)
+            await self._set_permissions(fileId=fileId)
         except BaseException:
             pass
-        _url = self._build.files().get(fileId=fileId, supportsAllDrives=True).execute()
+        # execute() is blocking, run in thread
+        _url = await run_async(self._build.files().get(fileId=fileId, supportsAllDrives=True).execute)()
         return _url.get("webContentLink")
 
     async def _download_file(self, event, fileId: str, filename: str = None):
-        last_txt = ""
         if fileId.startswith("http"):
             if "=download" in fileId:
                 fileId = fileId.split("=")[1][:-7]
@@ -149,53 +177,72 @@ class GDriveManager:
                 fileId = fileId.split("/")[::-1][1]
         try:
             if not filename:
-                filename = (
-                    self._build.files()
-                    .get(fileId=fileId, supportsAllDrives=True)
-                    .execute()["title"]
-                )
+                # get() and execute() are blocking
+                info = await run_async(self._build.files().get(fileId=fileId, supportsAllDrives=True).execute)()
+                filename = info["title"]
+            
             downloader = self._build.files().get_media(
                 fileId=fileId, supportsAllDrives=True
             )
         except Exception as ex:
             return False, str(ex)
+        
         with FileIO(filename, "wb") as file:
             start = time.time()
-            download = MediaIoBaseDownload(file, downloader)
+            # 25MB chunksize for high-speed download saturation
+            download = MediaIoBaseDownload(file, downloader, chunksize=25*1024*1024)
             _status = None
             while not _status:
-                _progress, _status = download.next_chunk(num_retries=3)
+                # next_chunk() is blocking network I/O
+                _progress, _status = await run_async(download.next_chunk)(num_retries=3)
                 if _progress:
-                    diff = time.time() - start
+                    now = time.time()
+                    chat_id = event.chat_id
+                    msg_id = event.id
+
+                    # Universal progress throttle logic (No_Flood)
+                    if len(No_Flood) > _NO_FLOOD_PRUNE_THRESHOLD:
+                        for c_id in list(No_Flood.keys()):
+                            for m_id in list(No_Flood[c_id].keys()):
+                                if now - No_Flood[c_id][m_id] > 30:
+                                    del No_Flood[c_id][m_id]
+                            if not No_Flood[c_id]: del No_Flood[c_id]
+                    
+                    if chat_id in No_Flood:
+                        if msg_id in No_Flood[chat_id] and (now - No_Flood[chat_id][msg_id]) < 1.1:
+                            continue
+                        No_Flood[chat_id][msg_id] = now
+                    else:
+                        No_Flood[chat_id] = {msg_id: now}
+
+                    diff = now - start
                     completed = _progress.resumable_progress
                     total_size = _progress.total_size
-                    percentage = round((completed / total_size) * 100, 2)
-                    speed = round(completed / diff, 2)
-                    eta = round((total_size - completed) / speed, 2) * 1000
-                    crnt_txt = (
-                        f"`Downloading {filename} from GDrive...\n\n"
-                        + f"Status: {humanbytes(completed)}/{humanbytes(total_size)} »» {percentage}%\n"
-                        + f"Speed: {humanbytes(speed)}/s\n"
-                        + f"ETA: {time_formatter(eta)}`"
+                    percentage = (completed / total_size) * 100
+                    speed = completed / diff if diff > 0 else 0
+                    eta = round((total_size - completed) / speed) * 1000 if speed > 0 else 0
+                    
+                    filled = math.floor(percentage / 5)
+                    progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
+                    
+                    tmp = (
+                        f"{progress_str}\n\n"
+                        f"`{humanbytes(completed)} of {humanbytes(total_size)}`\n\n"
+                        f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
+                        f"`✦ ETA: {time_formatter(eta)}`"
                     )
-                    if round((diff % 10.00) == 0) or last_txt != crnt_txt:
-                        await event.edit(crnt_txt)
-                        last_txt = crnt_txt
+                    await event.edit(f"`✦ Downloading from GDrive...`\n\n`File Name: {filename}`\n\n" + tmp)
+
         return True, filename
 
-    @property
-    def _list_files(self):
-        _items = (
-            self._build.files()
-            .list(
-                supportsTeamDrives=True,
-                includeTeamDriveItems=True,
-                spaces="drive",
-                fields="nextPageToken, items(id, title, mimeType)",
-                pageToken=None,
-            )
-            .execute()
-        )
+    async def _list_files(self):
+        _items = await run_async(self._build.files().list(
+            supportsTeamDrives=True,
+            includeTeamDriveItems=True,
+            spaces="drive",
+            fields="nextPageToken, items(id, title, mimeType)",
+            pageToken=None,
+        ).execute)()
         _files = {}
         for files in _items["items"]:
             if files["mimeType"] == self.gdrive_creds["dir_mimetype"]:
@@ -204,34 +251,34 @@ class GDriveManager:
                 _files[self._create_download_link(files["id"])] = files["title"]
         return _files
 
-    def create_directory(self, directory):
+    async def create_directory(self, directory):
         body = {
             "title": directory,
             "mimeType": self.gdrive_creds["dir_mimetype"],
         }
         if self.folder_id:
             body["parents"] = [{"id": self.folder_id}]
-        file = self._build.files().insert(body=body, supportsAllDrives=True).execute()
+        
+        file = await run_async(self._build.files().insert(
+            body=body, supportsAllDrives=True
+        ).execute)()
         fileId = file.get("id")
-        self._set_permissions(fileId=fileId)
+        await self._set_permissions(fileId=fileId)
         return fileId
 
-    def search(self, title):
+    async def search(self, title):
         query = f"title contains '{title}'"
         if self.folder_id:
             query = f"'{self.folder_id}' in parents and (title contains '{title}')"
-        _items = (
-            self._build.files()
-            .list(
-                supportsTeamDrives=True,
-                includeTeamDriveItems=True,
-                q=query,
-                spaces="drive",
-                fields="nextPageToken, items(id, title, mimeType)",
-                pageToken=None,
-            )
-            .execute()
-        )
+        
+        _items = await run_async(self._build.files().list(
+            supportsTeamDrives=True,
+            includeTeamDriveItems=True,
+            q=query,
+            spaces="drive",
+            fields="nextPageToken, items(id, title, mimeType)",
+            pageToken=None,
+        ).execute)()
         _files = {}
         for files in _items["items"]:
             _files[self._create_download_link(files["id"])] = files["title"]
