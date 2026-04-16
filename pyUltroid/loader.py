@@ -69,7 +69,7 @@ class Loader:
             except ModuleNotFoundError:
                 continue
             except Exception as exc:
-                self._logger.debug(f"pyUltroid - {self.key} - ERROR - {plugin}: {exc}")
+                self._logger.error(f"pyUltroid - {self.key} - ERROR - {plugin}: {exc}")
                 continue
             
             if callable(after_load):

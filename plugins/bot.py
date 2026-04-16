@@ -113,8 +113,14 @@ async def lol(ult):
         pic = choice(pic)
     uptime = time_formatter((time.time() - start_time) * 1000)
     header = udB.get_key("ALIVE_TEXT") or get_string("bot_1")
-    y = Repo().active_branch
-    xx = Repo().remotes[0].config_reader.get("url")
+    try:
+        repo = Repo()
+        y = repo.active_branch
+        xx = repo.remotes[0].config_reader.get("url")
+    except Exception:
+        y = "main"
+        xx = "https://github.com/TeamUltroid/Ultroid"
+
     rep = xx.replace(".git", f"/tree/{y}")
     kk = f" `[{y}]({rep})` "
     if inline:
@@ -307,9 +313,14 @@ async def inline_alive(ult):
         pic = choice(pic)
     uptime = time_formatter((time.time() - start_time) * 1000)
     header = udB.get_key("ALIVE_TEXT") or get_string("bot_1")
-    y = Repo().active_branch
-    xx = Repo().remotes[0].config_reader.get("url")
-    rep = xx.replace(".git", f"/tree/{y}")
+    try:
+        repo = Repo()
+        y = repo.active_branch
+        xx = repo.remotes[0].config_reader.get("url")
+    except Exception:
+        y = "main"
+        xx = "https://github.com/TeamUltroid/Ultroid"
+
     kk = f"<a href={rep}>{y}</a>"
     als = in_alive.format(
         header, f"{ultroid_version} [{HOSTED_ON}]", UltVer, pyver(), uptime, kk

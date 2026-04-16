@@ -136,6 +136,7 @@ if run_as_module:
     HNDLR = udB.get_key("HNDLR") or "."
     DUAL_HNDLR = udB.get_key("DUAL_HNDLR") or "/"
     SUDO_HNDLR = udB.get_key("SUDO_HNDLR") or HNDLR
+    LOGS.info(f"Handler | HNDLR: '{HNDLR}' | DUAL: '{DUAL_HNDLR}' | SUDO: '{SUDO_HNDLR}'")
 else:
     print("pyUltroid 2022 © TeamUltroid")
 
