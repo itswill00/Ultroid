@@ -16,7 +16,8 @@ Ultroid is a professional-grade extension of your Telegram account. Designed to 
 
 ### 🚀 Turbo Media Engine (2026 Edition)
 The industry's most aggressive downloader integration. Powered by a hardened `yt-dlp` core.
-- **Concurrent Fragments**: Multi-threaded extraction (10 parallel streams) translates to 5x-10x faster downloads on VPS.
+- **Auto-Detection**: Dropping a YouTube, TikTok, Instagram, or Twitter link in a group chat instantly triggers an interactive download prompt — no command needed.
+- **Concurrent Fragments**: Multi-threaded extraction (up to 10 parallel streams) for 5x-10x faster downloads on VPS.
 - **1MB Optimized Buffering**: Tuned for maximum disk throughput and high-speed network saturation.
 - **Shadow Proxy Protocol**: Automatically bypasses Telegram's 50MB file size limit by relaying through a secure Assistant-Proxy, allowing for seamless delivery of files up to **2GB**.
 - **Real-Time Control**: Interactive `[❌ Cancel]` buttons allow you to abort any active task instantly with automatic cleanup.
@@ -29,28 +30,31 @@ Deeply integrated large language models for productivity.
 
 ### 🛡️ Enterprise Security
 - **Session Guard**: Real-time monitoring of account access and automatic revocation of suspicious session ghosts.
-- **Access Control**: Dynamic authorization ensures only you and your admins can control high-impact tasks.
+- **Tiered Authorization**: Dynamic multi-level permission system (Owner → Full Sudo → Scoped Sudo → Public) with sub-5-minute stale-cache invalidation.
+- **Captcha Gateway**: Math-challenge verification prevents unauthorized public access to the assistant bot.
 
 ---
 
 ## ⚡ Quick Deployment
 
-### Mobile Edition
+### Mobile Edition (Termux)
 One-step installation for a native mobile experience:
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid && bash termux_setup.sh
 ```
 
-### Production Environment
+### Production Environment (VPS / Linux)
 Standard deployment for performance and stability:
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid
+cp .env.sample .env && nano .env   # Fill in your credentials
 bash installer.sh
 ```
 
 ### Docker (Containerized)
 The most stable and reproducible deployment method:
 ```bash
+cp .env.sample .env && nano .env   # Fill in your credentials
 docker-compose up -d
 ```
 
@@ -60,18 +64,35 @@ docker-compose up -d
 
 | Category | Command | Description |
 | :--- | :--- | :--- |
-| **Media** | `.dl <url>` | Intelligent auto-detection for TT, IG, TW, YT. |
-| **Admin** | `.dlservice` | Toggle the autonomous group listener. |
-| **Logic** | `.ask <query>` | Context-aware AI technical search. |
+| **Media** | `.dl <url>` | Interactive download prompt (YT/TT/IG/TW/NSFW + universal). |
+| **Media** | `.ytv <url>` | Direct video download, skips format prompt. |
+| **Media** | `.yta <url>` | Direct audio (MP3) download, skips format prompt. |
+| **Admin** | `.dlservice` | Toggle the autonomous group link-listener. |
+| **AI** | `.ask <query>` | Context-aware AI technical search (Groq / Gemini). |
 | **System** | `.health` | Real-time system diagnostics and memory audit. |
-| **Universal** | **Runs flawlessly on Mobile, Server, and Local hosts.** |
+| **Sudo** | `.addsudo` | Add a sudo user (with optional scoped command list). |
+| **Universal** | **Runs flawlessly on Mobile, VPS, and Local hosts.** | |
 
 ---
 
 ## ⚙️ Technical Requirements
-- **Python 3.10+** (3.12 Recommended)
-- **Node.js 20+** (Required for YouTube Po-Token Extractors)
-- **Git**
+
+| Component | Version | Purpose |
+| :--- | :--- | :--- |
+| Python | 3.10+ (3.12 recommended) | Core runtime |
+| Node.js | 20+ | YouTube PoToken signature solver |
+| FFmpeg | Any recent | Audio/video post-processing & merge |
+| Git | Any | Auto-update support |
+
+### YouTube on VPS
+VPS IPs are commonly blocked by YouTube. You need **both** of these set in `.env`:
+- `PO_TOKEN` — Proof of Origin token
+- `VISITOR_DATA` — Client session context
+
+See [yt-dlp PO Token Guide](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide) to generate these.
+A `cookies.txt` (Netscape format) exported from your browser provides additional authentication.
+
+---
 
 Ultroid — *Intelligence, beautifully simplified.*
 

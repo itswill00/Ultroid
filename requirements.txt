@@ -1,39 +1,54 @@
-# Core AI & Search
-groq
-beautifulsoup4
-duckduckgo_search
-lxml
-localdb.json
+# ============================================================
+#   Ultroid — Python Dependencies
+#   Install: pip install -r requirements.txt
+#   Note: Heavy C/Rust packages (Pillow, lxml, etc.) are
+#         handled automatically by installer.sh on Termux.
+# ============================================================
 
-# Database Backends
-redis
-hiredis
-pymongo[srv]
-psycopg2-binary
-
-# System Requirements
+# --- Core Runtime ---
 telethon
-gitpython
 telethon-patch
 python-decouple
 python-dotenv
 pytz
-psutil
-Pillow
-apscheduler
-tabulate
-coloredlogs
-telegraph
-enhancer
-requests
-aiohttp
-catbox-uploader
-cloudscraper
-google-api-python-client
-oauth2client
+gitpython
 
-# Downloader Engine (Turbo Optimized)
+# --- Web & HTTP ---
+aiohttp
+requests
+cloudscraper
+
+# --- Database Backends (install only what you configure in .env) ---
+redis
+hiredis            # Optional speedup for Redis
+pymongo[srv]       # For MongoDB Atlas
+psycopg2-binary    # For PostgreSQL / Supabase
+localdb.json       # Default local JSON DB (fallback, always installed)
+
+# --- AI & Search ---
+groq
+duckduckgo_search
+
+# --- Media & File Processing ---
+Pillow
 yt-dlp>=2026.3.17
 youtube-search-python
-aria2p
+aria2p             # Optional: Aria2 RPC for external download management
+
+# --- Media Metadata ---
+beautifulsoup4
+lxml
+
+# --- System & Monitoring ---
+psutil
+apscheduler
+coloredlogs
+tabulate
+
+# --- Misc Integrations ---
+telegraph
+enhancer
+catbox-uploader
+google-api-python-client
+oauth2client
 speedtest-cli

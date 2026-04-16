@@ -1,7 +1,7 @@
 # Ultroid Optimized — Dockerfile
 # Supports: docker build -t ultroid . && docker run --env-file .env ultroid
 
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Metadata
 LABEL maintainer="itswill00 <https://github.com/itswill00>"

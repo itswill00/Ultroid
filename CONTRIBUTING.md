@@ -1,23 +1,48 @@
-# Welcome To Contributing Guide
-Any contribution done to this repository will be appreciated! 🎉
+# Contributing to Ultroid
 
-### About Ultroid
-- **Ultroid** is Telegram Userbot, which allow you to perform many task easily. 
-- It's base core is a pip package named [`pyUltroid`](https://GitHub.com/TeamUltroid/pyUltroid).
-- This repository, contains Ultroid's official plugin files.
-- moreover, Ultroid User also have an option to get more plugins available at [`UltroidAddons`](https://github.com/TeamUltroid/UltroidAddons)
+Thank you for taking the time to contribute! 🎉
 
-### Issues
-- Search for existing Similar issues.
-- You can open a issue first before contributing, If it contain some major changes like `bug fixes` or `feature addition`.
-- If you are busy or getting trouble while making changes, you can just open the issue (explaining it).
+## About This Fork
 
-### Contributing
-- You can [fork](https://github.com/TeamUltroid/Ultroid/fork) this repository.
-- You can commits your changes now.
-- You can [Git-Squash](https://docs.github.com/en/get-started/using-git/about-git-rebase) your commits, if they are more. [Optional]
-- At last, You are ready to [`make a Pull Request`](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request).
-- Make sure that, your `Pull Request` contain an explaining title and issue number if it closes any open issue.
+This is a hardened, production-ready fork of [TeamUltroid/Ultroid](https://github.com/TeamUltroid/Ultroid).
+Key differences from upstream:
+- Rewritten media downloader with yt-dlp attestation, parallel MTProto transfer, and auto-listener.
+- Multi-tier authorization system (Owner → Full Sudo → Scoped Sudo → Public + Captcha).
+- Optimized database layer with security-aware TTL for auth keys.
+- Runtime mode switching (`RUNTIME_MODE=user|bot|dual`).
 
-### Thanks
-- Congrats! 💫 you have successfully made your Contribution to Ultroid.
+## How to Contribute
+
+### Opening an Issue
+- Search for existing similar issues first.
+- For bug reports: include your Python version, platform (VPS/Termux/Docker), and the full traceback from `ultroid.log`.
+- For feature requests: describe the use-case concisely.
+
+### Submitting a Pull Request
+
+1. **Fork** this repository.
+2. **Create a branch** with a descriptive name: `fix/upload-cache-leak` or `feat/auto-yt-detect`.
+3. **Make your changes** — keep commits focused (one concern per commit).
+4. **Sign off** your commits with `git commit -s` (DCO compliance).
+5. **Open a Pull Request** with a clear title and a description of what changed and why.
+
+### Code Style
+- Format: follow the existing style (no reformatting of unrelated lines).
+- Async: always use `asyncio.get_running_loop()`, not `get_event_loop()`.
+- Imports: absolute imports preferred; avoid importing inside hot loops.
+- Logging: use `LOGS.info/warning/error` — never bare `print()` in production paths.
+- Tests: if your change touches the downloader or extractor, test with at least one YT and one TikTok URL.
+
+### Commit Message Format
+```
+type(scope): short description
+
+Longer explanation if needed.
+
+Signed-off-by: Your Name <your@email.com>
+```
+Types: `fix`, `feat`, `perf`, `refactor`, `docs`, `chore`.
+
+---
+
+Thanks again — every contribution makes this better. 💫
