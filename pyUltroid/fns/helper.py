@@ -622,11 +622,18 @@ async def catbox_upload(path: str):
     try:
         from catbox import CatboxUploader
         uploader = CatboxUploader()
-        # upload_file is synchronous network I/O; must run in thread
         return await run_async(uploader.upload_file)(path)
     except Exception as e:
         if "Failed to upload" in str(e):
-            raise Exception("Catbox server rejected the upload. It might be down or blocking the file type.") from e
+            LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to transfer.sh...")
+            # Fallback to transfer.sh
+            filename = os.path.basename(path)
+            # Ensure filename doesn't break curl
+            clean_name = filename.replace(' ', '_').replace("'", "")
+            out, err = await bash(f"curl -s --upload-file '{path}' https://transfer.sh/{clean_name}")
+            if not err and out.startswith("https://"):
+                return out.strip()
+            raise Exception(f"Upload completely failed. Catbox rejected it, and fallback error: {err or out}") from e
         raise e
 
 def time_cache(ttl=60):
