@@ -76,12 +76,12 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
                 # Gate 1: Identity Verify (Click Button)
                 if not is_verified(sender_id):
                     auth_text = (
-                        f"🛡️ **Verification Required**\n"
-                        f"---"
-                        f"\nTo ensure system stability, public users must complete a one-time verification process."
-                        f"\n\n**User:** `{sender_id}`"
+                        f"**User Verification**\n"
+                        f"---\n"
+                        f"Please verify your identity to use this bot.\n\n"
+                        f"ID: `{sender_id}`"
                     )
-                    buttons = [[Button.inline("🛡️ Verify Identity", data=f"verify_user|{sender_id}")]]
+                    buttons = [[Button.inline("Verify Me", data=f"verify_user|{sender_id}")]]
                     try:
                         return await event.reply(auth_text, buttons=buttons)
                     except Exception:
@@ -101,10 +101,10 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
                     btn_row = [Button.inline(str(o), data=f"captcha|{sender_id}|{o}|{ans}") for o in opts]
                     
                     auth_text = (
-                        f"🔢 **Security Gateway: Logic Challenge**\n"
-                        f"---"
-                        f"\nPlease solve this one-time challenge to enable public command access:"
-                        f"\n\n**Question:** `{a} + {b} = ?`"
+                        f"**Captcha Challenge**\n"
+                        f"---\n"
+                        f"Solve this once to enable public commands:\n\n"
+                        f"**Question:** `{a} + {b} = ?`"
                     )
                     return await event.reply(auth_text, buttons=[btn_row])
 
@@ -114,7 +114,7 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
                 # Clean old logs (> 1 hour)
                 history = [t for t in history if now - t < 3600]
                 if len(history) >= 10:
-                    return await event.reply("⚠️ **Rate Limit Exceeded**\n\nPublic users are limited to 10 requests per hour. Please try again later.")
+                    return await event.reply("**Rate Limit Exceeded**\n\nPublic users are limited to 10 requests per hour.")
                 history.append(now)
                 UsageLogs.add({str(sender_id): history})
             # ----------------------------------------

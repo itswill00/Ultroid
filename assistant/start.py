@@ -149,44 +149,39 @@ async def asst_help(event):
     is_owner_or_sudo = sender_id in owner_and_sudos()
     
     if is_owner_or_sudo:
-        # Tier A: Sudo Governance Guide
-        header = "🛡️ **Sudo Governance Protocol**"
+        header = "**Sudo Commands**"
         content = (
-            "You have elevated system access. Management controls enabled."
-            "\n\n**[ Systems & Diagnostics ]**"
-            "\n• `/speedtest` - Network Statistics"
-            "\n• `/sysinfo` - Health Overview"
-            "\n• `/sysmon` - Real-time Hardware Monitor"
-            "\n\n**[ Administration ]**"
-            "\n• `/dlservice` - Auto-DL Governance"
-            "\n• `/stat` - Usage Metrics"
-            "\n• `/bcast` - Broadcast Relay"
-            "\n\n**[ Utilities ]**"
-            "\n• Access all Public Commands below."
+            "System access granted."
+            "\n\n**Diagnostics**"
+            "\n• `/speedtest` - Network stats"
+            "\n• `/sysinfo` - System info"
+            "\n• `/sysmon` - Hardware monitor"
+            "\n\n**Admin**"
+            "\n• `/dlservice` - Auto-DL toggle"
+            "\n• `/stat` - Metrics"
+            "\n• `/bcast` - Broadcast"
         )
         buttons = [
-            [Button.inline("⚙️ System Settings", data="setter")],
-            [Button.inline("📊 Global Stats", data="stat")]
+            [Button.inline("Settings", data="setter")],
+            [Button.inline("Stats", data="stat")]
         ]
     else:
-        # Tier B: Public Service Guide
-        header = "🌐 **Public Connectivity Center**"
+        header = "**Public Commands**"
         content = (
-            "Verified human access granted. Service tools enabled."
-            "\n\n**[ Media Services ]**"
-            "\n• `/dl <url>` - Universal Downloader"
-            "\n• `/ytv /yta` - Specialized Video/Audio"
-            "\n\n**[ Intelligence & Research ]**"
-            "\n• `/ask <query>` - Technical AI Relay"
-            "\n\n**[ Translation ]**"
-            "\n• `/tr <lang> <text>` - Universal Translation"
-            "\n\n**[ Identification Tools ]**"
-            "\n• `/id` - System Identification"
-            "\n• `/info` - Profile Information"
+            "Verified access active."
+            "\n\n**Media**"
+            "\n• `/dl <url>` - Downloader"
+            "\n• `/ytv /yta` - Video/Audio"
+            "\n\n**Utilities**"
+            "\n• `/ask <query>` - AI"
+            "\n• `/tr <lang> <text>` - Translation"
+            "\n\n**System**"
+            "\n• `/id` - My ID"
+            "\n• `/info` - Bot info"
         )
-        buttons = [[Button.inline("👤 System Identity", data="ownerinfo")]]
+        buttons = [[Button.inline("Info", data="ownerinfo")]]
 
-    text = f"{header}\n---\n{content}\n\n---\n⚙️ `Documentation Ledger: Local Edition`"
+    text = f"{header}\n---\n{content}"
     await event.reply(text, buttons=buttons)
 
 

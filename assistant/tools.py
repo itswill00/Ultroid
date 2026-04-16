@@ -12,18 +12,17 @@ from pyUltroid.fns.helper import time_formatter
 @asst_cmd(pattern="id", public=True)
 async def assistant_id(event):
     """Extract IDs of users, chats, and replied media."""
-    text = f"🛡️ **System Identification**\n---"
-    text += f"\n📍 **Chat ID:** `{event.chat_id}`"
-    text += f"\n👤 **User ID:** `{event.sender_id}`"
+    text = f"**System Identification**\n---"
+    text += f"\n**Chat ID:** `{event.chat_id}`"
+    text += f"\n**User ID:** `{event.sender_id}`"
     
     if event.is_reply:
         reply = await event.get_reply_message()
         if reply.sender_id:
-            text += f"\n👤 **Replied User:** `{reply.sender_id}`"
+            text += f"\n**Replied User:** `{reply.sender_id}`"
         if reply.media:
-            text += f"\n📦 **Media ID:** `{get_peer_id(reply.media)}`" if hasattr(reply.media, 'media') else "\n📦 **Media Detected**"
+            text += f"\n**Media Detected**"
 
-    text += f"\n---\n⚙️ `Secure Identity Ledger`"
     await event.reply(text)
 
 @asst_cmd(pattern="info", public=True)
@@ -42,15 +41,13 @@ async def assistant_info(event):
     bio = getattr(chat, 'about', 'No Bio')
     
     text = (
-        f"👤 **System Identification: Profile**\n"
+        f"**Profile Info**\n"
         f"---"
         f"\n**First:** {first}"
         f"\n**Last:** {last}"
         f"\n**Username:** @{user}"
         f"\n**ID:** `{chat.id}`"
         f"\n**Bio:** `{bio}`"
-        f"\n---"
-        f"\n⚙️ `Global Profile Scoping`"
     )
     await event.reply(text)
 
@@ -71,6 +68,6 @@ async def assistant_json(event):
             import os
             os.remove("metadata.json")
         else:
-            await event.reply(f"**[ 📑 Message Metadata ]**\n```json\n{raw}\n```")
+            await event.reply(f"**Metadata**\n```json\n{raw}\n```")
     except Exception as e:
-        await event.reply(f"❌ **Metadata Retrieval Failed:** `{str(e)}`")
+        await event.reply(f"❌ Error: `{str(e)}`")

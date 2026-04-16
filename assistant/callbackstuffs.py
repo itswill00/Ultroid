@@ -1319,12 +1319,12 @@ async def process_verification(event):
         return await event.answer("❌ This verification is not for you.", alert=True)
     
     add_verified(user_id)
-    await event.answer("✅ Identity Verified. Proceeding to Logic Challenge.", alert=True)
+    await event.answer("Identity recognized.", alert=True)
     await event.edit(
-        f"🛡️ **Verification Success**\n"
-        f"---"
-        f"Identity for User `{user_id}` is recognized.\n\n"
-        f"⚙️ `Secure Identity Ledger Updated`"
+        f"**Verification Success**\n"
+        f"---\n"
+        f"User `{user_id}` recognized.\n\n"
+        f"`Identity Updated`"
     )
 
 @callback(re.compile(b"captcha\\|(.*)\\|(.*)\\|(.*)"))
@@ -1341,10 +1341,9 @@ async def process_captcha(event):
         return await event.answer("❌ Incorrect answer. Please try again.", alert=True)
     
     add_captcha_verified(user_id)
-    await event.answer("✅ Verification Complete. Public commands enabled.", alert=True)
+    await event.answer("Verification complete.", alert=True)
     await event.edit(
-        f"🛡️ **Verification Complete**\n"
-        f"---"
-        f"User `{user_id}` has been fully authorized for public command access.\n\n"
-        f"⚙️ `Logic Challenge: SUCCESS`"
+        f"**Verification Complete**\n"
+        f"---\n"
+        f"User `{user_id}` authorized."
     )

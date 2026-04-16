@@ -108,17 +108,17 @@ async def dler_process(event, url, fmt):
                 # Approximate size in bytes
                 size = info.get("filesize") or info.get("filesize_approx") or 0
                 if size > 100 * 1024 * 1024:
-                    return await status_msg.edit(f"⚠️ **Resource Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nFound metadata size: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for elevated access.`")
+                    return await status_msg.edit(f"**Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nSize: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for access.`")
             elif info and "error" in info:
-                return await status_msg.edit(f"`[DL ERROR] Metadata extraction failed: {info['error']}`")
+                return await status_msg.edit(f"`[Error] Extraction failed: {info['error']}`")
 
         # Proceed to actual download
         files = await extractor.download(url, format_type=fmt, job_id=job_id)
         if not files:
-            return await status_msg.edit("`[DL ERROR] No downloadable content found or download failed.`")
+            return await status_msg.edit("`[Error] Download failed or content missing.`")
     except Exception as e:
         LOGS.error(f"Downloader Metadata Error: {e}")
-        return await status_msg.edit(f"`[DL ERROR] Resource extraction failed: {str(e)[:50]}`")
+        return await status_msg.edit(f"`[Error] Task failed: {str(e)[:50]}`")
     # -----------------------------------------------------
 
     loop = asyncio.get_running_loop()

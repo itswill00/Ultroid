@@ -38,35 +38,33 @@ async def assistant_translate(event):
         result = translator.translate(text_to_tr, dest=target_lang.strip())
         
         text = (
-            f"🌐 **Translation Activity**\n"
-            f"---"
-            f"\n**Source ({result.src}):** `{text_to_tr}`"
-            f"\n**Result ({result.dest}):** `{result.text}`"
-            f"\n---"
-            f"\n⚙️ `Universal Linguistic Ledger`"
+            f"**Translation**\n"
+            f"---\n"
+            f"**Source ({result.src}):** `{text_to_tr}`\n"
+            f"**Result ({result.dest}):** `{result.text}`"
         )
         await event.reply(text)
     except Exception as e:
-        await event.reply(f"❌ **Translation Failed:** `{str(e)}`")
+        await event.reply(f"❌ Error: `{str(e)}`")
 
 @asst_cmd(pattern="ask( (.*)|$)", public=True)
 async def assistant_ask_ai(event):
-    """Technical AI Relay for Assistant Bot."""
+    """AI Response for Assistant Bot."""
     query = event.pattern_match.group(1).strip()
     if not query and event.is_reply:
         reply = await event.get_reply_message()
         query = reply.text
         
     if not query:
-        return await event.reply("`Please provide a query for the technical audit.`")
+        return await event.reply("`Please provide a query.`")
 
-    x = await event.reply("`Consulting Technical Intelligence...`")
+    x = await event.reply("`Processing...`")
     
     try:
         # Interface with Groq/OpenAI if configured
         api_key = udB.get_key("GROQ_API_KEY")
         if not api_key:
-            return await x.edit("`[ERROR] Technical AI Engine not configured (GROQ_API_KEY missing).`")
+            return await x.edit("`[ERROR] AI not configured.`")
         
         from groq import Groq
         client = Groq(api_key=api_key)
@@ -74,22 +72,22 @@ async def assistant_ask_ai(event):
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
-                {"role": "system", "content": f"You are a professional technical assistant for the {OWNER_NAME} project. Provide concise, expert-level auditing and technical advice. No fluff."},
+                {"role": "system", "content": f"You are a professional assistant for the {OWNER_NAME} project. Provide concise, technical advice. No fluff."},
                 {"role": "user", "content": query}
             ],
         )
         
         response = completion.choices[0].message.content
-        header = f"🧠 **Technical AI Response**\n---\n"
+        header = f"**AI Response**\n---\n"
         
         if len(response) > 4000:
-            with open("audit_log.txt", "w") as f:
+            with open("response.txt", "w") as f:
                 f.write(response)
-            await event.reply(header, file="audit_log.txt")
-            os.remove("audit_log.txt")
+            await event.reply(header, file="response.txt")
+            os.remove("response.txt")
             await x.delete()
         else:
-            await x.edit(header + response + f"\n\n---\n⚙️ `Response Complete`")
+            await x.edit(header + response)
             
     except Exception as e:
-        await x.edit(f"❌ **Technical Request Failed:** `{str(e)}`")
+        await x.edit(f"❌ Error: `{str(e)}`")
