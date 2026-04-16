@@ -24,3 +24,7 @@ catbox-uploader
 cloudscraper
 google-api-python-client
 oauth2client
+
+# Downloader Engine
+yt-dlp
+youtube-search-python

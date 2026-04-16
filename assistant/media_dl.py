@@ -119,6 +119,7 @@ async def process_media_selection(event):
     url = data["url"]
     await event.edit(f"`[DL] Preparing {fmt.upper()}... please wait.`")
     
+    valid_files = []
     try:
         start_time = time.time()
         # Extract metadata (once more for fresh info)
@@ -132,6 +133,15 @@ async def process_media_selection(event):
         
         if not files:
             return await event.edit("`[DL ERROR] Extraction failed.`")
+
+        valid_files = [f for f in files if os.path.exists(f)]
+        if not valid_files:
+            return await event.edit("`[DL ERROR] File download failed.`")
+
+        # Size Check (Telegram 2GB Limit)
+        total_size = sum(os.path.getsize(f) for f in valid_files)
+        if total_size > 2 * 1024 * 1024 * 1024:
+            return await event.edit(f"`[DL ERROR] File too large ({humanbytes(total_size)}). Telegram limit is 2GB.`")
 
         # Determine Source and Metadata
         source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X"
@@ -147,10 +157,6 @@ async def process_media_selection(event):
         caption += f"**[ {source} | {fmt.upper()} ]** • `{duration}s`"
         
         # Final delivery
-        valid_files = [f for f in files if os.path.exists(f)]
-        if not valid_files:
-            return await event.edit("`[DL ERROR] File download failed.`")
-
         # Use send_file with EXPLICIT message_id to avoid 64-bit struct error
         await event.client.send_file(
             event.chat_id,
@@ -159,10 +165,6 @@ async def process_media_selection(event):
             reply_to=event.message_id,
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
-        
-        # Cleanup
-        for f in valid_files:
-            if os.path.exists(f): os.remove(f)
         await event.delete()
         
         # Remove from cache after success
@@ -171,6 +173,11 @@ async def process_media_selection(event):
     except Exception as e:
         LOGS.error(f"Media Selection Error: {e}")
         await event.edit(f"`[DL ERROR] {str(e)[:100]}`")
+    finally:
+        for f in valid_files:
+            if os.path.exists(f):
+                try: os.remove(f)
+                except: pass
 
 @callback(re.compile("close_dl"))
 async def close_media(event):
