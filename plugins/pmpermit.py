@@ -201,7 +201,7 @@ if udB.get_key("PMLOG"):
         
         # Phase 3: AI PM Summarizer
         ai_summary = ""
-        if event.text and len(event.text) > 150:
+        if event.text:
             try:
                 from pyUltroid.fns.ai_engine import _call_groq
                 messages = [
