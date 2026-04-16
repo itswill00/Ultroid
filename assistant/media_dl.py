@@ -104,8 +104,9 @@ async def dler_process(event, url, fmt):
 
     try:
         info = await extractor.extract(url)
-        if not info:
-             return await status_msg.edit("`[DL ERROR] Failed to fetch metadata.`")
+        if not info or "error" in info:
+            err = info.get("error", "Unknown Extraction Error.") if info else "Failed to fetch metadata."
+            return await status_msg.edit(f"`[DL ERROR] {err}`")
 
         files = await extractor.download(url, format_type=fmt, job_id=job_id, progress_callback=dl_progress_hook)
         duration = round(time.time() - start_time, 2)
