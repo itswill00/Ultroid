@@ -31,6 +31,8 @@ class MediaExtractor:
             "age_limit": 21,
             "geo_bypass": True,
             "nocheckcertificate": True,
+            "concurrent_fragment_downloads": 10,
+            "buffersize": 1048576, # 1MB Buffer for VPS Throughput
             "extractor_args": {
                 "youtube": {
                     "player_client": ["android", "web"],

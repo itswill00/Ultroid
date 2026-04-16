@@ -173,13 +173,14 @@ class ParallelTransferrer:
         self.senders = None
 
     @staticmethod
-    def _get_connection_count(
-        file_size: int,
-    ) -> int:
-        full_size = 100 * (1024 ** 2)
-        if file_size > full_size:
+    def _get_connection_count(file_size: int) -> int:
+        """Aggressive scaling for maximum VPS throughput."""
+        # 50MB Threshold for Max Parallelism
+        threshold = 50 * (1024 ** 2)
+        if file_size > threshold:
             return 20
-        return math.ceil((file_size / full_size) * 20)
+        # Min 8 connections, scaling to 20
+        return max(8, math.ceil((file_size / threshold) * 20))
 
     async def _init_download(
         self, connections: int, file: TypeLocation, part_count: int, part_size: int
