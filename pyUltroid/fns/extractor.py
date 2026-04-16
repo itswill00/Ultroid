@@ -28,6 +28,18 @@ class MediaExtractor:
 
     def get_opts(self, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
         out_path = f"{self.download_path}{job_id}/" if job_id else self.download_path
+
+        # Build YouTube extractor_args with the correct yt-dlp po_token format.
+        # yt-dlp expects po_token as a list of "client_name+token" strings.
+        # Only include keys if the env vars are actually set (never pass None).
+        _po_token = os.getenv("PO_TOKEN")
+        _visitor_data = os.getenv("VISITOR_DATA")
+        _yt_extractor_args = {"player_client": ["tv_embedded", "web"]}
+        if _po_token:
+            _yt_extractor_args["po_token"] = [f"web+{_po_token}"]
+        if _visitor_data:
+            _yt_extractor_args["visitor_data"] = [_visitor_data]
+
         opts = {
             "outtmpl": f"{out_path}%(title).20s_%(id)s.%(ext)s",
             "quiet": True,
@@ -37,16 +49,9 @@ class MediaExtractor:
             "age_limit": 21,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "nocheckcertificate": True,
             "concurrent_fragment_downloads": 10,
-            "buffersize": 1048576, # 1MB Buffer for VPS Throughput
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["web", "mweb", "tv"],
-                    "po_token": os.getenv("PO_TOKEN"),
-                    "visitor_data": os.getenv("VISITOR_DATA"),
-                }
-            },
+            "buffersize": 1048576,  # 1MB Buffer for VPS Throughput
+            "extractor_args": {"youtube": _yt_extractor_args},
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "*/*",

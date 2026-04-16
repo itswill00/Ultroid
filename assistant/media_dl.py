@@ -140,7 +140,9 @@ async def dler_process(event, url, fmt):
         if not is_admin_or_sudo:
             size = info.get("filesize") or info.get("filesize_approx") or 0
             if size > 100 * 1024 * 1024:
-                return await status_msg.edit(f"**Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nSize: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for access.`")
+                _owner_id = udB.get_key("OWNER_ID")
+                _owner_ref = f"[the bot owner](tg://user?id={_owner_id})" if _owner_id else "the bot owner"
+                return await status_msg.edit(f"**Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nSize: `{humanbytes(size)}`.\n\nContact {_owner_ref} for access.")
 
         # Step 3: Execute Download with Progress Hook
         files = await extractor.download(url, format_type=fmt, job_id=job_id, progress_callback=dl_progress_hook)
@@ -163,11 +165,6 @@ async def dler_process(event, url, fmt):
         uploader_url = info.get("uploader_url") or url
         title = info.get("title") or info.get("description") or ""
         if len(title) > 150: title = title[:147] + "..."
-
-        if total_size > 50 * 1024 * 1024:
-            sender_client = ultroid_bot
-        else:
-            sender_client = asst
 
         caption = (
             f"**[ {source} | {fmt.upper()} ]**\n"
