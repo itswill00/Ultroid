@@ -318,7 +318,7 @@ async def process_media_cancel(event):
     
     # Authorization Check
     owner_id = _ult_cache["job_owners"].get(job_id)
-    is_admin = await admin_check(event, require_admin=True)
+    is_admin = await admin_check(event, silent=True)
     is_sudo = event.sender_id in (owner_and_sudos())
     
     if owner_id and event.sender_id != owner_id and not (is_admin or is_sudo):
