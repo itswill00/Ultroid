@@ -42,8 +42,7 @@ class MediaExtractor:
             "buffersize": 1048576, # 1MB Buffer for VPS Throughput
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["tv", "ios"],
-                    "include_dash_manifest": False,
+                    "player_client": ["web", "mweb", "tv"],
                 }
             },
             "http_headers": {
@@ -52,12 +51,6 @@ class MediaExtractor:
                 "Accept-Language": "en-US,en;q=0.9",
             }
         }
-        
-        # Explicitly help yt-dlp find the newly installed node if it's in a non-standard path
-        import shutil
-        node_path = shutil.which("node")
-        if node_path:
-            opts["js_runtime"] = node_path
         
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
