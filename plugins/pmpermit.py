@@ -889,13 +889,11 @@ async def in_pm_ans(event):
         res = [
             event.builder.article(
                 title="Inline PMPermit.",
-                type=_type,
                 text=msg_,
                 description="@TeamUltroid",
-                include_media=include_media,
                 buttons=buttons,
                 thumb=cont,
-                content=cont,
+                link_preview=False,
             )
         ]
     await event.answer(res, switch_pm="• Ultroid •", switch_pm_param="start")

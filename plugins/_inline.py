@@ -66,15 +66,13 @@ async def inline_alive(o):
     )
     RES = [
         await o.builder.article(
-            type="photo",
-            text=MSG,
-            include_media=True,
-            buttons=SUP_BUTTONS,
             title="Ultroid Optimized",
+            text=MSG,
             description="Technical System | High Performance",
             url=TLINK,
             thumb=WEB0,
-            content=InputWebDocument(TLINK, 0, "image/jpg", []),
+            buttons=SUP_BUTTONS,
+            link_preview=False,
         )
     ]
     await o.answer(
@@ -432,13 +430,10 @@ async def ibuild(e):
                 results = [
                     await builder.article(
                         title="Ultroid Op",
-                        type=_type,
                         text=txt,
                         description="@TeamUltroid",
-                        include_media=include_media,
                         buttons=btn,
                         thumb=cont,
-                        content=cont,
                         link_preview=False,
                     )
                 ]
