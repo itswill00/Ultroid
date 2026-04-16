@@ -20,7 +20,7 @@ from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
 from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE
-from pyUltroid.fns.helper import humanbytes, time_formatter
+from pyUltroid.fns.helper import humanbytes, time_formatter, progress
 from pyUltroid.fns.admins import admin_check
 from pyUltroid._misc._assistant import asst_cmd, callback
 
@@ -83,12 +83,31 @@ async def dler_process(event, url, fmt):
     
     valid_files = []
     job_id = str(uuid.uuid4())[:8]
+    loop = asyncio.get_running_loop()
+    last_update = [0]
+
+    def dl_progress_hook(d):
+        if d.get('status') == 'downloading':
+            now = time.time()
+            if now - last_update[0] > 5:
+                last_update[0] = now
+                current = d.get('downloaded_bytes', 0)
+                total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+                if total > 0:
+                    try:
+                        asyncio.run_coroutine_threadsafe(
+                            progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}..."),
+                            loop
+                        )
+                    except:
+                        pass
+
     try:
         info = await extractor.extract(url)
         if not info:
              return await status_msg.edit("`[DL ERROR] Failed to fetch metadata.`")
 
-        files = await extractor.download(url, format_type=fmt, job_id=job_id)
+        files = await extractor.download(url, format_type=fmt, job_id=job_id, progress_callback=dl_progress_hook)
         duration = round(time.time() - start_time, 2)
         
         if not files:

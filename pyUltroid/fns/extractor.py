@@ -20,7 +20,7 @@ class MediaExtractor:
         if not os.path.exists(download_path):
             os.makedirs(download_path)
 
-    def get_opts(self, format_type="video", custom_opts=None, job_id=None):
+    def get_opts(self, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
         out_path = f"{self.download_path}{job_id}/" if job_id else self.download_path
         opts = {
             "outtmpl": f"{out_path}%(title).20s_%(id)s.%(ext)s",
@@ -54,6 +54,10 @@ class MediaExtractor:
 
         if custom_opts:
             opts.update(custom_opts)
+            
+        if progress_callback:
+            opts["progress_hooks"] = [progress_callback]
+            
         return opts
 
     @run_async
@@ -70,9 +74,9 @@ class MediaExtractor:
                 return None
 
     @run_async
-    def download(self, url, format_type="video", job_id=None):
+    def download(self, url, format_type="video", job_id=None, progress_callback=None):
         """Download media and return the file path(s)."""
-        opts = self.get_opts(format_type, job_id=job_id)
+        opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:
                 info = ydl.extract_info(url, download=True)
