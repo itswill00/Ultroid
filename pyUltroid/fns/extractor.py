@@ -40,12 +40,23 @@ class MediaExtractor:
             "nocheckcertificate": True,
             "concurrent_fragment_downloads": 10,
             "buffersize": 1048576, # 1MB Buffer for VPS Throughput
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["tv", "ios", "web"],
+                }
+            },
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "*/*",
                 "Accept-Language": "en-US,en;q=0.9",
             }
         }
+        
+        # Explicitly help yt-dlp find the newly installed node if it's in a non-standard path
+        import shutil
+        node_path = shutil.which("node")
+        if node_path:
+            opts["js_runtime"] = node_path
         
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
