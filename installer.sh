@@ -141,6 +141,14 @@ install_system_deps() {
         command -v mediainfo &>/dev/null && ok "mediainfo: present" \
             || pkg install mediainfo -y 2>/dev/null || true
 
+        # Node.js — critical for modern yt-dlp signatures
+        command -v node &>/dev/null && ok "Node.js: present" \
+            || { info "Installing Node.js..."; pkg install nodejs -y 2>/dev/null || warn "Node.js: failed (YT may have issues)"; }
+
+        # aria2 — for Turbo Download features
+        command -v aria2c &>/dev/null && ok "aria2: present" \
+            || { info "Installing aria2..."; pkg install aria2 -y 2>/dev/null || warn "aria2: failed (Turbo features may be limited)"; }
+
         # Headers required for some pip C extensions as fallback
         for lib in libxml2 libxslt openssl; do
             pkg install "$lib" -y 2>/dev/null || true
@@ -148,7 +156,7 @@ install_system_deps() {
 
     elif command -v apt-get &>/dev/null; then
         NEEDED=""
-        for dep in git ffmpeg mediainfo python3-pip python3-venv \
+        for dep in git ffmpeg nodejs aria2 mediainfo python3-pip python3-venv \
                    libxml2-dev libxslt1-dev libjpeg-dev zlib1g-dev \
                    libffi-dev libssl-dev; do
             dpkg -l "$dep" 2>/dev/null | grep -q "^ii" || NEEDED="$NEEDED $dep"

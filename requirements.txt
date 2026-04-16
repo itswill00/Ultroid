@@ -25,6 +25,7 @@ cloudscraper
 google-api-python-client
 oauth2client
 
-# Downloader Engine
-yt-dlp
+# Downloader Engine (Turbo Optimized)
+yt-dlp>=2026.3.17
 youtube-search-python
+aria2p # Python wrapper for aria2 (Speed optimization)
