@@ -15,7 +15,7 @@ from traceback import format_exc
 from urllib.parse import unquote
 from urllib.request import urlretrieve
 
-from .. import run_as_module
+from .. import run_as_module, ULTConfig
 
 if run_as_module:
     from ..configs import Var
