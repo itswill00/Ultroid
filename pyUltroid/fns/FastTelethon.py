@@ -130,6 +130,8 @@ class UploadSender:
         self.request.bytes = data
         await self.client._call(self.sender, self.request)
         self.request.file_part += self.stride
+        if hasattr(self.client, '_uploader_sent_bytes'):
+            self.client._uploader_sent_bytes += len(data)
 
     async def disconnect(self) -> None:
         if self.previous:
@@ -160,6 +162,7 @@ class ParallelTransferrer:
         )
         self.senders = None
         self.upload_ticker = 0
+        self.client._uploader_sent_bytes = 0
         try:
             self.client.clear_auth(self.client)
         except AttributeError:
@@ -339,34 +342,52 @@ async def _internal_transfer_to_telegram(
 ) -> Tuple[TypeInputFile, int]:
     file_id = helpers.generate_random_long()
     file_size = os.path.getsize(response.name)
+    client._uploader_sent_bytes = 0
 
     hash_md5 = hashlib.md5()
     uploader = ParallelTransferrer(client)
     part_size, part_count, is_large = await uploader.init_upload(file_id, file_size)
+    
+    # Background Progress Reporter
+    async def progress_reporter():
+        while uploader.senders is not None:
+            if progress_callback:
+                try:
+                    await _maybe_await(progress_callback(client._uploader_sent_bytes, file_size))
+                except:
+                    pass
+            await asyncio.sleep(2) # Refresh rate
+
+    reporter_task = asyncio.create_task(progress_reporter())
+    
     buffer = bytearray()
-    for data in stream_file(response):
-        if progress_callback:
-            try:
-                await _maybe_await(progress_callback(response.tell(), file_size))
-            except BaseException:
-                pass
-        if not is_large:
-            hash_md5.update(data)
-        if len(buffer) == 0 and len(data) == part_size:
-            await uploader.upload(data)
-            continue
-        new_len = len(buffer) + len(data)
-        if new_len >= part_size:
-            cutoff = part_size - len(buffer)
-            buffer.extend(data[:cutoff])
+    try:
+        for data in stream_file(response):
+            if not is_large:
+                hash_md5.update(data)
+            if len(buffer) == 0 and len(data) == part_size:
+                await uploader.upload(data)
+                continue
+            new_len = len(buffer) + len(data)
+            if new_len >= part_size:
+                cutoff = part_size - len(buffer)
+                buffer.extend(data[:cutoff])
+                await uploader.upload(bytes(buffer))
+                buffer.clear()
+                buffer.extend(data[cutoff:])
+            else:
+                buffer.extend(data)
+        
+        if len(buffer) > 0:
             await uploader.upload(bytes(buffer))
-            buffer.clear()
-            buffer.extend(data[cutoff:])
-        else:
-            buffer.extend(data)
-    if len(buffer) > 0:
-        await uploader.upload(bytes(buffer))
-    await uploader.finish_upload()
+            
+        await uploader.finish_upload()
+    finally:
+        reporter_task.cancel()
+        # Final update
+        if progress_callback:
+            await _maybe_await(progress_callback(file_size, file_size))
+
     if is_large:
         return InputFileBig(file_id, part_count, filename), file_size
     return InputFile(file_id, part_count, filename, hash_md5.hexdigest()), file_size
