@@ -15,6 +15,10 @@ import time
 import uuid
 import asyncio
 import shutil
+try:
+    from yt_dlp.utils import DownloadCancelled
+except ImportError:
+    class DownloadCancelled(Exception): pass
 from telethon import Button
 from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
@@ -30,6 +34,10 @@ DisabledDL = KeyManager("DISABLED_DL_CHATS", cast=list)
 # Initialize Cache for Media Downloads
 if "media_dl" not in _ult_cache:
     _ult_cache["media_dl"] = {}
+
+# Tracker for Cancelled Jobs
+if "cancel_jobs" not in _ult_cache:
+    _ult_cache["cancel_jobs"] = set()
 
 LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
@@ -85,8 +93,13 @@ async def dler_process(event, url, fmt):
     job_id = str(uuid.uuid4())[:8]
     loop = asyncio.get_running_loop()
     last_update = [0]
+    cancel_btn = [Button.inline("❌ Cancel", data=f"cancel_dl|{job_id}")]
 
     def dl_progress_hook(d):
+        # Immediate Termination Check
+        if job_id in _ult_cache["cancel_jobs"]:
+            raise DownloadCancelled("Download aborted by user.")
+
         if d.get('status') in ['downloading', 'finished']:
             now = time.time()
             if now - last_update[0] > 3 or d.get('status') == 'finished':
@@ -96,7 +109,7 @@ async def dler_process(event, url, fmt):
                 if total:
                     try:
                         asyncio.run_coroutine_threadsafe(
-                            progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}..."),
+                            progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}...", buttons=cancel_btn),
                             loop
                         )
                     except:
@@ -145,8 +158,13 @@ async def dler_process(event, url, fmt):
         
         # Define Upload Progress Hook
         async def up_progress_hook(current, total, header=None):
+            # Also check cancellation during upload phase
+            if job_id in _ult_cache["cancel_jobs"]:
+                # For uploads we can just stop the task
+                raise Exception("Upload aborted by user.")
+            
             header = header or f"📤 Uploading {fmt.upper()} to Telegram..."
-            await progress(current, total, status_msg, start_time, header)
+            await progress(current, total, status_msg, start_time, header, buttons=cancel_btn)
 
         file_to_send = valid_files if len(valid_files) > 1 else valid_files[0]
         
@@ -177,11 +195,16 @@ async def dler_process(event, url, fmt):
             buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
         )
         await status_msg.delete()
-
+    except DownloadCancelled:
+        await status_msg.edit("`[DL] Task aborted by user. Cleanup complete.`")
     except Exception as e:
-        LOGS.error(f"Downloader Error: {e}")
-        await status_msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
+        if "aborted" in str(e):
+            await status_msg.edit("`[DL] Task aborted by user.`")
+        else:
+            LOGS.error(f"Downloader Error: {e}")
+            await status_msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
     finally:
+        _ult_cache["cancel_jobs"].discard(job_id)
         shutil.rmtree(f"downloads/{job_id}", ignore_errors=True)
 
 # --------------------------------------------------------------------------
@@ -281,3 +304,11 @@ async def process_media_selection(event):
 @callback(re.compile("close_dl"))
 async def close_media(event):
     await event.delete()
+
+@callback(re.compile(b"cancel_dl\\|(.*)"))
+async def process_media_cancel(event):
+    """Signals a background download job to terminate."""
+    job_id = event.pattern_match.group(1).decode("utf-8")
+    _ult_cache["cancel_jobs"].add(job_id)
+    await event.answer("❌ Cancellation signal sent. Stopping task...", alert=True)
+    await event.edit("`[DL] Aborting task... Clearing temporary files.`")

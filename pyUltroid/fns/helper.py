@@ -528,7 +528,8 @@ def numerize(number):
 No_Flood = {}
 
 
-async def progress(current, total, event, start, type_of_ps, file_name=None):
+async def progress(current, total, event, start, type_of_ps, file_name=None, buttons=None):
+    """Universal progress bar with button support."""
     now = time.time()
     chat_id = event.chat_id
     msg_id = event.id
@@ -568,7 +569,7 @@ async def progress(current, total, event, start, type_of_ps, file_name=None):
         caption = f"`✦ {type_of_ps}`\n\n"
         if file_name:
             caption += f"`File Name: {file_name}`\n\n"
-        await event.edit(caption + tmp)
+        await event.edit(caption + tmp, buttons=buttons)
 
 
 # ------------------System\\Heroku stuff----------------
