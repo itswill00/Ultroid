@@ -104,7 +104,7 @@ if run_as_module:
     except (ImportError, Exception):
         pass
 
-    try:
-        from safety.tools import *
-    except ImportError:
-        LOGS.error("'safety' package not found!")
+    # try:
+    #     from safety.tools import *
+    # except ImportError:
+    #     LOGS.error("'safety' package not found!")
