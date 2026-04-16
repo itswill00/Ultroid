@@ -87,18 +87,18 @@ async def dler_process(event, url, fmt):
     last_update = [0]
 
     def dl_progress_hook(d):
-        if d.get('status') == 'downloading':
+        if d.get('status') in ['downloading', 'finished']:
             now = time.time()
-            if now - last_update[0] > 5:
+            if now - last_update[0] > 3 or d.get('status') == 'finished':
                 last_update[0] = now
                 current = d.get('downloaded_bytes', 0)
                 total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
-                if total > 0:
+                if total:
                     try:
                         asyncio.run_coroutine_threadsafe(
                             progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}..."),
                             loop
-                        )
+                        ).result(timeout=1) # check for immediate errors
                     except:
                         pass
 

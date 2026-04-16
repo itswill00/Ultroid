@@ -76,6 +76,8 @@ class MediaExtractor:
     @run_async
     def download(self, url, format_type="video", job_id=None, progress_callback=None):
         """Download media and return the file path(s)."""
+        if job_id:
+            os.makedirs(os.path.join(self.download_path, job_id), exist_ok=True)
         opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:

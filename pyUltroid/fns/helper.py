@@ -551,7 +551,7 @@ async def progress(current, total, event, start, type_of_ps, file_name=None):
         No_Flood[chat_id] = {msg_id: now}
 
     diff = now - start
-    if round(diff % 10.00) == 0 or current == total:
+    if True: # Removed 10s throttling to allow smoother UI updates via No_Flood
         percentage = current * 100 / total
         speed = current / diff if diff > 0 else 0
         eta = round((total - current) / speed) * 1000 if speed > 0 else 0
