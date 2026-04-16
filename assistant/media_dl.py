@@ -97,30 +97,7 @@ async def dler_process(event, url, fmt):
     job_id = str(uuid.uuid4())[:8]
     _ult_cache["job_owners"][job_id] = event.sender_id
     
-    # --- Resource Governance (Public Size Limit: 100MB) ---
-    is_admin_or_sudo = event.sender_id in owner_and_sudos()
-    
-    try:
-        if not is_admin_or_sudo:
-            # We must check size before the full download to protect resources.
-            info = await extractor.extract(url)
-            if info and "error" not in info:
-                # Approximate size in bytes
-                size = info.get("filesize") or info.get("filesize_approx") or 0
-                if size > 100 * 1024 * 1024:
-                    return await status_msg.edit(f"**Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nSize: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for access.`")
-            elif info and "error" in info:
-                return await status_msg.edit(f"`[Error] Extraction failed: {info['error']}`")
-
-        # Proceed to actual download
-        files = await extractor.download(url, format_type=fmt, job_id=job_id)
-        if not files:
-            return await status_msg.edit("`[Error] Download failed or content missing.`")
-    except Exception as e:
-        LOGS.error(f"Downloader Metadata Error: {e}")
-        return await status_msg.edit(f"`[Error] Task failed: {str(e)[:50]}`")
-    # -----------------------------------------------------
-
+    # --- Progress Hooks ---
     loop = asyncio.get_running_loop()
     last_update = [0]
     cancel_btn = [Button.inline("❌ Cancel", data=f"cancel_dl|{job_id}")]
@@ -138,28 +115,40 @@ async def dler_process(event, url, fmt):
                 total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
                 if total:
                     try:
+                        header = f"📥 Downloading {fmt.upper()} to VPS..."
                         asyncio.run_coroutine_threadsafe(
-                            progress(current, total, status_msg, start_time, f"📥 Downloading {fmt.upper()}...", buttons=cancel_btn),
+                            progress(current, total, status_msg, start_time, header, buttons=cancel_btn), 
                             loop
                         )
-                    except:
+                    except Exception:
                         pass
 
+    # --- Resource Governance & Download ---
+    is_admin_or_sudo = event.sender_id in owner_and_sudos()
+    
     try:
+        # Step 1: Extract Metadata (Info)
         info = await extractor.extract(url)
         if not info or "error" in info:
-            err = info.get("error", "Unknown Extraction Error.") if info else "Failed to fetch metadata."
-            return await status_msg.edit(f"`[DL ERROR] {err}`")
+            err = info.get("error", "Failed to fetch metadata.")
+            return await status_msg.edit(f"`[Error] {err}`")
 
+        # Step 2: Governance Check (100MB Public Limit)
+        if not is_admin_or_sudo:
+            size = info.get("filesize") or info.get("filesize_approx") or 0
+            if size > 100 * 1024 * 1024:
+                return await status_msg.edit(f"**Limit Exceeded**\n\nPublic downloads are limited to **100 MB**.\nSize: `{humanbytes(size)}`.\n\n`Contact {OWNER_NAME} for access.`")
+
+        # Step 3: Execute Download with Progress Hook
         files = await extractor.download(url, format_type=fmt, job_id=job_id, progress_callback=dl_progress_hook)
         duration = round(time.time() - start_time, 2)
         
         if not files:
-            return await status_msg.edit("`[DL ERROR] Extraction failed.`")
+            return await status_msg.edit("`[Error] Download failed.`")
 
         valid_files = [f for f in files if os.path.exists(f)]
         if not valid_files:
-            return await status_msg.edit("`[DL ERROR] File download failed.`")
+            return await status_msg.edit("`[Error] Local file missing after download.`")
 
         total_size = sum(os.path.getsize(f) for f in valid_files)
         if total_size > 2 * 1024 * 1024 * 1024:
