@@ -43,6 +43,7 @@ class MediaExtractor:
             "extractor_args": {
                 "youtube": {
                     "player_client": ["web", "mweb", "tv"],
+                    "po_token": os.getenv("PO_TOKEN"),
                 }
             },
             "http_headers": {
@@ -51,6 +52,12 @@ class MediaExtractor:
                 "Accept-Language": "en-US,en;q=0.9",
             }
         }
+        
+        # Explicit Node Detection
+        import shutil
+        node_path = shutil.which("node") or "/root/.nvm/versions/node/v24.15.0/bin/node"
+        if os.path.exists(node_path):
+            opts["js_runtime"] = node_path
         
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
