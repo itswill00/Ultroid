@@ -39,10 +39,19 @@ bash run.sh
 ---
 
 ## 🛠️ Performance Architecture
-Ultroid is built for the long haul.
-- **Adaptive Runtime**: Choose between `User`, `Bot`, or `Dual` modes via `.env`.
-- **Intelligent Caching**: Optimized database reads to save memory on low-tier VPS and Termux.
+Ultroid is built for the long haul, operating on an **Enterprise-Grade** core framework.
+- **Memory Leak Immunity**: Features a *Smart Timestamp Pruner* to prevent flood-waits and state collisions during massive bulk downloads.
+- **Non-Blocking I/O**: Heavy tasks are offloaded natively without relying on slow `bash` subprocesses, ensuring the bot's event loop never freezes.
 - **Atomic Persistence**: Restarts are instantaneous and clean—no ghost processes or hung sessions.
+
+---
+
+## ⏬ Universal Media Engine
+Powered by deeply integrated `yt-dlp`, Ultroid features an ultra-discreet, zero-latency downloader.
+- **Age-Gate & Geo Bypass**: Natively bypasses 18+ verification walls and regional ISP censorships without relying on flaky proxies.
+- **Zero-Latency UI**: Instantaneous format selection (`1080p`, `720p`, `480p`, `Audio`) enforced entirely through backend arguments rather than slow network scrapes.
+- **Discrete & Professional**: Seamlessly handles major Adult Hubs while masking the output behind professional UI tags (`[ 🔞 NSFW Media ]` or `[ 🌐 Universal Media ]`).
+- **Assistant Proxy Separation**: All media processing is offloaded to the Assistant Bot, ensuring your main user account remains completely clean and immune to Telegram spam filters.
 
 ---
 
@@ -50,17 +59,14 @@ Ultroid is built for the long haul.
 Powered by **Llama 3.3 (Groq)** with seamless **Gemini** failover.
 
 - ` .ask ` — Specialized AI queries with real-time web search capabilities.
-- ` .tldr ` — Intelligent chat summarization.
-- ` .analyze ` — AI-powered AOSP/Kernel log diagnostics for developers.
+- ` .analyze ` — AI-powered code & log diagnostics for developers.
 - ` .summarize ` — Transform complex messages into concise points.
 
 ---
 
 ## 🛡️ Security & Monitoring
 - **Group Intel**: Real-time surveillance and automated group protection with a minimalist alert system.
-- **System Sentinel**: Live health monitoring and system diagnostics.
 - **Session Guard**: Monitor active sessions and revoke unauthorized access instantly.
-- **Scoped Sudo**: Granular permission control for authorized users.
 
 ---
 
@@ -68,9 +74,9 @@ Powered by **Llama 3.3 (Groq)** with seamless **Gemini** failover.
 | Category | Key Commands |
 | :--- | :--- |
 | **System** | `.restart`, `.health`, `.sysmon`, `.sysinfo` |
+| **Media Engine** | `.dl <url>`, `.yta <url>`, `.ytv <url>`, `.dlservice on` |
 | **AI** | `.ask`, `.tldr`, `.analyze`, `.aimodel` |
 | **Security** | `.sessions`, `.revokeall`, `.sessionguard` |
-| **Tools** | `.weather`, `.air`, `.exportnotes`, `.dbinfo` |
 
 ---
 
