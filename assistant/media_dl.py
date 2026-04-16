@@ -139,6 +139,7 @@ async def dler_process(event, url, fmt):
             f"\n👤 **Uploader:** [{uploader}]({uploader_url})"
             f"\n📄 **Title:** `{title}`"
             f"\n⏱️ **Duration:** `{duration}s`"
+            f"\n📦 **Size:** `{humanbytes(total_size)}`"
         )
         
         # Define Upload Progress Hook
