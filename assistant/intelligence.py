@@ -5,7 +5,7 @@ from telethon import events
 from . import asst, asst_cmd, udB, OWNER
 from pyUltroid.fns.tools import async_searcher
 
-@asst_cmd(pattern="tr( (.*)|$)")
+@asst_cmd(pattern="tr( (.*)|$)", public=True)
 async def assistant_translate(event):
     """Universal Translation Bot."""
     input_str = event.pattern_match.group(1).strip()
@@ -49,7 +49,7 @@ async def assistant_translate(event):
     except Exception as e:
         await event.reply(f"❌ **Translation Failed:** `{str(e)}`")
 
-@asst_cmd(pattern="ask( (.*)|$)")
+@asst_cmd(pattern="ask( (.*)|$)", public=True)
 async def assistant_ask_ai(event):
     """Technical AI Relay for Assistant Bot."""
     query = event.pattern_match.group(1).strip()

@@ -6,7 +6,9 @@
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
 import inspect
+import random
 import re
+import time
 from traceback import format_exc
 
 from telethon import Button
@@ -16,7 +18,7 @@ from telethon.tl.types import InputWebDocument
 
 from .. import LOGS, asst, udB, ultroid_bot
 from ..fns.admins import admin_check
-from ..dB.verify_db import is_verified
+from ..dB.verify_db import is_verified, is_fully_authorized, UsageLogs
 from . import append_or_update, owner_and_sudos
 
 OWNER = ultroid_bot.full_name
@@ -43,7 +45,7 @@ IN_BTTS = [
 # decorator for assistant
 
 
-def asst_cmd(pattern=None, load=None, owner=False, **kwargs):
+def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
     """Decorator for assistant's command"""
     name = inspect.stack()[1].filename.split("/")[-1].replace(".py", "")
     kwargs["forwards"] = False
@@ -59,23 +61,52 @@ def asst_cmd(pattern=None, load=None, owner=False, **kwargs):
             if owner and not is_owner_or_sudo:
                 return
             
-            # --- Verification Gateway ---
+            # --- Verification Gateway (Identity & Logic Challenge) ---
             if not is_owner_or_sudo:
+                # Gate 1: Identity Verify (Click Button)
                 if not is_verified(sender_id):
-                    # Prompt for verification
                     auth_text = (
                         f"🛡️ **Verification Required**\n"
                         f"---"
                         f"\nTo ensure system stability, public users must complete a one-time verification process."
                         f"\n\n**User:** `{sender_id}`"
                     )
-                    buttons = [
-                        [Button.inline("🛡️ Verify Identity", data=f"verify_user|{sender_id}")]
-                    ]
+                    buttons = [[Button.inline("🛡️ Verify Identity", data=f"verify_user|{sender_id}")]]
                     try:
                         return await event.reply(auth_text, buttons=buttons)
                     except Exception:
                         return
+
+                # Gate 2: Public Authorization (Whitelist or Public Flag)
+                if not public:
+                    return # Block non-public commands for unauth users
+
+                # Gate 3: Logic Challenge (Captcha)
+                if not is_fully_authorized(sender_id):
+                    a, b = random.randint(1, 9), random.randint(1, 9)
+                    ans = a + b
+                    # Shuffle options
+                    opts = list({ans, ans+1, ans-1, random.randint(2, 18)})
+                    random.shuffle(opts)
+                    btn_row = [Button.inline(str(o), data=f"captcha|{sender_id}|{o}|{ans}") for o in opts]
+                    
+                    auth_text = (
+                        f"🔢 **Security Gateway: Logic Challenge**\n"
+                        f"---"
+                        f"\nPlease solve this one-time challenge to enable public command access:"
+                        f"\n\n**Question:** `{a} + {b} = ?`"
+                    )
+                    return await event.reply(auth_text, buttons=[btn_row])
+
+                # Gate 4: Rate Limiting (10 req/hour)
+                now = time.time()
+                history = UsageLogs.get().get(str(sender_id), [])
+                # Clean old logs (> 1 hour)
+                history = [t for t in history if now - t < 3600]
+                if len(history) >= 10:
+                    return await event.reply("⚠️ **Rate Limit Exceeded**\n\nPublic users are limited to 10 requests per hour. Please try again later.")
+                history.append(now)
+                UsageLogs.add({str(sender_id): history})
             # ----------------------------------------
 
             try:

@@ -96,6 +96,22 @@ async def dler_process(event, url, fmt):
     valid_files = []
     job_id = str(uuid.uuid4())[:8]
     _ult_cache["job_owners"][job_id] = event.sender_id
+    
+    # --- Resource Governance (Public Size Limit: 100MB) ---
+    is_admin_or_sudo = event.sender_id in owner_and_sudos()
+    
+    try:
+        files = await asyncio.to_thread(extractor.extract, url, fmt=fmt, job_id=job_id)
+        if not files:
+            return await status_msg.edit("`[DL ERROR] No downloadable content found.`")
+            
+        # Check size for public users
+        if not is_admin_or_sudo:
+            total_size = sum(os.path.getsize(f) for f in files)
+            if total_size > 100 * 1024 * 1024: # 100MB
+                return await status_msg.edit(f"⚠️ **Resource Limit Exceeded**\n\nPublic downloads are limited to **100 MB**. Found: `{humanbytes(total_size)}`.\n\n`Contact @{OWNER_ID} for elevated access.`")
+    # -----------------------------------------------------
+
     loop = asyncio.get_running_loop()
     last_update = [0]
     cancel_btn = [Button.inline("❌ Cancel", data=f"cancel_dl|{job_id}")]
@@ -236,7 +252,7 @@ async def toggle_dl_service(event):
 # MANUAL COMMANDS
 # --------------------------------------------------------------------------
 
-@asst_cmd(pattern="(dl|yta|ytv)( (.*)|$)")
+@asst_cmd(pattern="(dl|yta|ytv)( (.*)|$)", public=True)
 async def manual_downloader(event):
     """Explicitly trigger downloader via command."""
     cmd = event.pattern_match.group(1)
@@ -262,7 +278,7 @@ async def manual_downloader(event):
 # AUTOMATIC LISTENER
 # --------------------------------------------------------------------------
 
-@asst_cmd(incoming=True, func=lambda e: e.is_group)
+@asst_cmd(incoming=True, func=lambda e: e.is_group, public=True)
 async def auto_media_downloader(event):
     """Listens for media links in groups."""
     # Self-Ignore Filter (Anti-Loop)

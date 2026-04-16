@@ -9,7 +9,7 @@ from telethon.utils import get_peer_id
 from . import asst, asst_cmd, udB, ultroid_bot
 from pyUltroid.fns.helper import time_formatter
 
-@asst_cmd(pattern="id")
+@asst_cmd(pattern="id", public=True)
 async def assistant_id(event):
     """Extract IDs of users, chats, and replied media."""
     text = f"🛡️ **System Identification**\n---"
@@ -26,7 +26,7 @@ async def assistant_id(event):
     text += f"\n---\n⚙️ `Secure Identity Ledger`"
     await event.reply(text)
 
-@asst_cmd(pattern="info")
+@asst_cmd(pattern="info", public=True)
 async def assistant_info(event):
     """Basic profile audit via Assistant."""
     target = event.sender_id

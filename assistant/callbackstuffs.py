@@ -27,7 +27,7 @@ from telethon.utils import get_peer_id
 
 from pyUltroid.fns.helper import fast_download, progress
 from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
-from pyUltroid.dB.verify_db import add_verified
+from pyUltroid.dB.verify_db import add_verified, add_captcha_verified
 from pyUltroid.startup.loader import Loader
 
 from . import *
@@ -1312,17 +1312,39 @@ async def fdroid_dler(event):
     os.remove(thumb)
 @callback(re.compile(b"verify_user\\|(.*)"))
 async def process_verification(event):
-    """Signals success for identity audit."""
+    """Signals success for identity verify."""
     user_id = int(event.pattern_match.group(1).decode("utf-8"))
     
     if event.sender_id != user_id:
         return await event.answer("❌ This verification is not for you.", alert=True)
     
     add_verified(user_id)
-    await event.answer("✅ Identity Verified. You can now use all bot commands.", alert=True)
+    await event.answer("✅ Identity Verified. Proceeding to Logic Challenge.", alert=True)
+    await event.edit(
+        f"🛡️ **Verification Success**\n"
+        f"---"
+        f"Identity for User `{user_id}` is recognized.\n\n"
+        f"⚙️ `Secure Identity Ledger Updated`"
+    )
+
+@callback(re.compile(b"captcha\\|(.*)\\|(.*)\\|(.*)"))
+async def process_captcha(event):
+    """Signals success for logic challenge."""
+    user_id = int(event.pattern_match.group(1).decode("utf-8"))
+    got = int(event.pattern_match.group(2).decode("utf-8"))
+    ans = int(event.pattern_match.group(3).decode("utf-8"))
+    
+    if event.sender_id != user_id:
+        return await event.answer("❌ This challenge is not for you.", alert=True)
+        
+    if got != ans:
+        return await event.answer("❌ Incorrect answer. Please try again.", alert=True)
+    
+    add_captcha_verified(user_id)
+    await event.answer("✅ Verification Complete. Public commands enabled.", alert=True)
     await event.edit(
         f"🛡️ **Verification Complete**\n"
         f"---"
-        f"User `{user_id}` has been authorized for public command access.\n\n"
-        f"⚙️ `Secure Identity Ledger Updated`"
+        f"User `{user_id}` has been fully authorized for public command access.\n\n"
+        f"⚙️ `Logic Challenge: SUCCESS`"
     )
