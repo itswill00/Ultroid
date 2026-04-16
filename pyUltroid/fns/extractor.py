@@ -44,6 +44,7 @@ class MediaExtractor:
                 "youtube": {
                     "player_client": ["web", "mweb", "tv"],
                     "po_token": os.getenv("PO_TOKEN"),
+                    "visitor_data": os.getenv("VISITOR_DATA"),
                 }
             },
             "http_headers": {
