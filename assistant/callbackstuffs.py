@@ -408,7 +408,10 @@ async def _edit_to(event):
     data = _buttons.get(match)
     if not data:
         return
-    await event.edit(data["text"], buttons=data["buttons"], link_preview=False)
+    try:
+        await event.edit(data["text"], buttons=data["buttons"], link_preview=False)
+    except Exception as er:
+        LOGS.debug(f"Ignored callback edit error: {er}")
 
 
 @callback(re.compile("abs_(.*)"), owner=True)
