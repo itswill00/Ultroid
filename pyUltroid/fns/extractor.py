@@ -49,6 +49,17 @@ class MediaExtractor:
         
         # Check for Local Cookies to bypass YouTube bot detection
         if os.path.exists("cookies.txt"):
+            try:
+                with open("cookies.txt", "r") as f:
+                    content = f.read(500)
+                    if "# Netscape" not in content:
+                        LOGS.warning("Extractor | cookies.txt is NOT in Netscape format!")
+                    elif "\t" not in content and "  " in content:
+                        LOGS.error("Extractor | cookies.txt detected SPACE-indentation instead of TABS! (Paste Error)")
+                        LOGS.warning("Extractor | Re-upload cookies.txt via FTP/SFTP to preserve TABS.")
+            except Exception as e:
+                LOGS.warning(f"Extractor | Could not perform cookie integrity check: {e}")
+
             opts["cookiefile"] = "cookies.txt"
             LOGS.info("Extractor | cookies.txt detected and loaded.")
         else:
