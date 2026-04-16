@@ -37,14 +37,9 @@ class MediaExtractor:
             "age_limit": 21,
             "geo_bypass": True,
             "nocheckcertificate": True,
+            "nocheckcertificate": True,
             "concurrent_fragment_downloads": 10,
             "buffersize": 1048576, # 1MB Buffer for VPS Throughput
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"],
-                    "innertube_host": "www.youtube.com",
-                }
-            },
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "*/*",
