@@ -95,6 +95,7 @@ async def dler_process(event, url, fmt):
     
     valid_files = []
     job_id = str(uuid.uuid4())[:8]
+    _ult_cache["job_owners"][job_id] = event.sender_id
     loop = asyncio.get_running_loop()
     last_update = [0]
     cancel_btn = [Button.inline("❌ Cancel", data=f"cancel_dl|{job_id}")]
@@ -301,9 +302,6 @@ async def process_media_selection(event):
         return await event.answer("Download prompt expired.", alert=True)
     
     url = data["url"]
-    # Register ownership for cancellation control
-    _ult_cache["job_owners"][job_id] = event.sender_id
-    
     # Deleting picker immediately for UI cleanup
     await event.delete()
     await dler_process(event, url, fmt)
