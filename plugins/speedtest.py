@@ -57,27 +57,27 @@ async def turbo_speedtest(ult):
         match = ult.pattern_match.group(1).strip().lower()
     except (IndexError, AttributeError):
         match = ""
-    x = await ult.eor("`Audit: Initializing network connectivity check...`")
+    x = await ult.eor("`Measuring network performance...`")
     
     try:
         # Step 1: Initialize
         loop = asyncio.get_running_loop()
         s = speedtest.Speedtest()
         
-        await x.edit("`Audit: Selecting optimal service node...`")
+        await x.edit("`Selecting optimal service node...`")
         best = await asyncio.to_thread(s.get_best_server)
         
         # Step 2: Download
-        await x.edit(f"`Audit: Measuring download throughput...` \n**Node:** `{best['sponsor']} ({best['name']})`")
+        await x.edit(f"`Measuring download throughput...` \n**Node:** `{best['sponsor']} ({best['name']})`")
         await asyncio.to_thread(s.download)
         
         # Step 3: Upload
-        await x.edit("`Audit: Measuring upload throughput...` \n**Latency:** `{:.2f} ms`".format(s.results.ping))
+        await x.edit("`Measuring upload throughput...` \n**Latency:** `{:.2f} ms`".format(s.results.ping))
         await asyncio.to_thread(s.upload)
         
         # Step 4: Finalize
         if "image" in match:
-            await x.edit("`Audit: Exporting diagnostic report...`")
+            await x.edit("`Exporting diagnostic report...`")
             share_url = await asyncio.to_thread(s.results.share)
         
         res = s.results.dict()
@@ -90,7 +90,7 @@ async def turbo_speedtest(ult):
         ping = f"{res['ping']:.2f} ms"
         
         text = (
-            f"**Network Performance Audit**\n"
+            f"**Network Statistics**\n"
             f"---"
             f"\n**Service Provider:** `{isp}`"
             f"\n**Assigned Node:** `{server}`"

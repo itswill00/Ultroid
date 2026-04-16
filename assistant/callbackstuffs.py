@@ -1321,7 +1321,7 @@ async def process_verification(event):
     add_verified(user_id)
     await event.answer("✅ Identity Verified. You can now use all bot commands.", alert=True)
     await event.edit(
-        f"🛡️ **Identity Audit: Verified**\n"
+        f"🛡️ **Verification Complete**\n"
         f"---"
         f"User `{user_id}` has been authorized for public command access.\n\n"
         f"⚙️ `Secure Identity Ledger Updated`"

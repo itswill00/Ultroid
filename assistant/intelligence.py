@@ -7,7 +7,7 @@ from pyUltroid.fns.tools import async_searcher
 
 @asst_cmd(pattern="tr( (.*)|$)")
 async def assistant_translate(event):
-    """Universal Translation Audit via Bot."""
+    """Universal Translation Bot."""
     input_str = event.pattern_match.group(1).strip()
     if not event.is_reply and not input_str:
         return await event.reply("`Usage: /tr <lang_code> (as reply) or /tr <lang_code> <text>`")
@@ -38,7 +38,7 @@ async def assistant_translate(event):
         result = translator.translate(text_to_tr, dest=target_lang.strip())
         
         text = (
-            f"🌐 **Identity Audit: Translation**\n"
+            f"🌐 **Translation Activity**\n"
             f"---"
             f"\n**Source ({result.src}):** `{text_to_tr}`"
             f"\n**Result ({result.dest}):** `{result.text}`"
@@ -47,7 +47,7 @@ async def assistant_translate(event):
         )
         await event.reply(text)
     except Exception as e:
-        await event.reply(f"❌ **Translation Audit Failed:** `{str(e)}`")
+        await event.reply(f"❌ **Translation Failed:** `{str(e)}`")
 
 @asst_cmd(pattern="ask( (.*)|$)")
 async def assistant_ask_ai(event):
@@ -60,7 +60,7 @@ async def assistant_ask_ai(event):
     if not query:
         return await event.reply("`Please provide a query for the technical audit.`")
 
-    x = await event.reply("`Audit: Consulting Technical Intelligence Engine...`")
+    x = await event.reply("`Consulting Technical Intelligence...`")
     
     try:
         # Interface with Groq/OpenAI if configured
@@ -80,7 +80,7 @@ async def assistant_ask_ai(event):
         )
         
         response = completion.choices[0].message.content
-        header = f"🧠 **Technical Intelligence Audit**\n---\n"
+        header = f"🧠 **Technical AI Response**\n---\n"
         
         if len(response) > 4000:
             with open("audit_log.txt", "w") as f:
@@ -89,7 +89,7 @@ async def assistant_ask_ai(event):
             os.remove("audit_log.txt")
             await x.delete()
         else:
-            await x.edit(header + response + f"\n\n---\n⚙️ `AI Ledger Audit Complete`")
+            await x.edit(header + response + f"\n\n---\n⚙️ `Response Complete`")
             
     except Exception as e:
-        await x.edit(f"❌ **Technical Audit Failed:** `{str(e)}`")
+        await x.edit(f"❌ **Technical Request Failed:** `{str(e)}`")

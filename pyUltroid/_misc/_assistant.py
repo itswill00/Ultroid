@@ -59,14 +59,14 @@ def asst_cmd(pattern=None, load=None, owner=False, **kwargs):
             if owner and not is_owner_or_sudo:
                 return
             
-            # --- Security Gateway (Identity Audit) ---
+            # --- Verification Gateway ---
             if not is_owner_or_sudo:
                 if not is_verified(sender_id):
                     # Prompt for verification
                     auth_text = (
-                        f"🛡️ **Access Verification Required**\n"
+                        f"🛡️ **Verification Required**\n"
                         f"---"
-                        f"\nTo ensure system stability, public users must complete a one-time identity audit."
+                        f"\nTo ensure system stability, public users must complete a one-time verification process."
                         f"\n\n**User:** `{sender_id}`"
                     )
                     buttons = [

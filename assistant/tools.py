@@ -11,8 +11,8 @@ from pyUltroid.fns.helper import time_formatter
 
 @asst_cmd(pattern="id")
 async def assistant_id(event):
-    """Audit IDs of users, chats, and replied media."""
-    text = f"🛡️ **Identity Audit**\n---"
+    """Extract IDs of users, chats, and replied media."""
+    text = f"🛡️ **System Identification**\n---"
     text += f"\n📍 **Chat ID:** `{event.chat_id}`"
     text += f"\n👤 **User ID:** `{event.sender_id}`"
     
@@ -42,7 +42,7 @@ async def assistant_info(event):
     bio = getattr(chat, 'about', 'No Bio')
     
     text = (
-        f"👤 **Identity Audit: Profile**\n"
+        f"👤 **System Identification: Profile**\n"
         f"---"
         f"\n**First:** {first}"
         f"\n**Last:** {last}"
@@ -67,10 +67,10 @@ async def assistant_json(event):
             # Handle large JSON by sending as file
             with open("metadata.json", "w") as f:
                 f.write(raw)
-            await event.reply("**[ 📑 Raw Metadata Audit ]**", file="metadata.json")
+            await event.reply("**[ 📑 Message Metadata ]**", file="metadata.json")
             import os
             os.remove("metadata.json")
         else:
-            await event.reply(f"**[ 📑 Raw Metadata Audit ]**\n```json\n{raw}\n```")
+            await event.reply(f"**[ 📑 Message Metadata ]**\n```json\n{raw}\n```")
     except Exception as e:
-        await event.reply(f"❌ **Metadata Audit Failed:** `{str(e)}`")
+        await event.reply(f"❌ **Metadata Retrieval Failed:** `{str(e)}`")
