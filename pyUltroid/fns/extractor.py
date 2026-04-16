@@ -46,6 +46,10 @@ class MediaExtractor:
             }
         }
         
+        # Check for Local Cookies to bypass YouTube bot detection
+        if os.path.exists("cookies.txt"):
+            opts["cookiefile"] = "cookies.txt"
+        
         if format_type == "audio":
             opts["format"] = "bestaudio/best"
             opts["postprocessors"] = [{

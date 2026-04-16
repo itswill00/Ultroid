@@ -129,8 +129,10 @@ async def dler_process(event, url, fmt):
     try:
         # Step 1: Extract Metadata (Info)
         info = await extractor.extract(url)
-        if not info or "error" in info:
-            err = info.get("error", "Failed to fetch metadata.")
+        if not info:
+            return await status_msg.edit("`[Error] Failed to fetch metadata (Timeout/Empty).`")
+        if "error" in info:
+            err = info.get("error", "Unknown error.")
             return await status_msg.edit(f"`[Error] {err}`")
 
         # Step 2: Governance Check (100MB Public Limit)
