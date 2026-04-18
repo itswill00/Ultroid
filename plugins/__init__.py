@@ -16,6 +16,7 @@ from telethon.tl import functions, types  # pylint:ignore
 
 from pyUltroid import *
 from pyUltroid._misc._assistant import asst_cmd, callback, in_pattern
+call_back = callback
 from pyUltroid._misc._decorators import ultroid_cmd
 from pyUltroid._misc._wrappers import eod, eor
 from pyUltroid.dB import DEVLIST, ULTROID_IMAGES
