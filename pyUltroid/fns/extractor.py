@@ -18,6 +18,7 @@ YOUTUBE_RE = re.compile(r"https?://(?:www\.)?(?:youtube\.com/(?:watch|shorts|liv
 class MediaExtractor:
     def __init__(self, download_path="downloads/"):
         self.download_path = download_path
+        self._extract_cache = {}  # Cache last extraction result to avoid double API calls
         if not os.path.exists(download_path):
             os.makedirs(download_path)
 
@@ -126,6 +127,47 @@ class MediaExtractor:
     @run_async
     def extract(self, url):
         """Extract metadata without downloading."""
+        if url in self._extract_cache:
+            return self._extract_cache[url]
+
+        if "instagram.com" in url:
+            try:
+                # Prioritize Sonzaix API for Instagram
+                res = self._sonzaix_dl(url)
+                if res and res.get("status"):
+                    # Mock yt-dlp info structure for compatibility
+                    results = res.get("result") or []
+                    if not isinstance(results, list):
+                        results = [results]
+                    
+                    entries = []
+                    for item in results:
+                        u = item.get("url")
+                        if u:
+                            entries.append({
+                                "url": u,
+                                "ext": "mp4" if item.get("type") == "video" else "jpg",
+                                "title": "Sonzaix_IG",
+                                "id": "sonzaix",
+                                "uploader": "Instagram",
+                            })
+                    
+                    if entries:
+                        if len(entries) == 1:
+                            info = entries[0]
+                        else:
+                            info = {
+                                "entries": entries,
+                                "title": "Sonzaix_IG_Carousel",
+                                "uploader": "Instagram",
+                                "uploader_url": url,
+                            }
+                        
+                        self._extract_cache[url] = info
+                        return info
+            except Exception as e:
+                LOGS.warning(f"Extractor | Sonzaix API failed: {e}. Falling back to yt-dlp.")
+
         opts = self.get_opts(format_type="extract")
         # Keep quiet=True to avoid yt-dlp spam in production logs.
         # Only log warnings/errors that are actionable.
@@ -137,6 +179,7 @@ class MediaExtractor:
                 if not info:
                     LOGS.error(f"Extractor | Null info returned for {url}")
                     return {"error": "YouTube returned no metadata (Empty)."}
+                self._extract_cache[url] = info
                 return info
             except Exception as e:
                 err_msg = str(e)
@@ -191,10 +234,31 @@ class MediaExtractor:
         """Download media and return the file path(s)."""
         if job_id:
             os.makedirs(os.path.join(self.download_path, job_id), exist_ok=True)
+            
+        # Use cached info if available to avoid double extraction
+        info = self._extract_cache.get(url)
+        
         opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:
-                info = ydl.extract_info(url, download=True)
+                if not info:
+                    info = ydl.extract_info(url, download=True)
+                else:
+                    # If we have cached info (e.g. from Sonzaix), download it
+                    # yt-dlp can download from a processed info dict via process_ie_data
+                    if "entries" in info:
+                        # For carousel/multi-file
+                        files = []
+                        for entry in info["entries"]:
+                            # Force download of the direct URL
+                            e_info = ydl.extract_info(entry["url"], download=True)
+                            if e_info:
+                                files.append(self._resolve_filename(ydl, e_info))
+                        return files or None
+                    else:
+                        # For single file
+                        info = ydl.extract_info(info["url"], download=True)
+
                 if not info:
                     return None
 
@@ -211,6 +275,23 @@ class MediaExtractor:
             except Exception as e:
                 LOGS.error(f"Download failed for {url}: {e}")
                 return None
+
+    def _sonzaix_dl(self, url):
+        """Internal helper to fetch data from Sonzaix API."""
+        try:
+            import cloudscraper
+            scraper = cloudscraper.create_scraper()
+            # Try /api/igdl first
+            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/igdl?url={url}", timeout=15)
+            if res.status_code == 200:
+                return res.json()
+            # Fallback to /api/v1/igdl
+            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/v1/igdl?url={url}", timeout=15)
+            if res.status_code == 200:
+                return res.json()
+        except Exception:
+            pass
+        return None
 
 # Global Instance
 extractor = MediaExtractor()
