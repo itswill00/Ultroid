@@ -15,6 +15,7 @@ from telethon import Button, events
 from telethon.tl import functions, types  # pylint:ignore
 
 from pyUltroid import *
+from pyUltroid import udB
 from pyUltroid._misc._assistant import asst_cmd, callback, in_pattern
 call_back = callback
 from pyUltroid._misc._decorators import ultroid_cmd
@@ -27,8 +28,6 @@ from pyUltroid.startup._database import _BaseDatabase as Database
 from pyUltroid.version import __version__, ultroid_version
 from strings import get_help, get_string
 from catbox import CatboxUploader
-
-udB = Database
 
 Redis = udB.get_key
 con = TgConverter
