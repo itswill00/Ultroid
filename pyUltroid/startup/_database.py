@@ -46,11 +46,14 @@ elif Var.DATABASE_URL:
 else:
     try:
         from localdb import Database
-    except ImportError:
-        LOGS.error(
-            "'localdb.json' package is required. Install it: pip install localdb.json"
-        )
-        Database = None
+    except (ImportError, ModuleNotFoundError):
+        try:
+            from localdb_json import Database
+        except (ImportError, ModuleNotFoundError):
+            Database = None
+            LOGS.error(
+                "'localdb.json' package is required. Install it: pip install localdb.json"
+            )
 
 # --------------------------------------------------------------------------------------------- #
 
@@ -341,6 +344,10 @@ class RedisDB(_BaseDatabase):
 
 class LocalDB(_BaseDatabase):
     def __init__(self):
+        if Database is None:
+            print("\n[CRITICAL ERROR]: 'localdb.json' is not installed.")
+            print("Please run: pip install localdb.json")
+            sys.exit(1)
         self.db = Database("ultroid")
         self.get = self.db.get
         self.set = self.db.set
