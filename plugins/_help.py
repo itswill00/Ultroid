@@ -45,19 +45,19 @@ async def _help(ult):
             if plug in HELP["Official"]:
                 output = f"**Plugin** - `{plug}`\n"
                 for i in HELP["Official"][plug]:
-                    output += i
+                    output += i.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             elif HELP.get("Addons") and plug in HELP["Addons"]:
                 output = f"**Plugin** - `{plug}`\n"
                 for i in HELP["Addons"][plug]:
-                    output += i
+                    output += i.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             elif HELP.get("VCBot") and plug in HELP["VCBot"]:
                 output = f"**Plugin** - `{plug}`\n"
                 for i in HELP["VCBot"][plug]:
-                    output += i
+                    output += i.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             else:
@@ -94,13 +94,13 @@ async def _help(ult):
                     output = f"**Command** `{plug}` **found in plugin** - `{file}`\n"
                     if file in HELP["Official"]:
                         for i in HELP["Official"][file]:
-                            output += i
+                            output += i.replace("{i}", HNDLR)
                     elif HELP.get("Addons") and file in HELP["Addons"]:
                         for i in HELP["Addons"][file]:
-                            output += i
+                            output += i.replace("{i}", HNDLR)
                     elif HELP.get("VCBot") and file in HELP["VCBot"]:
                         for i in HELP["VCBot"][file]:
-                            output += i
+                            output += i.replace("{i}", HNDLR)
                     output += "\n© @TeamUltroid"
                     await ult.eor(output)
         except BaseException as er:
