@@ -21,12 +21,28 @@ The industry's most aggressive downloader integration. Powered by a hardened `yt
 - **1MB Optimized Buffering**: Tuned for maximum disk throughput and high-speed network saturation.
 - **Shadow Proxy Protocol**: Automatically bypasses Telegram's 50MB file size limit by relaying through a secure Assistant-Proxy, allowing for seamless delivery of files up to **2GB**.
 - **Real-Time Control**: Interactive `[❌ Cancel]` buttons allow you to abort any active task instantly with automatic cleanup.
-
 ### 🧠 Advanced AI & Diagnostics
 Deeply integrated large language models for productivity.
 - **Llama 3.3 (Groq)**: Instant, high-context technical assistance.
 - **Gemini Pro**: Precision coding diagnostics and world-class reasoning.
+- **Indonesian Optimized**: AI Assistant is strictly tuned to respond in **Indonesian** (Bahasa Indonesia) for native Indonesian clarity.
 - **Double-Box UI**: Professional, terminal-style Markdown output for all AI interactions.
+
+---
+
+## ⚡ Recent Enhancements (April 2026)
+
+### 📦 Massive Plugin & Addon Collection
+This repository is now fully synchronized with the official **TeamUltroid** ecosystem, featuring **150+ commands** across various categories.
+- **Core Additions**: `_wspr`, `aiwrapper`, `audiotools`, `autopic`, `chatbot`, `echo`, `glitch`, `imagetools`, `logo`, `pdftools`, `qrcode`, and more.
+- **45+ Premium Addons**: `anime`, `autoprofile`, `figlet`, `imdb`, `pokedex`, `quote`, `song`, `spam`, `wikipedia`, etc.
+- **Zero-Config Deployment**: All dependencies are managed in `requirements.txt`.
+
+### 🛠️ Fixed Instagram Downloader
+- Integrated `SONZAIX_API_KEY` support to ensure stable Instagram media extraction on high-traffic servers.
+- Optimized multi-threaded buffering for Reels, IGTV, and Carousel posts.
+
+---
 
 ### 🛡️ Enterprise Security
 - **Session Guard**: Real-time monitoring of account access and automatic revocation of suspicious session ghosts.
