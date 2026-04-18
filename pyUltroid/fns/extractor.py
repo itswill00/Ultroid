@@ -5,6 +5,7 @@ import os
 import re
 import asyncio
 from pyUltroid import LOGS
+from pyUltroid.configs import Var
 from pyUltroid.fns.helper import run_async, bash
 from yt_dlp import YoutubeDL
 
@@ -281,16 +282,19 @@ class MediaExtractor:
         try:
             import cloudscraper
             scraper = cloudscraper.create_scraper()
+            api_key = Var.SONZAIX_API_KEY
+            key_param = f"&apikey={api_key}" if api_key else ""
+            
             # Try /api/igdl first
-            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/igdl?url={url}", timeout=15)
+            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/igdl?url={url}{key_param}", timeout=15)
             if res.status_code == 200:
                 return res.json()
             # Fallback to /api/v1/igdl
-            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/v1/igdl?url={url}", timeout=15)
+            res = scraper.get(f"http://Api.sonzaix.indevs.in/api/v1/igdl?url={url}{key_param}", timeout=15)
             if res.status_code == 200:
                 return res.json()
-        except Exception:
-            pass
+        except Exception as e:
+            LOGS.debug(f"Extractor | Sonzaix API error: {e}")
         return None
 
 # Global Instance

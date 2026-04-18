@@ -78,3 +78,4 @@ class Var:
     # bot   → bot only via BOT_TOKEN, no SESSION userbot
     # dual  → both userbot + assistant bot active (classic Ultroid)
     RUNTIME_MODE = _env("RUNTIME_MODE", default="")
+    SONZAIX_API_KEY = _env("SONZAIX_API_KEY", default=None)
