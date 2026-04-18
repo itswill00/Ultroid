@@ -22,6 +22,7 @@ from pyUltroid.dB.base import KeyManager
 from pyUltroid.dB.botchat_db import *
 from pyUltroid.fns.helper import inline_mention
 
+from pyUltroid import udB
 from . import *
 
 botb = KeyManager("BOTBLS", cast=list)

@@ -7,6 +7,9 @@
 
 
 from pyUltroid import *
+from pyUltroid._misc._assistant import asst_cmd, callback, in_pattern
+from pyUltroid._misc._decorators import ultroid_cmd
+from pyUltroid._misc._wrappers import eod, eor
 from pyUltroid.fns.helper import *
 from pyUltroid.fns.misc import *
 from pyUltroid.fns.tools import *
