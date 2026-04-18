@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available
+✘ Commands Available
 
 • `{i}usage`
     Get overall usage.
@@ -103,11 +103,11 @@ async def heroku_usage():
             "'psutil' not installed!\nPlease Install it to use this.\n`pip3 install psutil`",
         )
     if not (HEROKU_API and HEROKU_APP_NAME):
-        if HOSTED_ON == "Cloud Deploy":
-            return False, "Please fill `API` and `APP_NAME` for Cloud Services."
+        if HOSTED_ON == "heroku":
+            return False, "Please fill `HEROKU_API` and `HEROKU_APP_NAME`"
         return (
             False,
-            f"`This command is only for Cloud Instances, You are using {HOSTED_ON}`",
+            f"`This command is only for Heroku Users, You are using {HOSTED_ON}`",
         )
     user_id = Heroku.account().id
     headers = {
@@ -174,15 +174,6 @@ def db_usage():
         total = 30
     elif udB.name == "SQL":
         total = 20
-    elif udB.name == "LocalDB":
-        # LocalDB is limited by local disk; report disk space instead
-        import shutil
-        disk_total, disk_used, disk_free = shutil.disk_usage(".")
-        a = f"{humanbytes(disk_used)}/{humanbytes(disk_total)}"
-        b = f"{str(round((disk_used / disk_total) * 100, 2))}%"
-        return f"**{udB.name}**\n\n**Disk Used**: `{a}`\n**Usage percentage**: **{b}**"
-    else:
-        return f"**{udB.name}**\n\n`Storage usage reporting not supported for this database type.`"
     total = total * (2**20)
     used = udB.usage
     a = f"{humanbytes(used)}/{humanbytes(total)}"

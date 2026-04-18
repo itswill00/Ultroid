@@ -325,7 +325,7 @@ async def _(event):
                     pass
             else:
                 r += 1
-        if getattr(i, 'bot', None):
+        if i.bot:
             if "bot" in input_str:
                 try:
                     await event.client.kick_participant(event.chat_id, i)

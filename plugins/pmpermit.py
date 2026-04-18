@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}a` or `{i}approve`
     Approve someone to PM.
@@ -114,50 +114,15 @@ def update_pm(userid, message, warns_given):
         pass
 
 
-def do_cleanup(uid):
-    """Thoroughly remove user data from RAM after final state is reached."""
-    # We don't remove from _to_delete here because it's handled by delete_pm_warn_msgs
-    # or should be cleaned separately if we want to preserve 'edit' capability
-    for d in [COUNT_PM, LASTMSG, WARN_MSGS, U_WARNS, _not_approved, _to_delete]:
-        d.pop(uid, None)
-
-
 async def delete_pm_warn_msgs(chat: int):
     try:
         await _to_delete[chat].delete()
-    except Exception:
+    except KeyError:
         pass
-    _to_delete.pop(chat, None)
 
 
 # =================================================================
 
-@ultroid_cmd(pattern="pmpermit (on|off)$", fullsudo=True)
-async def toggle_pm(e):
-    choice = e.pattern_match.group(1)
-    if choice == "on":
-        if udB.get_key("PMSETTING"):
-            return await e.eor("`PM Permit is already ENABLED.`", time=5)
-        udB.set_key("PMSETTING", "True")
-        await e.eor("`PM Permit has been ENABLED. Restarting to apply changes...`", time=5)
-    else:
-        if not udB.get_key("PMSETTING"):
-            return await e.eor("`PM Permit is already DISABLED.`", time=5)
-        udB.del_key("PMSETTING")
-        await e.eor("`PM Permit has been DISABLED. Restarting to apply changes...`", time=5)
-    
-    # Trigger restart directly — no Telegram round-trip needed
-    import os, sys, json as _json, time as _time
-    who = "user"
-    udB.set_key("_RESTART", _json.dumps({
-        "who": who,
-        "chat_id": e.chat_id,
-        "msg_id": e.id,
-        "ts": _time.time(),
-        "version": udB.get_key("ULTROID_VERSION") or "?",
-    }))
-    args = [sys.executable, "-m", "pyUltroid"] + sys.argv[1:]
-    os.execl(sys.executable, *args)
 
 if udB.get_key("PMLOG"):
 
@@ -191,57 +156,11 @@ if udB.get_key("PMLOG"):
             func=lambda e: e.is_private,
         ),
     )
-    async def pmlog_handler(event):
+    async def permitpm(event):
         user = await event.get_sender()
-        if getattr(user, "bot", None) or user.is_self or user.verified or Logm.contains(user.id):
+        if user.bot or user.is_self or user.verified or Logm.contains(user.id):
             return
-        target = udB.get_key("PMLOGGROUP") or LOG_CHANNEL
-        mention = inline_mention(user)
-        header = f"💌 **#PMLOG** from {mention} [`{user.id}`]"
-        
-        # Phase 3: AI PM Summarizer
-        ai_summary = ""
-        if event.text:
-            try:
-                from pyUltroid.fns.ai_engine import _call_groq
-                messages = [
-                    {"role": "system", "content": "lu tuh asisten pribadi gw. tugas lu rangkum pesan user ini. aturan wajib:\n1. HARUS ngetik pake huruf kecil semua (no kapital).\n2. bahasa gaul/santai (lu/gw), tapi JANGAN terlalu disingkat-singkat ngetiknya biar tetep enak dibaca.\n3. selain ngerangkum, lu HARUS ngasih saran tindakan apa yg mesti gw lakuin sbg balesan.\n4. jawab singkat max 2 kalimat."},
-                    {"role": "user", "content": [{"type": "text", "text": event.text[:1000]}]}
-                ]
-                ans, _ = await _call_groq(messages)
-                if ans:
-                    ai_summary = f"\n\n🤖 **AI Summary:** `{ans.strip()}`"
-            except Exception as e:
-                LOGS.warning(f"PM Summarizer failed: {e}")
-
-        buttons = [
-            [
-                Button.url("👤 View Profile", url=f"tg://user?id={user.id}"),
-                Button.inline("⛔ Block", data=f"block_{user.id}"),
-            ]
-        ]
-        try:
-            if event.media:
-                await asst.send_file(
-                    target,
-                    event.media,
-                    caption=f"{header}{ai_summary}\n\n{event.text or ''}",
-                    buttons=buttons,
-                )
-            else:
-                await asst.send_message(
-                    target, f"{header}{ai_summary}\n\n{event.text or ''}", buttons=buttons
-                )
-        except Exception as er:
-            LOGS.info(f"PMLogger Error: {er}")
-            try:
-                await asst.send_message(
-                    target,
-                    f"{header}{ai_summary}\n\n**Content:**\n{event.text or '[Media/File]'}",
-                    buttons=buttons,
-                )
-            except Exception:
-                pass
+        await event.forward_to(udB.get_key("PMLOGGROUP") or LOG_CHANNEL)
 
 
 if udB.get_key("PMSETTING"):
@@ -262,14 +181,6 @@ if udB.get_key("PMSETTING"):
             keym.add(miss.id)
             await delete_pm_warn_msgs(miss.id)
             try:
-                from telethon.tl.functions.account import UpdateNotifySettingsRequest
-                from telethon.tl.types import InputPeerNotifySettings
-                
-                # Unmute the chat
-                await ultroid_bot(UpdateNotifySettingsRequest(
-                    peer=miss.id,
-                    settings=InputPeerNotifySettings(mute_until=0)
-                ))
                 await ultroid_bot.edit_folder(miss.id, folder=0)
             except BaseException:
                 pass
@@ -288,7 +199,6 @@ if udB.get_key("PMSETTING"):
                 )
             except MessageNotModifiedError:
                 pass
-            do_cleanup(miss.id)
 
     @ultroid_bot.on(
         events.NewMessage(
@@ -301,25 +211,15 @@ if udB.get_key("PMSETTING"):
             and not e.sender.verified,
         )
     )
-    async def pm_security_handler(event):
+    async def permitpm(event):
         inline_pm = Redis("INLINE_PM") or False
         user = event.sender
         if not keym.contains(user.id) and event.text != UND:
-            # Enhanced Privacy: Auto Archive and Mute
-            try:
-                from telethon.tl.functions.account import UpdateNotifySettingsRequest
-                from telethon.tl.types import InputPeerNotifySettings
-                
-                # Mute the chat permanently
-                await event.client(UpdateNotifySettingsRequest(
-                    peer=event.input_chat,
-                    settings=InputPeerNotifySettings(mute_until=2**31-1)
-                ))
-                # Archive the chat
-                await ultroid_bot.edit_folder(user.id, folder=1)
-            except Exception:
-                pass
-
+            if Redis("MOVE_ARCHIVE"):
+                try:
+                    await ultroid_bot.edit_folder(user.id, folder=1)
+                except BaseException as er:
+                    LOGS.info(er)
             if event.media and not udB.get_key("DISABLE_PMDEL"):
                 await event.delete()
             name = user.first_name
@@ -466,15 +366,22 @@ if udB.get_key("PMSETTING"):
             if COUNT_PM[user.id] >= WARNS:
                 await delete_pm_warn_msgs(user.id)
                 _to_delete[user.id] = await event.respond(UNS)
-                do_cleanup(user.id)
+                try:
+                    del COUNT_PM[user.id]
+                    del LASTMSG[user.id]
+                except KeyError:
+                    await asst.send_message(
+                        udB.get_key("LOG_CHANNEL"),
+                        "PMPermit is messed! Pls restart the bot!!",
+                    )
+                    return LOGS.info("COUNT_PM is messed.")
                 await ultroid_bot(BlockRequest(user.id))
                 await ultroid_bot(ReportSpamRequest(peer=user.id))
                 await asst.edit_message(
                     udB.get_key("LOG_CHANNEL"),
-                    _not_approved.get(user.id, 0), # use get to avoid issues if already cleaned
+                    _not_approved[user.id],
                     f"**{mention}** [`{user.id}`] was Blocked for spamming.",
                 )
-                do_cleanup(user.id) # Final cleanup after logging
 
     @ultroid_cmd(pattern="(start|stop|clear)archive$", fullsudo=True)
     async def _(e):
@@ -509,15 +416,8 @@ if udB.get_key("PMSETTING"):
             keym.add(user.id)
             try:
                 await delete_pm_warn_msgs(user.id)
-                from telethon.tl.functions.account import UpdateNotifySettingsRequest
-                from telethon.tl.types import InputPeerNotifySettings
-                # Unmute and Unarchive
-                await apprvpm.client(UpdateNotifySettingsRequest(
-                    peer=user.id,
-                    settings=InputPeerNotifySettings(mute_until=0)
-                ))
                 await apprvpm.client.edit_folder(user.id, folder=0)
-            except Exception:
+            except BaseException:
                 pass
             await eod(
                 apprvpm,
@@ -547,7 +447,6 @@ if udB.get_key("PMSETTING"):
                 )
             except MessageNotModifiedError:
                 pass
-            do_cleanup(user.id)
         else:
             await apprvpm.eor("`User may already be approved.`", time=5)
 
@@ -643,7 +542,6 @@ async def blockpm(block):
         )
     except MessageNotModifiedError:
         pass
-    do_cleanup(user)
 
 
 @ultroid_cmd(pattern="unblock( (.*)|$)", fullsudo=True)
@@ -769,7 +667,6 @@ async def apr_in(event):
             parse_mode="html",
         )
         await delete_pm_warn_msgs(uid)
-        do_cleanup(uid)
         await event.answer("Approved.", alert=True)
     else:
         await event.edit(
@@ -841,7 +738,6 @@ async def blck_in(event):
         buttons=Button.inline("UnBlock", data=f"unblock_{uid}"),
         parse_mode="html",
     )
-    do_cleanup(uid)
     await event.answer("Blocked.", alert=True)
 
 
@@ -935,11 +831,13 @@ async def in_pm_ans(event):
         res = [
             event.builder.article(
                 title="Inline PMPermit.",
+                type=_type,
                 text=msg_,
                 description="@TeamUltroid",
+                include_media=include_media,
                 buttons=buttons,
                 thumb=cont,
-                link_preview=False,
+                content=cont,
             )
         ]
     await event.answer(res, switch_pm="• Ultroid •", switch_pm_param="start")

@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available
+✘ Commands Available
 
 • `{i}gdul <reply/file name>`
     Reply to file to upload on Google Drive.
@@ -66,12 +66,10 @@ async def files(event):
         return await event.eor(get_string("gdrive_6").format(asst.me.username))
     eve = await event.eor(get_string("com_1"))
     msg = ""
-    # _list_files is now an async method to prevent event loop blocking
-    files_list = await GDrive._list_files()
-    if files_list:
-        msg += f"{len(files_list.keys())} files found in gdrive.\n\n"
-        for _ in files_list:
-            msg += f"> [{files_list[_]}]({_})\n"
+    if files := GDrive._list_files:
+        msg += f"{len(files.keys())} files found in gdrive.\n\n"
+        for _ in files:
+            msg += f"> [{files[_]}]({_})\n"
     else:
         msg += "Nothing in Gdrive"
     if len(msg) < 4096:
@@ -146,8 +144,7 @@ async def _(event):
             return await eod(
                 mone, "`Requested directory is empty. Can't create empty directory.`"
             )
-        # create_directory is now async
-        folder_id = await GDrive.create_directory(filename)
+        folder_id = GDrive.create_directory(filename)
         c = 0
         for files in sorted(files):
             file = f"{filename}/{files}"
@@ -186,15 +183,14 @@ async def _(event):
     if not input_str:
         return await event.eor("`Give filename to search on GDrive...`")
     eve = await event.eor(f"`Searching for {input_str} in G-Drive...`")
-    # search is now async
-    files_list = await GDrive.search(input_str)
+    files = GDrive.search(input_str)
     msg = ""
-    if files_list:
+    if files:
         msg += (
-            f"{len(files_list.keys())} files with {input_str} in title found in GDrive.\n\n"
+            f"{len(files.keys())} files with {input_str} in title found in GDrive.\n\n"
         )
-        for _ in files_list:
-            msg += f"> [{files_list[_]}]({_})\n"
+        for _ in files:
+            msg += f"> [{files[_]}]({_})\n"
     else:
         msg += f"`No files with title {input_str}`"
     if len(msg) < 4096:

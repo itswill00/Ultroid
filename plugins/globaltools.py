@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}gban <reply user/ username>`
 • `{i}ungban`
@@ -325,14 +325,15 @@ async def _(e):
             try:
                 await e.client.edit_permissions(ggban.id, userid, view_messages=True)
                 chats += 1
-                await asyncio.sleep(1.0)
-                if chats % 20 == 0:
-                    await asyncio.sleep(5.0)
             except FloodWaitError as fw:
-                LOGS.info(f"Flood Wait Error | : on Ungban\nSleeping for {fw.seconds+10}")
+                LOGS.info(
+                    f"[FLOOD_WAIT_ERROR] : on Ungban\nSleeping for {fw.seconds+10}"
+                )
                 await asyncio.sleep(fw.seconds + 10)
                 try:
-                    await e.client.edit_permissions(ggban.id, userid, view_messages=True)
+                    await e.client.edit_permissions(
+                        ggban.id, userid, view_messages=True
+                    )
                     chats += 1
                 except BaseException as er:
                     LOGS.exception(er)
@@ -404,14 +405,15 @@ async def _(e):
             try:
                 await e.client.edit_permissions(ggban.id, userid, view_messages=False)
                 chats += 1
-                await asyncio.sleep(1.0)
-                if chats % 20 == 0:
-                    await asyncio.sleep(5.0)
             except FloodWaitError as fw:
-                LOGS.info(f"Flood Wait Error | : on GBAN Command\nSleeping for {fw.seconds+10}")
+                LOGS.info(
+                    f"[FLOOD_WAIT_ERROR] : on GBAN Command\nSleeping for {fw.seconds+10}"
+                )
                 await asyncio.sleep(fw.seconds + 10)
                 try:
-                    await e.client.edit_permissions(ggban.id, userid, view_messages=False)
+                    await e.client.edit_permissions(
+                        ggban.id, userid, view_messages=False
+                    )
                     chats += 1
                 except BaseException as er:
                     LOGS.exception(er)
@@ -450,7 +452,7 @@ async def gcast(event):
     done = 0
     err = ""
     if event.client._dialogs:
-        dialog = list(event.client._dialogs)
+        dialog = event.client._dialogs
     else:
         dialog = await event.client.get_dialogs()
         event.client._dialogs.extend(dialog)
@@ -483,10 +485,6 @@ async def gcast(event):
                             chat, msg, file=reply.media if reply else None
                         )
                     done += 1
-                    # Proactive delay: 1s per chat, 5s every 20 to mimic human behavior
-                    await asyncio.sleep(1.0)
-                    if done % 20 == 0:
-                        await asyncio.sleep(5.0)
                 except FloodWaitError as fw:
                     await asyncio.sleep(fw.seconds + 10)
                     try:
@@ -512,9 +510,8 @@ async def gcast(event):
                     err += f"• {str(h)}" + "\n"
                     er += 1
     text += f"Done in {done} chats, error in {er} chat(s)"
-    if err:
-        with open("gcast-error.log", "w+") as f:
-            f.write(err)
+    if err != "":
+        open("gcast-error.log", "w+").write(err)
         text += f"\nYou can do `{HNDLR}ul gcast-error.log` to know error report."
     await kk.edit(text)
 
@@ -539,7 +536,7 @@ async def gucast(event):
     er = 0
     done = 0
     if event.client._dialogs:
-        dialog = list(event.client._dialogs)
+        dialog = event.client._dialogs
     else:
         dialog = await event.client.get_dialogs()
         event.client._dialogs.extend(dialog)
@@ -563,10 +560,6 @@ async def gucast(event):
                             chat, msg, file=reply.media if reply else None
                         )
                     done += 1
-                    # Proactive delay: 2s per DM (stricter than groups)
-                    await asyncio.sleep(2.0)
-                    if done % 10 == 0:
-                        await asyncio.sleep(10.0)
                 except BaseException:
                     er += 1
     await kk.edit(f"Done in {done} chats, error in {er} chat(s)")
@@ -599,9 +592,6 @@ async def gkick(e):
             try:
                 await e.client.kick_participant(gkick.id, userid)
                 chats += 1
-                await asyncio.sleep(1.5)
-                if chats % 15 == 0:
-                    await asyncio.sleep(5.0)
             except BaseException:
                 pass
     await xx.edit(f"`Gkicked` [{name}](tg://user?id={userid}) `in {chats} chats.`")
@@ -617,7 +607,7 @@ async def _(e):
     elif e.is_private:
         userid = e.chat_id
     else:
-        return await xx.eor("`Reply to some msg or add their id.`", time=5)
+        return await xx.eor("`Reply to some msg or add their id.`", tome=5, time=5)
     name = await e.client.get_entity(userid)
     chats = 0
     if userid == ultroid_bot.uid:
@@ -636,9 +626,6 @@ async def _(e):
             try:
                 await e.client.edit_permissions(onmute.id, userid, send_messages=False)
                 chats += 1
-                await asyncio.sleep(1.0)
-                if chats % 20 == 0:
-                    await asyncio.sleep(5.0)
             except BaseException:
                 pass
     gmute(userid)
@@ -670,9 +657,6 @@ async def _(e):
             try:
                 await e.client.edit_permissions(hurr.id, userid, send_messages=True)
                 chats += 1
-                await asyncio.sleep(1.0)
-                if chats % 20 == 0:
-                    await asyncio.sleep(5.0)
             except BaseException:
                 pass
     ungmute(userid)

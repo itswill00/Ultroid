@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}fsub <chat username><id>`
     Enable ForceSub in Used Chat !
@@ -49,7 +49,6 @@ from . import (
 )
 
 CACHE = {}
-MAX_CACHE_PER_CHAT = 500  # Prevent unbounded memory growth in large groups
 
 
 @ultroid_cmd(pattern="fsub( (.*)|$)", admins_only=True, groups_only=True)
@@ -129,11 +128,6 @@ async def diesoon(e):
     await ultroid_bot.edit_permissions(
         e.chat_id, int(spli[0]), send_messages=True, until_date=None
     )
-    # Clean up CACHE for this user so they're not tracked anymore
-    chat_id = e.chat_id
-    user_id = int(spli[0])
-    if CACHE.get(chat_id) and CACHE[chat_id].get(user_id):
-        del CACHE[chat_id][user_id]
     await e.edit(get_string("fsub_8"))
 
 
@@ -149,10 +143,6 @@ async def force_sub(ult):
             CACHE[ult.chat_id].update({user.id: CACHE[ult.chat_id][user.id] + 1})
         else:
             CACHE[ult.chat_id].update({user.id: 1})
-        # Evict oldest entries if cache grows too large
-        if len(CACHE[ult.chat_id]) > MAX_CACHE_PER_CHAT:
-            oldest_key = next(iter(CACHE[ult.chat_id]))
-            del CACHE[ult.chat_id][oldest_key]
     else:
         CACHE.update({ult.chat_id: {user.id: 1}})
     count = CACHE[ult.chat_id][user.id]

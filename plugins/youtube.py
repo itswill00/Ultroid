@@ -1,69 +1,85 @@
-"""
-★ Assistant-Exclusive Relay Module ★
-
-This module acts as a silent proxy.
-Commands like .dl, .yta, and .ytv are captured here on the userbot side
-and instantly relayed to the Assistant Bot to process the actual download,
-keeping your main account clean and unaffected.
-"""
-
 # Ultroid - UserBot
-# Media Downloader Relay (Assistant Proxy)
+# Copyright (C) 2021-2026 TeamUltroid
+#
+# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# PLease read the GNU Affero General Public License in
+# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+"""
+✘ Commands Available -
 
-import re
+• `{i}yta <(youtube/any) link>`
+   Download audio from the link.
 
-from pyUltroid import asst
-from . import ultroid_cmd
+• `{i}ytv <(youtube/any) link>`
+   Download video  from the link.
 
-# Import relay targets once at module load, not on every command call.
-# Lazy import on each call adds unnecessary sys.modules lookup overhead.
-_show_dl_prompt = None
-_dler_process = None
+• `{i}ytsa <(youtube) search query>`
+   Search and download audio from youtube.
 
-def _load_relay_fns():
-    """Resolve relay functions lazily on first use (assistant may not be
-    loaded yet at plugin import time, but will be by first command)."""
-    global _show_dl_prompt, _dler_process
-    if _show_dl_prompt is None:
-        from assistant.media_dl import show_dl_prompt, dler_process
-        _show_dl_prompt = show_dl_prompt
-        _dler_process = dler_process
+• `{i}ytsv <(youtube) search query>`
+   Search and download video from youtube.
+"""
+from pyUltroid.fns.ytdl import download_yt, get_yt_link
+
+from . import get_string, requests, ultroid_cmd
 
 
-@ultroid_cmd(pattern="(dl|yta|ytv)( (.*)|$)")
-async def userbot_dl_relay(event):
-    """Relays download commands to the Assistant Bot."""
-    if not asst:
-        return await event.edit(
-            "`[!] Assistant Bot is not active. Start the assistant to use downloaders.`",
-            time=8
-        )
-
-    cmd = event.pattern_match.group(1)
-    # group(3) captures only the URL part (without leading space)
-    raw = event.pattern_match.group(3) or ""
-    url = raw.strip()
-
-    if not url:
-        return await event.edit(f"`Usage: .{cmd} <link>`", time=5)
-
-    # Validate URL before relaying to prevent garbage input
-    url_match = re.search(r"https?://\S+", url)
-    if not url_match:
-        return await event.edit("`[!] Invalid or missing URL.`", time=5)
-    url = url_match.group(0)
-
-    try:
-        _load_relay_fns()
-        if cmd == "yta":
-            await _dler_process(event, url, "audio")
-        elif cmd == "ytv":
-            await _dler_process(event, url, "video")
-        else:
-            # .dl — show interactive format selection prompt
-            await _show_dl_prompt(event, url)
-
-        # Delete the trigger command to keep the chat clean
-        await event.delete()
-    except Exception as e:
-        await event.edit(f"`[Relay Error] {str(e)[:150]}`", time=8)
+@ultroid_cmd(
+    pattern="yt(a|v|sa|sv) ?(.*)",
+)
+async def download_from_youtube_(event):
+    ytd = {
+        "prefer_ffmpeg": True,
+        "addmetadata": True,
+        "geo-bypass": True,
+        "nocheckcertificate": True,
+    }
+    opt = event.pattern_match.group(1).strip()
+    xx = await event.eor(get_string("com_1"))
+    if opt == "a":
+        ytd["format"] = "bestaudio"
+        ytd["outtmpl"] = "%(id)s.m4a"
+        url = event.pattern_match.group(2)
+        if not url:
+            return await xx.eor(get_string("youtube_1"))
+        try:
+            requests.get(url)
+        except BaseException:
+            return await xx.eor(get_string("youtube_2"))
+    elif opt == "v":
+        ytd["format"] = "best"
+        ytd["outtmpl"] = "%(id)s.mp4"
+        ytd["postprocessors"] = [{"key": "FFmpegMetadata"}]
+        url = event.pattern_match.group(2)
+        if not url:
+            return await xx.eor(get_string("youtube_3"))
+        try:
+            requests.get(url)
+        except BaseException:
+            return await xx.eor(get_string("youtube_4"))
+    elif opt == "sa":
+        ytd["format"] = "bestaudio"
+        ytd["outtmpl"] = "%(id)s.m4a"
+        try:
+            query = event.text.split(" ", 1)[1]
+        except IndexError:
+            return await xx.eor(get_string("youtube_5"))
+        url = get_yt_link(query)
+        if not url:
+            return await xx.edit(get_string("unspl_1"))
+        await xx.eor(get_string("youtube_6"))
+    elif opt == "sv":
+        ytd["format"] = "best"
+        ytd["outtmpl"] = "%(id)s.mp4"
+        ytd["postprocessors"] = [{"key": "FFmpegMetadata"}]
+        try:
+            query = event.text.split(" ", 1)[1]
+        except IndexError:
+            return await xx.eor(get_string("youtube_7"))
+        url = get_yt_link(query)
+        if not url:
+            return await xx.edit(get_string("unspl_1"))
+        await xx.eor(get_string("youtube_8"))
+    else:
+        return
+    await download_yt(xx, url, ytd)

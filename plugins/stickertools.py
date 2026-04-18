@@ -179,8 +179,6 @@ async def hehe(args):
             is_vid = True
             photo = await con.create_webm(xy)
         else:
-            if not cv2:
-                return await xx.edit("`OpenCV is required for processing long videos. Please kang images or shorter clips instead.`")
             y = cv2.VideoCapture(xy)
             heh, lol = y.read()
             cv2.imwrite("ult.webp", lol)
@@ -478,8 +476,6 @@ async def ultiny(event):
         file = "ult.tgs"
         os.remove("json.json")
     elif ik.endswith((".gif", ".webm", ".mp4")):
-        if not cv2:
-            return await xx.edit("`OpenCV is required for processing tiny videos.`")
         iik = cv2.VideoCapture(ik)
         dani, busy = iik.read()
         cv2.imwrite("i.png", busy)

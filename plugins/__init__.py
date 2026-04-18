@@ -25,6 +25,7 @@ from pyUltroid.fns.tools import *
 from pyUltroid.startup._database import _BaseDatabase as Database
 from pyUltroid.version import __version__, ultroid_version
 from strings import get_help, get_string
+from catbox import CatboxUploader
 
 udB: Database
 
@@ -37,9 +38,7 @@ OWNER_ID = ultroid_bot.uid
 ultroid_bot: UltroidClient
 asst: UltroidClient
 
-from pyUltroid._misc import refresh_all
 LOG_CHANNEL = udB.get_key("LOG_CHANNEL")
-call_back = refresh_all
 
 
 def inline_pic():
@@ -52,8 +51,9 @@ def inline_pic():
 
 
 Telegraph = telegraph_client()
+cat_uploader = CatboxUploader()
 
-upload_file = catbox_upload
+upload_file = cat_uploader.upload_file
 
 List = []
 Dict = {}

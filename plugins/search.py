@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}saavn <search query>`
     Download songs from Saavn.
@@ -69,7 +69,7 @@ async def gitsearch(event):
     except BaseException:
         return await event.eor(get_string("srch_2"))
     fullusr = f"""
-**Github |({ulink})**
+**[GITHUB]({ulink})**
 **Name** - {uacc}
 **UserName** - {uname}
 **ID** - {uid}

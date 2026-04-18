@@ -6,7 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}webupload`
     Upload files on another server.

@@ -5,7 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}mediainfo <reply to media>/<file path>/<url>`
    To get info about it.
@@ -88,7 +88,7 @@ async def mi(e):
     makehtml = ""
     if naam.endswith((".jpg", ".png")):
         if os.path.exists(naam):
-            med = await upload_file(naam)
+            med = upload_file(naam)
         else:
             med = match
         makehtml += f"<img src='{med}'><br>"

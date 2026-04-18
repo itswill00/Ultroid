@@ -37,7 +37,6 @@ from . import (
 
 CACHE_SPAM = {}
 TAG_EDITS = {}
-_MAX_TAG_EDITS_PER_CHAT = 300  # Limit stored msg refs to prevent RAM growth
 
 
 @ultroid_bot.on(
@@ -61,11 +60,7 @@ async def all_messages_catcher(e):
         if TAG_EDITS.get(e.chat_id):
             TAG_EDITS[e.chat_id].update({e.id: {"id": sent.id, "msg": e}})
         else:
-            TAG_EDITS[e.chat_id] = {e.id: {"id": sent.id, "msg": e}}
-        # Evict oldest entry if cache is full
-        if len(TAG_EDITS[e.chat_id]) > _MAX_TAG_EDITS_PER_CHAT:
-            oldest = next(iter(TAG_EDITS[e.chat_id]))
-            del TAG_EDITS[e.chat_id][oldest]
+            TAG_EDITS.update({e.chat_id: {e.id: {"id": sent.id, "msg": e}}})
         tag_add(sent.id, e.chat_id, e.id)
     except MediaEmptyError as er:
         LOGS.debug(f"handling {er}.")
@@ -217,11 +212,9 @@ async def when_added_or_joined(event):
     if not (user and user.is_self):
         return
     if getattr(chat, "username", None):
-        msg_id = getattr(event.action_message, "id", "")
-        chat = f"[{chat.title}](https://t.me/{chat.username}/{msg_id})"
+        chat = f"[{chat.title}](https://t.me/{chat.username}/{event.action_message.id})"
     else:
-        msg_id = getattr(event.action_message, "id", "")
-        chat = f"[{chat.title}](https://t.me/c/{chat.id}/{msg_id})"
+        chat = f"[{chat.title}](https://t.me/c/{chat.id}/{event.action_message.id})"
     key = "bot" if event.client._bot else "user"
     buttons = Button.inline(
         get_string("userlogs_3"), data=f"leave_ch_{event.chat_id}|{key}"
@@ -266,7 +259,7 @@ async def leave_ch_at(event):
         pass
     except ChannelPrivateError:
         return await event.edit(
-            "`Cant Access Chat |` `Maybe already left or got banned.`"
+            "`[CANT_ACCESS_CHAT]` `Maybe already left or got banned.`"
         )
     except Exception as er:
         LOGS.exception(er)

@@ -6,7 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 """
-» Commands Available -
+✘ Commands Available -
 
 • `{i}write <text or reply to text>`
    It will write on a paper.

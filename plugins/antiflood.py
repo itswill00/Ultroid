@@ -21,7 +21,6 @@ from pyUltroid.fns.admins import admin_check
 from . import Button, Redis, asst, callback, eod, get_string, ultroid_bot, ultroid_cmd
 
 _check_flood = {}
-_MAX_FLOOD_CACHE = 200  # Max users tracked per chat
 
 if Redis("ANTIFLOOD"):
 
@@ -33,18 +32,14 @@ if Redis("ANTIFLOOD"):
     async def flood_checm(event):
         count = 1
         chat = (await event.get_chat()).title
-        if event.chat_id in _check_flood:
+        if event.chat_id in _check_flood.keys():
             if event.sender_id == list(_check_flood[event.chat_id].keys())[0]:
                 count = _check_flood[event.chat_id][event.sender_id]
                 _check_flood[event.chat_id] = {event.sender_id: count + 1}
             else:
-                _check_flood[event.chat_id][event.sender_id] = 1
-                # Evict if too many users tracked in this chat
-                if len(_check_flood[event.chat_id]) > _MAX_FLOOD_CACHE:
-                    oldest = next(iter(_check_flood[event.chat_id]))
-                    del _check_flood[event.chat_id][oldest]
+                _check_flood[event.chat_id] = {event.sender_id: count}
         else:
-            _check_flood[event.chat_id] = {event.sender_id: 1}
+            _check_flood[event.chat_id] = {event.sender_id: count}
         if await admin_check(event, silent=True) or getattr(event.sender, "bot", None):
             return
         if event.sender_id in DEVLIST:
@@ -57,9 +52,7 @@ if Redis("ANTIFLOOD"):
                 await event.client.edit_permissions(
                     event.chat_id, event.sender_id, send_messages=False
                 )
-                # Clean up only the offending user, not the whole chat
-                if event.chat_id in _check_flood:
-                    _check_flood[event.chat_id].pop(event.sender_id, None)
+                del _check_flood[event.chat_id]
                 await event.reply(f"#AntiFlood\n\n{get_string('antiflood_3')}")
                 await asst.send_message(
                     int(Redis("LOG_CHANNEL")),

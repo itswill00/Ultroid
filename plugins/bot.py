@@ -113,14 +113,8 @@ async def lol(ult):
         pic = choice(pic)
     uptime = time_formatter((time.time() - start_time) * 1000)
     header = udB.get_key("ALIVE_TEXT") or get_string("bot_1")
-    try:
-        repo = Repo()
-        y = repo.active_branch
-        xx = repo.remotes[0].config_reader.get("url")
-    except Exception:
-        y = "main"
-        xx = "https://github.com/TeamUltroid/Ultroid"
-
+    y = Repo().active_branch
+    xx = Repo().remotes[0].config_reader.get("url")
     rep = xx.replace(".git", f"/tree/{y}")
     kk = f" `[{y}]({rep})` "
     if inline:
@@ -206,61 +200,27 @@ heroku_api = Var.HEROKU_API
 
 
 @ultroid_cmd(
-    pattern="restart( (.*)|$)",
-    owner_only=True,
+    pattern="restart$",
+    fullsudo=True,
 )
 async def restartbt(ult):
-
-    import json as _json
-    import time as _time
-    import asyncio as _asyncio
-
-    # Reverting to stable pattern (group 1 contains the matched flags)
-    match = ult.pattern_match.group(1).strip()
-    msg = await ult.eor("`Restart | Initiating...`")
-
-    # 1. State Resilience
+    ok = await ult.eor(get_string("bot_5"))
+    call_back()
     who = "bot" if ult.client._bot else "user"
-    udB.set_key("_RESTART", _json.dumps({
-        "who": who,
-        "chat_id": ult.chat_id,
-        "msg_id": msg.id,
-        "ts": _time.time(),
-        "version": ultroid_version,
-    }))
-
+    udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{ok.id}")
     if heroku_api:
-        return await restart(msg)
-
-    # 2. Update logic (Simple Pull)
-    if any(x in match for x in ["-u", "--update"]):
-        try:
-            await msg.edit("`Restart | Running update...`")
-            await bash("git pull -f && pip install -r requirements.txt --break-system-packages -q")
-        except Exception:
-            pass
-
-    # 3. Direct Process Replacement (Most Robust)
-    # We skip explicit disconnect() because os.execl is an atomic OS-level 
-    # replacement. The OS will automatically close handles and release DB locks.
-    # This prevents 'zombie' hangs during graceful shutdown attempts.
-    await msg.edit("`Restart | Re-launching process...`")
-    await _asyncio.sleep(1) # Final sync buffer
-
-    # Absolute process replacement using standard module pattern
-    # We pass sys.argv[1:] directly to avoid shifting arguments and breaking
-    # the integer parsing logic in configs.py.
-    os.execl(sys.executable, sys.executable, "-m", "pyUltroid", *sys.argv[1:])
-
-
-
-
-
+        return await restart(ok)
+    await bash("git pull && pip3 install -r requirements.txt")
+    await bash("pip3 install -r requirements.txt --break-system-packages")
+    if len(sys.argv) > 1:
+        os.execl(sys.executable, sys.executable, "main.py")
+    else:
+        os.execl(sys.executable, sys.executable, "-m", "pyUltroid")
 
 
 @ultroid_cmd(
     pattern="shutdown$",
-    owner_only=True,
+    fullsudo=True,
 )
 async def shutdownbot(ult):
     await shutdown(ult)
@@ -269,7 +229,6 @@ async def shutdownbot(ult):
 @ultroid_cmd(
     pattern="logs( (.*)|$)",
     chats=[],
-    owner_only=True,
 )
 async def _(event):
     opt = event.pattern_match.group(1).strip()
@@ -313,14 +272,9 @@ async def inline_alive(ult):
         pic = choice(pic)
     uptime = time_formatter((time.time() - start_time) * 1000)
     header = udB.get_key("ALIVE_TEXT") or get_string("bot_1")
-    try:
-        repo = Repo()
-        y = repo.active_branch
-        xx = repo.remotes[0].config_reader.get("url")
-    except Exception:
-        y = "main"
-        xx = "https://github.com/TeamUltroid/Ultroid"
-
+    y = Repo().active_branch
+    xx = Repo().remotes[0].config_reader.get("url")
+    rep = xx.replace(".git", f"/tree/{y}")
     kk = f"<a href={rep}>{y}</a>"
     als = in_alive.format(
         header, f"{ultroid_version} [{HOSTED_ON}]", UltVer, pyver(), uptime, kk

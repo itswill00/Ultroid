@@ -96,19 +96,22 @@ async def weather(event):
             sun_rise_time = int(response_api["sys"]["sunrise"]) + country_time_zone
             sun_set_time = int(response_api["sys"]["sunset"]) + country_time_zone
             await msg.edit(
-                f"🌍 **{response_api['name']}, {response_api['sys']['country']}**\n"
-                f"---"
-                f"\n🌤️ **Weather:** {response_api['weather'][0]['description'].title()}"
-                f"\n🌐 **Timezone:** {tz}"
-                f"\n🌅 **Sunrise:** {time.strftime('%H:%M:%S', time.gmtime(sun_rise_time))}"
-                f"\n🌇 **Sunset:** {time.strftime('%H:%M:%S', time.gmtime(sun_set_time))}"
-                f"\n💨 **Wind:** {await getWindinfo(response_api['wind']['speed'], response_api['wind']['deg'])}"
-                f"\n🌡️ **Temp:** {response_api['main']['temp']}°C (Feels {response_api['main']['feels_like']}°C)"
-                f"\n📉 **Min:** {response_api['main']['temp_min']}°C | **Max:** {response_api['main']['temp_max']}°C"
-                f"\n🎈 **Pressure:** {response_api['main']['pressure']} hPa"
-                f"\n💧 **Humidity:** {response_api['main']['humidity']}%"
-                f"\n👁️ **Visibility:** {response_api['visibility']}m"
-                f"\n☁️ **Clouds:** {response_api['clouds']['all']}%"
+                f"{response_api['name']}, {response_api['sys']['country']}\n\n"
+                f"╭────────────────•\n"
+                f"╰➢ **𝖶𝖾𝖺𝗍𝗁𝖾𝗋:** {response_api['weather'][0]['description']}\n"
+                f"╰➢ **𝖳𝗂𝗆𝖾𝗓𝗈𝗇𝖾:** {tz}\n"
+                f"╰➢ **𝖲𝗎𝗇𝗋𝗂𝗌𝖾:** {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(sun_rise_time))}\n"
+                f"╰➢ **𝖲𝗎𝗇𝗌𝖾𝗍:** {time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(sun_set_time))}\n"
+                f"╰➢ **𝖶𝗂𝗇𝖽:** {await getWindinfo(response_api['wind']['speed'], response_api['wind']['deg'])}\n"
+                f"╰➢ **𝖳𝖾𝗆𝗉𝖾𝗋𝖺𝗍𝗎𝗋𝖾:** {response_api['main']['temp']}°C\n"
+                f"╰➢ **𝖥𝖾𝖾𝗅𝗌 𝗅𝗂𝗄𝖾:** {response_api['main']['feels_like']}°C\n"
+                f"╰➢ **𝖬𝗂𝗇𝗂𝗆𝗎𝗆:** {response_api['main']['temp_min']}°C\n"
+                f"╰➢ **𝖬𝖺𝗑𝗂𝗆𝗎𝗆:** {response_api['main']['temp_max']}°C\n"
+                f"╰➢ **𝖯𝗋𝖾𝗌𝗌𝗎𝗋𝖾:** {response_api['main']['pressure']} hPa\n"
+                f"╰➢ **𝖧𝗎𝗆𝗂𝖽𝗂𝗍𝗒:** {response_api['main']['humidity']}%\n"
+                f"╰➢ **𝖵𝗂𝗌𝗂𝖻𝗂𝗅𝗂𝗍𝗒:** {response_api['visibility']} m\n"
+                f"╰➢ **𝖢𝗅𝗈𝗎𝖽𝗌:** {response_api['clouds']['all']}%\n"
+                f"╰────────────────•\n\n"
             )
         else:
             await msg.edit(response_api["message"])
@@ -158,15 +161,16 @@ async def air_pollution(event):
         )
         return
     await msg.edit(
-        f"🏙️ **{city}, {prov}**\n"
-        f"---"
-        f"\n🍃 **AQI:** {air_pollution_data['main']['aqi']}"
-        f"\n🧪 **CO:** {air_pollution_data['components']['co']}µg/m³"
-        f"\n🧪 **NO:** {air_pollution_data['components']['no']}µg/m³"
-        f"\n🧪 **NO₂:** {air_pollution_data['components']['no2']}µg/m³"
-        f"\n🌤️ **Ozone:** {air_pollution_data['components']['o3']}µg/m³"
-        f"\n🧪 **SO₂:** {air_pollution_data['components']['so2']}µg/m³"
-        f"\n🧪 **NH₃:** {air_pollution_data['components']['nh3']}µg/m³"
-        f"\n🌫️ **PM₂.₅:** {air_pollution_data['components']['pm2_5']}"
-        f"\n🌫️ **PM₁₀:** {air_pollution_data['components']['pm10']}"
+        f"{city}, {prov}\n\n"
+        f"╭────────────────•\n"
+        f"╰➢ **𝖠𝖰𝖨:** {air_pollution_data['main']['aqi']}\n"
+        f"╰➢ **𝖢𝖺𝗋𝖻𝗈𝗇 𝖬𝗈𝗇𝗈𝗑𝗂𝖽𝖾:** {air_pollution_data['components']['co']}µg/m³\n"
+        f"╰➢ **𝖭𝗈𝗂𝗍𝗋𝗈𝗀𝖾𝗇 𝖬𝗈𝗇𝗈𝗑𝗂𝖽𝖾:** {air_pollution_data['components']['no']}µg/m³\n"
+        f"╰➢ **𝖭𝗂𝗍𝗋𝗈𝗀𝖾𝗇 𝖣𝗂𝗈𝗑𝗂𝖽𝖾:** {air_pollution_data['components']['no2']}µg/m³\n"
+        f"╰➢ **𝖮𝗓𝗈𝗇𝖾:** {air_pollution_data['components']['o3']}µg/m³\n"
+        f"╰➢ **𝖲𝗎𝗅𝗉𝗁𝗎𝗋 𝖣𝗂𝗈𝗑𝗂𝖽𝖾:** {air_pollution_data['components']['so2']}µg/m³\n"
+        f"╰➢ **𝖠𝗆𝗆𝗈𝗇𝗂𝖺:** {air_pollution_data['components']['nh3']}µg/m³\n"
+        f"╰➢ **𝖥𝗂𝗇𝖾 𝖯𝖺𝗋𝗍𝗂𝖼𝗅𝖾𝗌 (PM₂.₅):** {air_pollution_data['components']['pm2_5']}\n"
+        f"╰➢ **𝖢𝗈𝖺𝗋𝗌𝖾 𝖯𝖺𝗋𝗍𝗂𝖼𝗅𝖾𝗌 (PM₁₀):** {air_pollution_data['components']['pm10']}\n"
+        f"╰────────────────•\n\n"
     )

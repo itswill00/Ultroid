@@ -42,7 +42,6 @@ fn = functions
 
 @ultroid_cmd(
     pattern="sysinfo$",
-    fullsudo=True,
 )
 async def _(e):
     xx = await e.eor(get_string("com_1"))
@@ -60,7 +59,7 @@ async def _(e):
     remove("neo.txt")
 
 
-@ultroid_cmd(pattern="bash", owner_only=True, only_devs=True)
+@ultroid_cmd(pattern="bash", fullsudo=True, only_devs=True)
 async def _(event):
     carb, rayso, yamlf = None, None, False
     try:
@@ -195,7 +194,7 @@ def _parse_eval(value=None):
     return str(value)
 
 
-@ultroid_cmd(pattern="eval", owner_only=True, only_devs=True)
+@ultroid_cmd(pattern="eval", fullsudo=True, only_devs=True)
 async def _(event):
     try:
         cmd = event.text.split(maxsplit=1)[1]
@@ -292,16 +291,11 @@ async def _(event):
     tmt = tima * 1000
     timef = time_formatter(tmt)
     timeform = timef if not timef == "0s" else f"{tmt:.3f}ms"
-    
-    # Sanitize evaluation for nested code blocks
-    sanitized_eval = evaluation.replace("```", "'''")
-    
-    # Double Box Technical Layout
-    final_output = f"**In:**\n```{cmd}```\n"
-    final_output += f"**Out:**\n```{sanitized_eval}```\n"
-    final_output += f"---\n"
-    final_output += f"**Time:** `{timeform}`"
-    
+    final_output = "__►__ **EVAL** (__in {}__)\n```{}``` \n\n __►__ **OUTPUT**: \n```{}``` \n".format(
+        timeform,
+        cmd,
+        evaluation,
+    )
     if len(final_output) > 4096:
         final_output = evaluation
         with BytesIO(str.encode(final_output)) as out_file:
@@ -378,8 +372,7 @@ async def doie(e):
     if "main(" not in match:
         new_m = "".join(" " * 4 + i + "\n" for i in match.split("\n"))
         match = DUMMY_CPP.replace("!code", new_m)
-    with open("cpp-ultroid.cpp", "w") as f:
-        f.write(match)
+    open("cpp-ultroid.cpp", "w").write(match)
     m = await bash("g++ -o CppUltroid cpp-ultroid.cpp")
     o_cpp = f"• **Eval-Cpp**\n`{match}`"
     if m[1]:
