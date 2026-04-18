@@ -345,6 +345,14 @@ declare -A IMPORT_MAP=(
     ["redis"]="redis"
     ["pymongo"]="pymongo"
     ["psycopg2-binary"]="psycopg2"
+    ["opencv-python-headless"]="cv2"
+    ["emoji"]="emoji"
+    ["jikanpy"]="jikanpy"
+    ["pyfiglet"]="pyfiglet"
+    ["wikipedia"]="wikipedia"
+    ["pybase64"]="pybase64"
+    ["instaloader"]="instaloader"
+    ["profanity-check"]="profanity_check"
 )
 
 # Packages to SKIP entirely on Termux (too heavy, no pkg equivalent)
