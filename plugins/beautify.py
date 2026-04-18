@@ -15,8 +15,14 @@ import random
 
 from telethon.utils import get_display_name
 from urllib.parse import urlencode
-from . import Carbon, ultroid_cmd, get_string, inline_mention
+from . import Carbon, ultroid_cmd, get_string, inline_mention, LOGS
 from secrets import token_hex
+
+try:
+    import playwright
+    from playwright.async_api import async_playwright
+except ImportError:
+    async_playwright = None
 
 _colorspath = "resources/colorlist.txt"
 

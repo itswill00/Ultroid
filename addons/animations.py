@@ -14,6 +14,7 @@
 """
 
 import asyncio
+from . import ultroid_cmd
 
 
 @ultroid_cmd(pattern="kill$")

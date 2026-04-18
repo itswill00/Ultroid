@@ -33,6 +33,8 @@ import time
 import cv2
 import numpy as np
 
+from . import LOGS
+
 try:
     from PIL import Image
 except ImportError:

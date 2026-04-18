@@ -568,7 +568,7 @@ async def _monitor_cmd(ult):
         if not data:
             return await ult.eor("`No activity recorded.`")
 
-        chat = await ultroid.get_chat()
+        chat = await ult.get_chat()
         lines = (
             f"📊 **Activity Report**\n"
             f"📍 **Group:** {chat.title}\n"

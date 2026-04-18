@@ -23,6 +23,8 @@ from datetime import timedelta
 import aiohttp
 import pytz
 
+from . import LOGS
+
 from . import async_searcher, get_string, udB, ultroid_cmd
 
 

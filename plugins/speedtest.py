@@ -19,6 +19,10 @@ from datetime import datetime
 
 from . import HOSTED_ON, LOGS, ultroid_cmd, get_string, humanbytes, asst_cmd
 
+try:
+    import speedtest
+except ImportError:
+    speedtest = None
 
 # ── Speedtest Engine (Asynchronous Wrapper) ──────────────────
 
