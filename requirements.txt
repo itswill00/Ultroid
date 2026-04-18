@@ -60,3 +60,4 @@ wikipedia
 pybase64
 instaloader
 python-magic
+profanity-check
