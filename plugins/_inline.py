@@ -189,8 +189,8 @@ async def uptd_plugin(event):
     hel_p = f"Plugin Name - `{file}`\n"
     help_ = ""
     try:
-        for i in key_[file]:
-            help_ += i.replace("{i}", HNDLR)
+        doc = key_[file]
+        help_ += doc.replace("{i}", HNDLR)
     except BaseException:
         if file in LIST:
             help_ = get_string("help_11").format(file)

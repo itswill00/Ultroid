@@ -44,20 +44,20 @@ async def _help(ult):
         try:
             if plug in HELP["Official"]:
                 output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["Official"][plug]:
-                    output += i.replace("{i}", HNDLR)
+                doc = HELP["Official"][plug]
+                output += doc.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             elif HELP.get("Addons") and plug in HELP["Addons"]:
                 output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["Addons"][plug]:
-                    output += i.replace("{i}", HNDLR)
+                doc = HELP["Addons"][plug]
+                output += doc.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             elif HELP.get("VCBot") and plug in HELP["VCBot"]:
                 output = f"**Plugin** - `{plug}`\n"
-                for i in HELP["VCBot"][plug]:
-                    output += i.replace("{i}", HNDLR)
+                doc = HELP["VCBot"][plug]
+                output += doc.replace("{i}", HNDLR)
                 output += "\n© @TeamUltroid"
                 await ult.eor(output)
             else:
@@ -93,14 +93,14 @@ async def _help(ult):
                         return await ult.eor(text)
                     output = f"**Command** `{plug}` **found in plugin** - `{file}`\n"
                     if file in HELP["Official"]:
-                        for i in HELP["Official"][file]:
-                            output += i.replace("{i}", HNDLR)
+                        doc = HELP["Official"][file]
+                        output += doc.replace("{i}", HNDLR)
                     elif HELP.get("Addons") and file in HELP["Addons"]:
-                        for i in HELP["Addons"][file]:
-                            output += i.replace("{i}", HNDLR)
+                        doc = HELP["Addons"][file]
+                        output += doc.replace("{i}", HNDLR)
                     elif HELP.get("VCBot") and file in HELP["VCBot"]:
-                        for i in HELP["VCBot"][file]:
-                            output += i.replace("{i}", HNDLR)
+                        doc = HELP["VCBot"][file]
+                        output += doc.replace("{i}", HNDLR)
                     output += "\n© @TeamUltroid"
                     await ult.eor(output)
         except BaseException as er:
