@@ -8,7 +8,7 @@
 import random
 
 from telethon import errors
-from telethon.errors.rpcerrorlist import StickersetInvalidError
+from telethon.errors.rpcerrorlist import StickerSetInvalidError
 from telethon.tl.functions.messages import GetStickerSetRequest as GetSticker
 from telethon.tl.functions.messages import UploadMediaRequest
 from telethon.tl.functions.stickers import AddStickerToSetRequest as AddSticker
