@@ -3,9 +3,18 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+
+"""
+» Commands Available -
+
+• `{i}wspr <text> <@username>`
+   Send a secret message that only the target user can read.
+   Works in group chats via the assistant bot.
+"""
 
 import re
+
 
 from telethon import Button
 from telethon.errors.rpcerrorlist import (

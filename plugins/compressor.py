@@ -3,12 +3,16 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from . import get_help
+"""
+» Commands Available -
 
-__doc__ = get_help("help_compressor")
+• `{i}compress <reply to video>`
+   Compress the video to a smaller size for easier sharing.
+"""
 
+import os
 
 import asyncio
 import os

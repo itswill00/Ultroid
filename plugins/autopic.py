@@ -3,10 +3,20 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
+"""
+» Commands Available -
+
+• `{i}autopic`
+   Automatically cycle through a collection of profile photos.
+
+• `{i}stoppic`
+   Stop the automatic profile photo cycling.
+"""
 
 import asyncio
+
 import os
 import random
 from random import shuffle
