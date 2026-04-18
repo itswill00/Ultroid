@@ -204,18 +204,20 @@ heroku_api = Var.HEROKU_API
     fullsudo=True,
 )
 async def restartbt(ult):
-    ok = await ult.eor(get_string("bot_5"))
+    ok = await ult.eor("`Rebooting process... Please wait.`")
     call_back()
     who = "bot" if ult.client._bot else "user"
     udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{ok.id}")
+    
     if heroku_api:
         return await restart(ok)
-    await bash("git pull && pip3 install -r requirements.txt")
-    await bash("pip3 install -r requirements.txt --break-system-packages")
+    
+    # Simple process replacement for speed and stability
+    args = [sys.executable, "-m", "pyUltroid"]
     if len(sys.argv) > 1:
-        os.execl(sys.executable, sys.executable, "main.py")
-    else:
-        os.execl(sys.executable, sys.executable, "-m", "pyUltroid")
+        args = [sys.executable, "main.py"]
+        
+    os.execl(sys.executable, *args)
 
 
 @ultroid_cmd(
