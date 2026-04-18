@@ -40,6 +40,13 @@ if run_as_module:
     _ult_cache = {}
     _ignore_eval = []
 
+    # Safe Global Imports for Media Plugins
+    try:
+        import numpy as np
+        import cv2
+    except (ImportError, Exception):
+        np = cv2 = None
+
     udB = UltroidDB()
     update_envs()
 

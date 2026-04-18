@@ -27,9 +27,8 @@ except ImportError:
             # profanity-check returns [1] for profane, [0] for clean
             res = predict([text])[0]
             return (res, 0) if res else (0, 0)
-    except ImportError:
+    except (ImportError, Exception):
         detector = None
-        LOGS.error("nsfwfilter: 'Profanitydetector' not installed!")
 from pyUltroid.dB.nsfw_db import is_nsfw, nsfw_chat, rem_nsfw
 
 from . import HNDLR, async_searcher, eor, events, udB, ultroid_bot, ultroid_cmd
