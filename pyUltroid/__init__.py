@@ -7,6 +7,11 @@
 
 import os
 import sys
+import warnings
+
+# Suppress deprecation warnings from Google libraries
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
+
 import telethonpatch
 from .version import __version__
 from .fns import KEEP_SAFE
