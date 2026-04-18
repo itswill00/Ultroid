@@ -167,7 +167,7 @@ _strings = {"Official": helps, "Addons": zhelps, "VCBot": get_string("inline_6")
 
 @callback(re.compile("uh_(.*)"), owner=True)
 async def help_func(ult):
-    key, count = ult.data_match.group(1).decode("utf-8").split("_")
+    key, count = ult.data_match.group(1).decode("utf-8").split("_", 1)
     if key == "VCBot" and HELP.get("VCBot") is None:
         return await ult.answer(get_string("help_12"), alert=True)
     elif key == "Addons" and HELP.get("Addons") is None:
@@ -181,7 +181,7 @@ async def help_func(ult):
 
 @callback(re.compile("uplugin_(.*)"), owner=True)
 async def uptd_plugin(event):
-    key, file = event.data_match.group(1).decode("utf-8").split("_")
+    key, file = event.data_match.group(1).decode("utf-8").split("_", 1)
     index = None
     if "|" in file:
         file, index = file.split("|")
