@@ -22,7 +22,6 @@ python-barcode
 pysmartdl
 gitpython
 gdown
-google-search-python
 lxml
 beautifulsoup4
 pillow
