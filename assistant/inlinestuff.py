@@ -382,13 +382,23 @@ async def piston_run(event):
         re_json=True,
     )
 
-    output = output["run"]["output"] or get_string("instu_4")
-    if len(output) > 3000:
-        output = f"{output[:3000]}..."
+    if not (isinstance(output, dict) and "run" in output):
+        error_msg = output.get("message", "Unknown error from Piston API") if isinstance(output, dict) else "API Connection failed."
+        result = await event.builder.article(
+            title="Piston API Error",
+            description=error_msg,
+            text=f"❌ **API Error:**\n`{error_msg}`",
+        )
+        return await event.answer([result])
+
+    output_text = output["run"].get("output") or get_string("instu_4")
+    if len(output_text) > 3000:
+        output_text = f"{output_text[:3000]}..."
+    
     result = await event.builder.article(
         title="Result",
-        description=output,
-        text=f"• **Language:**\n`{lang}`\n\n• **Code:**\n`{code}`\n\n• **Result:**\n`{output}`",
+        description=output_text,
+        text=f"• **Language:**\n`{lang}`\n\n• **Code:**\n`{code}`\n\n• **Result:**\n`{output_text}`",
         thumb=wb(
             "https://graph.org/file/871ee4a481f58117dccc4.jpg", 0, "image/jpeg", []
         ),
