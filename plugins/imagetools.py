@@ -58,10 +58,13 @@ from . import LOGS, con
 
 try:
     import cv2
+    import numpy as np
 except ImportError:
-    LOGS.error(f"{__file__}: OpenCv not Installed.")
-
-import numpy as np
+    LOGS.error(f"{__file__}: OpenCv or Numpy not Installed.")
+    cv2 = np = None
+except Exception as e:
+    LOGS.error(f"Error importing numpy/cv2: {e}")
+    cv2 = np = None
 
 try:
     from PIL import Image
