@@ -4,13 +4,16 @@
 # Animation Plugin
 
 """
-  Animation Plugin
+✘ **Animations Plugin**
 
-✘ Commands Available
-
+✘ Commands Available:
 • `{i}kill`
+    Simulate a killing animation for fun.
 • `{i}fp`
+    Simulate a facepalm animation.
 
+✘ Note:
+These animations are for entertainment purposes only.
 """
 
 import asyncio

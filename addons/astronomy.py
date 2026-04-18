@@ -5,10 +5,11 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 """
-✘ Commands Available -
+✘ **Astronomy Plugin**
 
-• `{i}apod``
-    Get Astronomy Picture of Day by NASA
+✘ Commands Available:
+• `{i}apod`
+    Get the Astronomy Picture of the Day (APOD) from NASA.
 """
 
 from bs4 import BeautifulSoup as bs
