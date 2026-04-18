@@ -52,3 +52,11 @@ catbox-uploader
 google-api-python-client
 oauth2client
 speedtest-cli
+
+# --- Addon-Specific Dependencies ---
+# These are required by several plugins in the /addons folder.
+pyfiglet
+wikipedia
+pybase64
+instaloader
+python-magic
