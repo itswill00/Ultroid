@@ -67,6 +67,7 @@ def get_help(key):
     doc = get_string(f"help_{key}", _res=False)
     if doc:
         return get_string("cmda") + doc
+    return ""
 
 
 def get_languages() -> Dict[str, Union[str, List[str]]]:

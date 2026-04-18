@@ -6,6 +6,11 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 
-from plugins import *
+from pyUltroid import *
+from pyUltroid.fns.helper import *
+from pyUltroid.fns.misc import *
+from pyUltroid.fns.tools import *
+from strings import get_help, get_string
 
+# Access to bot instance
 bot = ultroid_bot

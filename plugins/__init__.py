@@ -28,12 +28,13 @@ from pyUltroid.startup._database import _BaseDatabase as Database
 from pyUltroid.version import __version__, ultroid_version
 from strings import get_help, get_string
 from catbox import CatboxUploader
+udB = Database
 
 Redis = udB.get_key
 con = TgConverter
 quotly = Quotly()
-OWNER_NAME = ultroid_bot.full_name
-OWNER_ID = ultroid_bot.uid
+OWNER_ID = ultroid_bot.uid if (ultroid_bot and hasattr(ultroid_bot, 'uid')) else (udB.get_key("OWNER_ID") or 0)
+OWNER_NAME = ultroid_bot.full_name if (ultroid_bot and hasattr(ultroid_bot, 'full_name')) else (udB.get_key("OWNER_NAME") or "Owner")
 
 LOG_CHANNEL = udB.get_key("LOG_CHANNEL")
 
