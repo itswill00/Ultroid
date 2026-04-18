@@ -3,14 +3,20 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from . import get_help
+"""
+» Commands Available -
 
-__doc__ = get_help("help_chatbot")
+• `{i}repai`
+   Reply to a message to get an automated AI response.
 
+• `{i}chatbot (on/off)`
+   Enable/disable the automated chatbot in current chat.
+"""
 
 from pyUltroid.fns.tools import get_chatbot_reply
+
 
 from . import LOGS, eod, get_string, inline_mention, udB, ultroid_cmd
 

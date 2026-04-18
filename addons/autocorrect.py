@@ -3,13 +3,18 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from . import get_help
+"""
+» Commands Available -
 
-__doc__ = get_help("help_autocorrect")
+• `{i}autocorrect <text>`
+   Fix spelling and grammar mistakes in the provided text.
+   Reply to a message to autocorrect its content.
+"""
 
 import string
+
 
 from . import HNDLR, LOGS, get_string, udB, ultroid_bot, ultroid_cmd  # ignore: pylint
 

@@ -3,14 +3,23 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from . import get_help
+"""
+» Commands Available -
 
-__doc__ = get_help("help_echo")
+• `{i}addecho`
+   Repeat every message from a user in the current chat.
 
+• `{i}remecho`
+   Stop echoing messages from a user.
+
+• `{i}listecho`
+   List all users currently being echoed.
+"""
 
 from telethon.utils import get_display_name
+
 
 from pyUltroid.dB.echo_db import add_echo, check_echo, list_echo, rem_echo
 
