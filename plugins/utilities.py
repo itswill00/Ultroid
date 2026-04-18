@@ -327,48 +327,38 @@ async def _(event):
     first_name = html.escape(user.first_name)
     if first_name is not None:
         first_name = first_name.replace("\u2060", "")
-    last_name = user.last_name
-    last_name = (
-        last_name.replace("\u2060", "") if last_name else ("Last Name not found")
-    )
-    user_bio = full_user.about
-    if user_bio is not None:
-        user_bio = html.escape(full_user.about)
+    last_name = user.last_name or ""
+    user_bio = full_user.about or "None"
     common_chats = full_user.common_chats_count
     if user.photo:
         dc_id = user.photo.dc_id
     else:
-        dc_id = "Need a Profile Picture to check this"
-    caption = """<b>Extracted Data From Telegram's Database</b>
-<b>• Telegram ID</b>: <code>{}</code>
-<b>• Permanent Link</b>: <a href='tg://user?id={}'>Click Here</a>
-<b>• First Name</b>: <code>{}</code>
-<b>• Last Name</b>: <code>{}</code>
-<b>• Bio</b>: <code>{}</code>
-<b>• DC ID</b>: <code>{}</code>
-<b>• Number of Profile Pictures</b>: <code>{}</code>
-<b>• Is Restricted</b>: <code>{}</code>
-<b>• Verified</b>: <code>{}</code>
-<b>• Is Premium</b>: <code>{}</code>
-<b>• Is A Bot</b>: <code>{}</code>
-<b>• Groups In Common</b>: <code>{}</code>
-""".format(
-        user_id,
-        user_id,
-        first_name,
-        last_name,
-        user_bio,
-        dc_id,
-        user_photos,
-        user.restricted,
-        user.verified,
-        user.premium,
-        user.bot,
-        common_chats,
-    )
+        dc_id = "N/A"
+    
+    caption = f"""👤 <b>USER INFORMATION</b>
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+<b>Name</b>: {first_name} {last_name}
+<b>ID</b>: <code>{user_id}</code>
+<b>Bio</b>: <i>{html.escape(user_bio)}</i>
+
+📊 <b>ACCOUNT STATS</b>
+• <b>DC ID</b>: <code>{dc_id}</code>
+• <b>Premium</b>: <code>{user.premium}</code>
+• <b>Common Groups</b>: <code>{common_chats}</code>
+• <b>Profile Photos</b>: <code>{user_photos}</code>
+
+🛡️ <b>SECURITY & STATUS</b>
+• <b>Bot</b>: <code>{user.bot}</code>
+• <b>Verified</b>: <code>{user.verified}</code>
+• <b>Restricted</b>: <code>{user.restricted}</code>"""
+
     if chk := is_gbanned(user_id):
-        caption += f"""<b>••Gʟᴏʙᴀʟʟʏ Bᴀɴɴᴇᴅ</b>: <code>True</code>
-<b>••Rᴇᴀsᴏɴ</b>: <code>{chk}</code>"""
+        caption += f"\n<b>Global Ban</b>: <code>Banned 🚫</code>\n<b>Reason</b>: <code>{chk}</code>"
+    else:
+        caption += "\n<b>Global Ban</b>: <code>Clean ✅</code>"
+        
+    caption += f"\n\n🔗 <a href='tg://user?id={user_id}'>Permanent Profile Link</a>"
+
     await event.client.send_message(
         event.chat_id,
         caption,
