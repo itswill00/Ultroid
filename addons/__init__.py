@@ -6,6 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 
+from plugins import ATRA_COL, InlinePlugin
 from pyUltroid import *
 from pyUltroid._misc._assistant import asst_cmd, callback, in_pattern
 from pyUltroid._misc._decorators import ultroid_cmd

@@ -28,7 +28,6 @@ from pyUltroid.startup._database import _BaseDatabase as Database
 from pyUltroid.version import __version__, ultroid_version
 from strings import get_help, get_string
 from catbox import CatboxUploader
-udB = Database
 
 Redis = udB.get_key
 con = TgConverter
