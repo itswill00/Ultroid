@@ -173,29 +173,36 @@ def bf(text):
     return "".join(items)
 
 
-@ultroid_cmd(
-    pattern="bf",
-)
+@ultroid_cmd(pattern="bf( (.*)|$)")
 async def _(event):
-    input_ = event.text[4:]
+    input_ = event.pattern_match.group(1).strip()
     if not input_:
-        if event.reply_to_msg_id:
+        if event.is_reply:
             previous_message = await event.get_reply_message()
             input_ = previous_message.message
         else:
-            return await eod(event, "Give me some text lol", time=5)
-    await event.eor(bf(input_))
+            return await eod(event, "Give me some text to encode!", time=5)
+    
+    output = bf(input_)
+    if not output:
+        return await event.eor("Failed to generate Brainfuck code.")
+    await event.eor(f"**Brainfuck Code:**\n`{output}`")
 
 
-@ultroid_cmd(
-    pattern="rbf",
-)
+@ultroid_cmd(pattern="rbf( (.*)|$)")
 async def _(event):
-    input_ = event.text[5:]
+    input_ = event.pattern_match.group(1).strip()
     if not input_:
-        if event.reply_to_msg_id:
+        if event.is_reply:
             previous_message = await event.get_reply_message()
             input_ = previous_message.message
         else:
-            return await eod(event, "Give me some text lol", time=5)
-    await event.eor(f"{evaluate(input_)}")
+            return await eod(event, "Give me some Brainfuck code to interpret!", time=5)
+    
+    try:
+        output = evaluate(input_)
+        if not output:
+            return await event.eor("The Brainfuck code executed but produced no output.")
+        await event.eor(f"**Interpreter Output:**\n`{output}`")
+    except Exception as e:
+        await event.eor(f"**Error:** `{str(e)}`")
