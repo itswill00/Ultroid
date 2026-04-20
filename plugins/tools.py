@@ -386,7 +386,7 @@ async def sangmata(event):
         await asyncio.sleep(10)
         return await event.delete()
 
-    await event.edit("`Processing...`")
+    await event.edit("`Wait...`")
     async with event.client.conversation("@SangMata_beta_bot") as conv:
         try:
             await conv.send_message(f"{userinfo.id}")

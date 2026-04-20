@@ -28,7 +28,7 @@ async def harpia(e):
         _ = pist[1]
     except IndexError:
         return eod(e, f"Check Example : `{HNDLR}help {wreplace}`")
-    msg = await e.eor("Processing...")
+    msg = await e.eor("Wait...")
     async for x in e.client.iter_messages(
         e.chat_id, search=pist[0], limit=lmt, from_user="me"
     ):

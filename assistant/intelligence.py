@@ -58,7 +58,7 @@ async def assistant_ask_ai(event):
     if not query:
         return await event.reply("`Please provide a query.`")
 
-    x = await event.reply("`Processing...`")
+    x = await event.reply("`Wait...`")
     
     try:
         # Interface with Groq/OpenAI if configured

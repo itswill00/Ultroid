@@ -22,7 +22,7 @@ py_d7: "Conversation Is Already On, Kindly Wait Sometime Then Try Again."
 py_d8: "`Sending media or sticker is not allowed in this chat.`"
 
 # commons
-com_1: "`Processing...`"
+com_1: "`Wait...`"
 com_2: "`Searching...`"
 com_3: "`Invalid Input`"
 com_4: "`UnSupported Media..`"
@@ -226,9 +226,9 @@ chab_3: "**Total List Of AI Enabled Users In This Chat :**\n\n"
 chats_1: "`Cant delete this chat.`"
 chats_2: "`I m not an admin`"
 chats_3: "#Deleted\nDeleted {}"
-chats_4: "Your [{}]({}) Group Made Boss!"
+chats_4: "Your [{}]({}) Group is now an Admin!"
 chats_5: "Join @TeamUltroid"
-chats_6: "Your {} Group/Channel Has been made Boss!"
+chats_6: "Your {} Group/Channel Has been made an Admin!"
 
 # clean action
 clan_1: "Added Clean Action Setting For this Chat"
@@ -547,7 +547,7 @@ clst_4: "Something went wrong..."
 clst_5: "Done!"
 
 # pmbot
-pmbot_1: "**You need to join below chat(s) in order to chat with my master!\n\n**"
+pmbot_1: "**You need to join below chat(s) in order to chat with me!\n\n**"
 pmbot_2: "Please reply to someone to ban him."
 pmbot_3: "User is already banned!"
 pmbot_4: "`GoodBye! You have been banned.`\n**Further messages you send will not be forwarded.**"

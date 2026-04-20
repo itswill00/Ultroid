@@ -110,11 +110,11 @@ async def ultroid(event):
             await get_stored_file(event, args)
         if not udB.get_key("STARTMSG"):
             if udB.get_key("PMBOT"):
-                ok = "You can contact my master using this bot!!\n\nSend your Message, I will Deliver it To Master."
+                ok = "You can use this bot to contact the owner directly.\nJust send your message here, and I'll forward it."
             await event.reply(
-                f"Hey there {mention}, this is Ultroid Assistant of {me}!\n\n{ok}",
+                f"Hello {mention}! I'm the assistant bot for {me}.\n\n{ok}",
                 file=udB.get_key("STARTMEDIA"),
-                buttons=[Button.inline("Info.", data="ownerinfo")]
+                buttons=[Button.inline("Info", data="ownerinfo")]
                 if Owner_info_msg
                 else None,
             )

@@ -34,7 +34,7 @@ _SAFE_LIMIT = 200  # Maximum messages to scan
 @ultroid_cmd(pattern="bulkdel( (.*)|$)")
 async def bulk_delete(e):
     args = e.pattern_match.group(1).strip().split()
-    xx = await e.eor("`[BULK-DEL] Processing...`")
+    xx = await e.eor("`Deleting...`")
 
     if not args:
         return await xx.edit(

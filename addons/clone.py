@@ -27,7 +27,7 @@ from . import *
 
 @ultroid_cmd(pattern="clone ?(.*)", fullsudo=True)
 async def _(event):
-    eve = await event.eor("Processing...")
+    eve = await event.eor("Wait...")
     reply_message = await event.get_reply_message()
     whoiam = await event.client(GetFullUserRequest(ultroid_bot.uid))
     if whoiam.full_user.about:

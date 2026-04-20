@@ -127,7 +127,7 @@ def check_for_py():
 
 
 def gen_session():
-    print("\nProcessing...")
+    print("\nWait...")
     # https://github.com/TeamUltroid/Ultroid/main/resources/startup/locals.py#L35
     os.system("python3 resources/session/ssgen.py")
 

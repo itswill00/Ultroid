@@ -199,7 +199,7 @@ if run_as_module:
         """
         from .. import LOGS
 
-        xx = await eor(event, "`Processing...`")
+        xx = await eor(event, "`Wait...`")
         if not (Var.HEROKU_API and Var.HEROKU_APP_NAME):
             return await xx.edit(
                 "Please set `HEROKU_APP_NAME` and `HEROKU_API` in vars."
