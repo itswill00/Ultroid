@@ -29,6 +29,7 @@ __doc__ = get_help("gdrive")
     If added then all files will be uploaded in this folder.
 """
 
+import asyncio
 import os
 import time
 
@@ -252,7 +253,7 @@ async def gdrive_stats(event):
         return await event.eor(get_string("gdrive_6").format(asst.me.username))
 
     eve = await event.eor("`✦ Fetching G-Drive Storage Stats...`")
-    data = await run_async(GDrive.get_storage_usage)
+    data = await asyncio.to_thread(GDrive.get_storage_usage)
 
     if not data:
         return await eve.edit(
