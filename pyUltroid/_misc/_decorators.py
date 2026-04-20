@@ -186,7 +186,7 @@ def ultroid_cmd(
         black_list_chats = ULT_CONFIG.get("BLACKLIST_CHATS")
         chats = list(black_list_chats) if black_list_chats else None
         
-        # Main Handler
+        # Main Handler registration
         cmd = compile_pattern(pattern, HNDLR) if pattern else None
         ultroid_bot.add_event_handler(
             wrapp,
@@ -200,25 +200,33 @@ def ultroid_cmd(
             ),
         )
         
-        # Sudo Handler
+        # Sudo & Edits Handler registration (kept same as before)
         if _add_new and pattern:
             scmd = compile_pattern(pattern, SUDO_HNDLR)
             ultroid_bot.add_event_handler(wrapp, NewMessage(pattern=scmd, incoming=True, forwards=False, func=func, chats=chats, blacklist_chats=bool(chats)))
             
-        # Edits Handler
         if ULT_CONFIG.get("TAKE_EDITS"):
             ultroid_bot.add_event_handler(wrapp, MessageEdited(pattern=cmd, forwards=False, func=lambda x: not x.via_bot_id and not (x.is_channel and x.chat.broadcast), chats=chats, blacklist_chats=bool(chats)))
 
-        if manager and ULT_CONFIG.get("MANAGER"):
+        # Automatic Dual-Mode Integration for Assistant (Manager)
+        # If DUAL_MODE is on and manager=True, register cmd to assistant as well
+        if (manager or DUAL_MODE) and ULT_CONFIG.get("MANAGER"):
             async def manager_cmd(ult):
-                if not kwargs.get("allow_all", False) and not (await admin_check(ult, require=kwargs.get("require"))):
+                # Apply same permission logic for Assistant Bot
+                if owner_only and ult.sender_id not in owner_and_sudos():
                     return
-                if not kwargs.get("allow_pm", False) and ult.is_private:
+                if admins_only and not (await admin_check(ult, require=kwargs.get("require"))):
+                    return
+                if groups_only and ult.is_private:
+                    return
+                if only_devs and not ULT_CONFIG.get("I_DEV"):
                     return
                 try:
                     await dec(ult)
                 except Exception as er:
                     LOGS.exception(er)
+            
+            # Use assistant handler (default "/")
             mcmd = compile_pattern(pattern, "/") if pattern else None
             asst.add_event_handler(manager_cmd, NewMessage(pattern=mcmd, forwards=False, incoming=True, func=func, chats=chats, blacklist_chats=bool(chats)))
 
