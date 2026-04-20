@@ -36,7 +36,7 @@ import time
 from telethon.tl.types import Message
 
 from pyUltroid.fns.gDrive import GDriveManager
-from pyUltroid.fns.helper import run_async, time_formatter
+from pyUltroid.fns.helper import humanbytes, run_async, time_formatter
 
 from . import ULTConfig, asst, eod, eor, get_string, ultroid_cmd
 
@@ -280,3 +280,61 @@ async def gdrive_stats(event):
         msg += "**Usage:** `Unlimited`"
 
     await eve.edit(msg)
+
+
+@ultroid_cmd(
+    pattern="gdleech( (.*)|$)",
+    fullsudo=True,
+)
+async def gdrive_leech(event):
+    GDrive = GDriveManager()
+    if not os.path.exists(GDrive.token_file):
+        return await event.eor(get_string("gdrive_6").format(asst.me.username))
+
+    match = event.pattern_match.group(1).strip()
+    if not match:
+        return await event.eor("`Give GDrive file link or ID to leech!`")
+
+    eve = await event.eor("`✦ Analyzing G-Drive link...`")
+    info = await GDrive.get_file_info(match)
+
+    if not info:
+        return await eve.edit(
+            "`Failed to fetch file info. Make sure the link is correct and accessible.`"
+        )
+
+    filename = info.get("name")
+    size = int(info.get("size", 0))
+
+    # Telegram limit: 2GB
+    if size > 2 * 1024 * 1024 * 1024:
+        return await eve.edit(
+            f"**Error:** File size is too large (`{humanbytes(size)}`). Telegram limit is 2GB."
+        )
+
+    await eve.edit(
+        f"**✦ Leeching to Telegram**\n**File:** `{filename}`\n**Size:** `{humanbytes(size)}`\n\n`✦ Downloading to VPS...`"
+    )
+
+    _start = time.time()
+    status, response = await GDrive._download_file(eve, info["id"], filename)
+    if not status:
+        return await eve.edit(f"**Download Error:** `{response}`")
+
+    await eve.edit("`✦ Uploading to Telegram...`")
+
+    try:
+        from pyUltroid.fns.helper import uploader
+
+        await uploader(
+            file=response,
+            name=os.path.basename(response),
+            taime=_start,
+            event=event,
+            msg=eve,
+        )
+    except Exception as e:
+        await eve.edit(f"**Upload Error:** `{e}`")
+    finally:
+        if os.path.exists(response):
+            os.remove(response)

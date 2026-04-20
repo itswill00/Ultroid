@@ -150,6 +150,24 @@ class GDriveManager:
         self._service = build("drive", "v3", credentials=creds, cache_discovery=False)
         return self._service
 
+    async def get_file_info(self, fileId: str):
+        if not self.service:
+            return None
+        if fileId.startswith("http"):
+            if "id=" in fileId:
+                fileId = fileId.split("id=")[1].split("&")[0]
+            elif "/file/d/" in fileId:
+                fileId = fileId.split("/file/d/")[1].split("/")[0]
+        try:
+            return await run_async(
+                self.service.files()
+                .get(fileId=fileId, fields="id, name, size, mimeType", supportsAllDrives=True)
+                .execute
+            )()
+        except Exception as e:
+            LOGS.error(f"GDrive Info Error: {e}")
+            return None
+
     def get_storage_usage(self):
         if not self.service:
             return None
