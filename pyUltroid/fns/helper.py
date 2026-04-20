@@ -623,34 +623,33 @@ async def catbox_upload(path: str):
     try:
         from catbox import CatboxUploader
         uploader = CatboxUploader()
+        # Like original repo but with run_async for better performance
         return await run_async(uploader.upload_file)(path)
     except Exception as e:
-        if "Failed to upload" in str(e):
-            from .. import LOGS
-            LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to graph.org...")
-            # Use aiohttp for direct upload - no shell syntax errors!
-            try:
-                import aiohttp
-                async with aiohttp.ClientSession() as session:
-                    with open(path, "rb") as f:
-                        data = aiohttp.FormData()
-                        data.add_field("file", f, filename=os.path.basename(path))
-                        async with session.post("https://graph.org/upload", data=data) as resp:
-                            try:
-                                res = await resp.json()
-                            except Exception:
-                                res = await resp.text()
-
-                            if isinstance(res, list) and len(res) > 0 and isinstance(res[0], dict) and res[0].get("src"):
-                                return "https://graph.org" + res[0]["src"]
-                            elif isinstance(res, dict) and res.get("error"):
-                                error_info = res["error"]
-                            else:
-                                error_info = str(res)
-            except Exception as fe:
-                error_info = str(fe)
-            raise Exception(f"Upload completely failed. Catbox: {e}, Fallback error: {error_info}") from e
-        raise e
+        from .. import LOGS
+        LOGS.warning(f"Catbox failed for {path}: {e}. Trying fallback...")
+        # Pure Python fallback - No shell, no curl, no syntax errors
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                with open(path, "rb") as f:
+                    data = aiohttp.FormData()
+                    data.add_field("file", f, filename=os.path.basename(path))
+                    async with session.post("https://graph.org/upload", data=data) as resp:
+                        # Handle response robustly
+                        text = await resp.text()
+                        try:
+                            import json
+                            res = json.loads(text)
+                            if isinstance(res, list) and len(res) > 0:
+                                if isinstance(res[0], dict) and res[0].get("src"):
+                                    return "https://graph.org" + res[0]["src"]
+                            error_info = res.get("error", text) if isinstance(res, dict) else text
+                        except Exception:
+                            error_info = text
+        except Exception as fe:
+            error_info = str(fe)
+        raise Exception(f"Upload failed. Catbox: {e}, Fallback: {error_info}") from e
 
 def time_cache(ttl=60):
     """
