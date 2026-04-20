@@ -1,3 +1,9 @@
+"""
+✘ Commands Available -
+
+• `{i}search(`
+"""
+
 # " Made by @e3ris for Ultroid. "
 # < https://github.com/TeamUltroid/Ultroid >
 # idea: https://t.me/TelethonChat/256160

@@ -8,11 +8,6 @@
 from . import get_help
 __doc__ = get_help("help_extra")
 
-
-from . import get_help
-
-__doc__ = get_help("extra")
-
 import asyncio
 
 from . import get_string, ultroid_cmd
