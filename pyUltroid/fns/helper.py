@@ -621,49 +621,61 @@ async def catbox_upload(path: str):
         raise ValueError(f"File too large ({humanbytes(size)}). Catbox guest limit is 200MB.")
 
     async def upload_to_service(url, session, field_name, file_path):
+        # Clean filename to prevent header issues with special characters
+        clean_name = re.sub(r'[^a-zA-Z0-9._]', '_', os.path.basename(file_path))
         with open(file_path, "rb") as f:
             data = aiohttp.FormData()
             if "catbox.moe" in url:
                 data.add_field("reqtype", "fileupload")
-                data.add_field("fileToUpload", f, filename=os.path.basename(file_path))
+                data.add_field("fileToUpload", f, filename=clean_name)
+            elif "0x0.st" in url:
+                data.add_field("file", f, filename=clean_name)
             else:
-                data.add_field(field_name, f, filename=os.path.basename(file_path))
-            async with session.post(url, data=data) as resp:
-                text = await resp.text()
-                try:
-                    res = json.loads(text)
-                    if isinstance(res, list) and res and res[0].get("src"):
-                        return "https://graph.org" if "graph.org" in url else "https://telegra.ph" + res[0]["src"]
-                    if isinstance(res, dict) and res.get("error"):
-                        return res["error"]
-                except:
+                data.add_field(field_name, f, filename=clean_name)
+
+            try:
+                async with session.post(url, data=data, timeout=30) as resp:
+                    text = await resp.text()
                     if text.startswith("https://"):
                         return text.strip()
-                return text or "Unknown Error"
+                    try:
+                        res = json.loads(text)
+                        if isinstance(res, list) and res and res[0].get("src"):
+                            base_url = "https://graph.org" if "graph.org" in url else "https://telegra.ph"
+                            return base_url + res[0]["src"]
+                        if isinstance(res, dict) and res.get("error"):
+                            return res["error"]
+                    except:
+                        pass
+                    return text or "Unknown Error"
+            except Exception as e:
+                return str(e)
 
     try:
         import aiohttp
         import json
         from .. import LOGS
         async with aiohttp.ClientSession() as session:
-            # 1. Try Catbox Direct API
+            # 1. Catbox
             res = await upload_to_service("https://catbox.moe/user/api.php", session, "fileToUpload", path)
-            if res.startswith("https://"):
-                return res
+            if res.startswith("https://"): return res
             
-            # 2. Try Telegra.ph Fallback
+            # 2. Telegra.ph
             LOGS.warning(f"Catbox failed ({res}). Trying Telegra.ph...")
             res2 = await upload_to_service("https://telegra.ph/upload", session, "file", path)
-            if res2.startswith("https://"):
-                return res2
+            if res2.startswith("https://"): return res2
 
-            # 3. Try Graph.org Fallback
+            # 3. Graph.org
             LOGS.warning(f"Telegra.ph failed ({res2}). Trying Graph.org...")
             res3 = await upload_to_service("https://graph.org/upload", session, "file", path)
-            if res3.startswith("https://"):
-                return res3
+            if res3.startswith("https://"): return res3
+
+            # 4. 0x0.st (Last Resort)
+            LOGS.warning(f"Graph.org failed ({res3}). Trying 0x0.st...")
+            res4 = await upload_to_service("https://0x0.st", session, "file", path)
+            if res4.startswith("http"): return res4
             
-            raise Exception(f"All upload services failed. Catbox: {res}, Telegra: {res2}, Graph: {res3}")
+            raise Exception(f"All services failed. Catbox: {res}, Telegra: {res2}, Graph: {res3}, 0x0: {res4}")
     except Exception as e:
         raise Exception(f"Upload process failed: {str(e)}") from e
 
