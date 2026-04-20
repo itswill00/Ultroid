@@ -60,20 +60,23 @@ SUP_BUTTONS = [
 
 @in_pattern(owner=True, func=lambda x: not x.text)
 async def inline_alive(o):
-    TLINK = inline_pic() or "https://graph.org/file/74d6259983e0642923fdb.jpg"
+    pic = inline_pic() or "https://graph.org/file/74d6259983e0642923fdb.jpg"
     MSG = "• **Ultroid Userbot •**"
-    WEB0 = InputWebDocument(
-        "https://graph.org/file/acd4f5d61369f74c5e7a7.jpg", 0, "image/jpg", []
-    )
+    ext = str(pic).split(".")[-1].lower()
+    if ext in ["gif", "mp4"]:
+        mime_type = "video/mp4"
+    else:
+        mime_type = "image/jpg"
+    
     RES = [
         await o.builder.article(
             text=MSG,
             buttons=SUP_BUTTONS,
             title="Ultroid Userbot",
             description="Userbot | Telethon",
-            url=TLINK,
-            thumb=WEB0,
-            content=InputWebDocument(TLINK, 0, "image/jpg", []),
+            url=pic,
+            thumb=InputWebDocument(pic, 0, mime_type, []),
+            content=InputWebDocument(pic, 0, mime_type, []),
         )
     ]
     await o.answer(
@@ -96,13 +99,22 @@ async def inline_handler(event):
         len(HELP.get("Addons", [])),
         len(z),
     )
-    if inline_pic():
-        result = await event.builder.photo(
-            file=inline_pic(),
-            link_preview=False,
-            text=text,
-            buttons=_main_help_menu,
-        )
+    pic = inline_pic()
+    if pic:
+        ext = str(pic).split(".")[-1].lower()
+        if ext in ["mp4", "gif"]:
+            result = await event.builder.gif(
+                file=pic,
+                text=text,
+                buttons=_main_help_menu,
+            )
+        else:
+            result = await event.builder.photo(
+                file=pic,
+                link_preview=False,
+                text=text,
+                buttons=_main_help_menu,
+            )
     else:
         result = await event.builder.article(
             title="Ultroid Help Menu", text=text, buttons=_main_help_menu

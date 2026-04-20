@@ -286,9 +286,16 @@ async def inline_alive(ult):
     builder = ult.builder
     if pic:
         try:
-            if ".jpg" in pic:
+            ext = str(pic).split(".")[-1].lower()
+            if ext in ["jpg", "jpeg", "png"]:
                 results = [
                     await builder.photo(
+                        pic, text=als, parse_mode="html", buttons=buttons
+                    )
+                ]
+            elif ext in ["gif", "mp4"]:
+                results = [
+                    await builder.gif(
                         pic, text=als, parse_mode="html", buttons=buttons
                     )
                 ]
@@ -303,6 +310,7 @@ async def inline_alive(ult):
                         pic,
                         title="Inline Alive",
                         description="@TeamUltroid",
+                        text=als,
                         parse_mode="html",
                         buttons=buttons,
                     )
