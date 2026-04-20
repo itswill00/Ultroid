@@ -620,36 +620,52 @@ async def catbox_upload(path: str):
     if size > 200 * 1024 * 1024:
         raise ValueError(f"File too large ({humanbytes(size)}). Catbox guest limit is 200MB.")
 
+    async def upload_to_service(url, session, field_name, file_path):
+        with open(file_path, "rb") as f:
+            data = aiohttp.FormData()
+            if "catbox.moe" in url:
+                data.add_field("reqtype", "fileupload")
+                data.add_field("fileToUpload", f, filename=os.path.basename(file_path))
+            else:
+                data.add_field(field_name, f, filename=os.path.basename(file_path))
+            async with session.post(url, data=data) as resp:
+                text = await resp.text()
+                try:
+                    res = json.loads(text)
+                    if isinstance(res, list) and res and res[0].get("src"):
+                        return "https://graph.org" if "graph.org" in url else "https://telegra.ph" + res[0]["src"]
+                    if isinstance(res, dict) and res.get("error"):
+                        return res["error"]
+                except:
+                    if text.startswith("https://"):
+                        return text.strip()
+                return text or "Unknown Error"
+
     try:
-        from catbox import CatboxUploader
-        uploader = CatboxUploader()
-        # Like original repo but with run_async for better performance
-        return await run_async(uploader.upload_file)(path)
-    except Exception as e:
+        import aiohttp
+        import json
         from .. import LOGS
-        LOGS.warning(f"Catbox failed for {path}: {e}. Trying fallback...")
-        # Pure Python fallback - No shell, no curl, no syntax errors
-        try:
-            import aiohttp
-            async with aiohttp.ClientSession() as session:
-                with open(path, "rb") as f:
-                    data = aiohttp.FormData()
-                    data.add_field("file", f, filename=os.path.basename(path))
-                    async with session.post("https://graph.org/upload", data=data) as resp:
-                        # Handle response robustly
-                        text = await resp.text()
-                        try:
-                            import json
-                            res = json.loads(text)
-                            if isinstance(res, list) and len(res) > 0:
-                                if isinstance(res[0], dict) and res[0].get("src"):
-                                    return "https://graph.org" + res[0]["src"]
-                            error_info = res.get("error", text) if isinstance(res, dict) else text
-                        except Exception:
-                            error_info = text
-        except Exception as fe:
-            error_info = str(fe)
-        raise Exception(f"Upload failed. Catbox: {e}, Fallback: {error_info}") from e
+        async with aiohttp.ClientSession() as session:
+            # 1. Try Catbox Direct API
+            res = await upload_to_service("https://catbox.moe/user/api.php", session, "fileToUpload", path)
+            if res.startswith("https://"):
+                return res
+            
+            # 2. Try Telegra.ph Fallback
+            LOGS.warning(f"Catbox failed ({res}). Trying Telegra.ph...")
+            res2 = await upload_to_service("https://telegra.ph/upload", session, "file", path)
+            if res2.startswith("https://"):
+                return res2
+
+            # 3. Try Graph.org Fallback
+            LOGS.warning(f"Telegra.ph failed ({res2}). Trying Graph.org...")
+            res3 = await upload_to_service("https://graph.org/upload", session, "file", path)
+            if res3.startswith("https://"):
+                return res3
+            
+            raise Exception(f"All upload services failed. Catbox: {res}, Telegra: {res2}, Graph: {res3}")
+    except Exception as e:
+        raise Exception(f"Upload process failed: {str(e)}") from e
 
 def time_cache(ttl=60):
     """
