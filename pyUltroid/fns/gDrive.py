@@ -84,7 +84,7 @@ class GDriveManager:
                 self._flow = Flow.from_client_config(
                     client_config,
                     scopes=self.scopes,
-                    redirect_uri="postmessage" # This often works for server-side auth-code exchange
+                    redirect_uri="http://localhost"
                 )
             try:
                 self._flow.fetch_token(code=code)
@@ -101,8 +101,7 @@ class GDriveManager:
         self._flow = Flow.from_client_config(
             client_config,
             scopes=self.scopes,
-            redirect_uri="urn:ietf:wg:oauth:2.0:oob" # Trying OOB again but google might block it.
-            # If OOB fails, 'http://localhost' is the only way for 'Desktop' apps.
+            redirect_uri="http://localhost" # Standard for Desktop apps after OOB deprecation
         )
         auth_url, _ = self._flow.authorization_url(prompt="consent")
         return auth_url
