@@ -150,6 +150,35 @@ class GDriveManager:
         self._service = build("drive", "v3", credentials=creds, cache_discovery=False)
         return self._service
 
+    def get_storage_usage(self):
+        if not self.service:
+            return None
+        try:
+            about = self.service.about().get(fields="storageQuota").execute()
+            quota = about.get("storageQuota", {})
+
+            limit = int(quota.get("limit", 0))
+            usage = int(quota.get("usage", 0))
+
+            if limit > 0:
+                free = limit - usage
+                percentage = round((usage / limit) * 100, 2)
+            else:
+                free = None
+                percentage = None
+
+            return {
+                "total": humanbytes(limit) if limit > 0 else "Unlimited",
+                "used": humanbytes(usage),
+                "free": humanbytes(free) if free is not None else "Unlimited",
+                "percentage": percentage,
+                "raw_total": limit,
+                "raw_used": usage,
+            }
+        except Exception as e:
+            LOGS.error(f"GDrive Quota Error: {e}")
+            return None
+
     async def _set_permissions(self, fileId: str):
         if not self.service: return
         _permissions = {

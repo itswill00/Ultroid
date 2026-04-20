@@ -35,7 +35,7 @@ import time
 from telethon.tl.types import Message
 
 from pyUltroid.fns.gDrive import GDriveManager
-from pyUltroid.fns.helper import time_formatter
+from pyUltroid.fns.helper import run_async, time_formatter
 
 from . import ULTConfig, asst, eod, eor, get_string, ultroid_cmd
 
@@ -241,3 +241,41 @@ async def _(event):
         )
     else:
         await eod(event, "`GDRIVE_FOLDER_ID not set. Please set it in Assistant Bot settings.`")
+
+@ultroid_cmd(
+    pattern="gdstats$",
+    fullsudo=True,
+)
+async def gdrive_stats(event):
+    GDrive = GDriveManager()
+    if not os.path.exists(GDrive.token_file):
+        return await event.eor(get_string("gdrive_6").format(asst.me.username))
+
+    eve = await event.eor("`✦ Fetching G-Drive Storage Stats...`")
+    data = await run_async(GDrive.get_storage_usage)
+
+    if not data:
+        return await eve.edit(
+            "`Failed to fetch storage stats. Make sure you are authorized.`"
+        )
+
+    total = data["total"]
+    used = data["used"]
+    free = data["free"]
+    pct = data["percentage"]
+
+    msg = "**📊 Google Drive Storage Stats**\n"
+    msg += "---"
+    msg += f"\n**Total Capacity:** `{total}`"
+    msg += f"\n**Used Space:** `{used}`"
+    msg += f"\n**Remaining:** `{free}`\n\n"
+
+    if pct is not None:
+        # Generate a nice progress bar
+        filled = int(pct // 10)
+        bar = "█" * filled + "░" * (10 - filled)
+        msg += f"**Usage:** `[{bar}] {pct}%`"
+    else:
+        msg += "**Usage:** `Unlimited`"
+
+    await eve.edit(msg)
