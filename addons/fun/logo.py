@@ -26,7 +26,7 @@ except ImportError:
 from pyUltroid.fns.misc import unsplashsearch
 from pyUltroid.fns.tools import LogoHelper
 
-from . import OWNER_ID, OWNER_NAME, download_file, get_string, mediainfo, ultroid_cmd
+from plugins import OWNER_ID, OWNER_NAME, download_file, get_string, mediainfo, ultroid_cmd
 
 
 @ultroid_cmd(pattern="logo( (.*)|$)")
