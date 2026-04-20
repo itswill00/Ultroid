@@ -8,127 +8,81 @@
 from . import *
 
 START = """
-🪅 **Help Menu** 🪅
+✨ **Ultroid Assistant Help Menu** ✨
 
-✘  /start : Check I am Alive or not.
-✘  /help : Get This Message.
-✘  /repo : Get Bot's Repo..
+I am your powerful assistant bot, working alongside your UserBot to provide seamless management and utility features.
 
-🧑‍💻 Join **@TeamUltroid**
+**Main Features:**
+• **AdminTools:** Manage your groups effortlessly.
+• **Locks:** Secure your chats with granular locks.
+• **Utilities:** Handy tools for daily tasks.
+• **Misc:** Fun and extra features.
+
+Select a category below to explore more.
 """
-
-ADMINTOOLS = """✘ **AdminTools** ✘
-
-• /pin : Pins the Replied Message
-• /pinned : Get Pinned message in chat.
-• /unpin : Unpin the Replied message
-• /unpin all : Unpin all Pinned Messages.
-
-• /ban (username/id/reply) : Ban the User
-• /unban (username/id/reply) : UnBan the User.
-
-• /mute (username/id/reply) : Mute the User.
-• /unmute (username/id/reply) : Unmute the User.
-
-• /tban (username/id/reply) (time) : Temporary ban a user
-• /tmute (username/id/reply) (time) : temporary Mutes a User.
-
-• /purge (purge messages)
-
-• /setgpic (reply photo) : keep Chat Photo of Group.
-• /delgpic : remove current chat Photo."""
-
-UTILITIES = """
-✘ ** Utilities ** ✘
-
-• /info (reply/username/id) : get detailed info of user.
-• /id : get chat/user id.
-• /tr : Translate Languages..
-• /q : Create Quotes.
-
-• /paste (reply file/text) : paste content on Spaceb.in
-• /meaning (text) : Get Meaning of that Word.
-• /google (query) : Search Something on Google..
-
-• /suggest (query/reply) : Creates a Yes / No Poll.
-"""
-
-LOCKS = """
-✘ ** Locks ** ✘
-
-• /lock (query) : lock particular content in chat.
-• /unlock (query) : Unlock some content.
-
-• All Queries
-- `msgs` : for messages.
-- `inlines` : for inline queries.
-- `media` : for all medias.
-- `games` : for games.
-- `sticker` : for stickers.
-- `polls` : for polls.
-- `gif` : for gifs.
-- `pin` : for pins.
-- `changeinfo` : for change info right.
-"""
-
-MISC = """
-✘  **Misc**  ✘
-
-• /joke : Get Random Jokes.
-• /decide : Decide Something..
-
-**✘ Stickertools ✘**
-• /kang : add sticker to your pack.
-• /listpack : get all of yours pack..
-"""
-
-STRINGS = {"Admintools": ADMINTOOLS, "locks": LOCKS, "Utils": UTILITIES, "Misc": MISC}
-
-MNGE = udB.get_key("MNGR_EMOJI") or "•"
-
 
 def get_buttons():
-    BTTS = []
-    keys = STRINGS.copy()
-    while keys:
-        BT = []
-        for i in list(keys)[:2]:
-            text = f"{MNGE} {i} {MNGE}"
-            BT.append(Button.inline(text, f"hlp_{i}"))
-            del keys[i]
-        BTTS.append(BT)
+    # Modernized button labels
+    BTTS = [
+        [
+            Button.inline("🛡️ Admin Tools", "hlp_Admintools"),
+            Button.inline("🔒 Locks", "hlp_locks"),
+        ],
+        [
+            Button.inline("🛠️ Utilities", "hlp_Utils"),
+            Button.inline("🎁 Misc", "hlp_Misc"),
+        ]
+    ]
+    
+    # Add Dual Mode Info if active
+    if udB.get_key("DUAL_MODE"):
+        BTTS.append([Button.inline("🚀 UserBot Commands (Dual Mode)", "hlp_dualinfo")])
+    
+    # Bottom buttons
     url = f"https://t.me/{asst.me.username}?startgroup=true"
-    BTTS.append([Button.url("Add me to Group", url)])
+    BTTS.append([Button.url("➕ Add to Group", url)])
+    BTTS.append([Button.url("📢 Channel", "https://t.me/TeamUltroid"), Button.url("💬 Support", "https://t.me/UltroidSupportChat")])
     return BTTS
 
+DUAL_INFO = """
+🚀 **Dual Mode Information** 🚀
+
+In Dual Mode, your Assistant Bot can handle many of the same commands as your UserBot using the `/` prefix.
+
+**How it works:**
+• Use `.` for UserBot commands.
+• Use `/` for Assistant Bot commands.
+
+Most plugins are synchronized between both clients for maximum reliability and efficiency.
+"""
+
+STRINGS = {
+    "Admintools": ADMINTOOLS, 
+    "locks": LOCKS, 
+    "Utils": UTILITIES, 
+    "Misc": MISC,
+    "dualinfo": DUAL_INFO
+}
 
 @asst_cmd(pattern="help")
 async def helpish(event):
     if not event.is_private:
-        url = f"https://t.me/{asst.me.username}?start=start"
+        url = f"https://t.me/{asst.me.username}?start=help"
         return await event.reply(
-            "Contact me in PM for help!", buttons=Button.url("Click me for Help", url)
+            "**Need help?**\nContact me in Private for the full interactive menu!", 
+            buttons=Button.url("📂 Open Help Menu", url)
         )
-    if str(event.sender_id) in owner_and_sudos() and (
-        udB.get_key("DUAL_MODE") and (udB.get_key("DUAL_HNDLR") == "/")
-    ):
-        return
     await event.reply(START, buttons=get_buttons())
-
-
-@callback("mngbtn", owner=True)
-async def ehwhshd(e):
-    buttons = get_buttons()
-    buttons.append([Button.inline("<< Back", "open")])
-    await e.edit(buttons=buttons)
-
 
 @callback("mnghome")
 async def home_aja(e):
     await e.edit(START, buttons=get_buttons())
 
-
 @callback(re.compile("hlp_(.*)"))
 async def do_something(event):
     match = event.pattern_match.group(1).strip().decode("utf-8")
-    await event.edit(STRINGS[match], buttons=Button.inline("<< Back", "mnghome"))
+    if match in STRINGS:
+        await event.edit(STRINGS[match], buttons=Button.inline("⬅️ Back", "mnghome"))
+    else:
+        await event.answer("Category not found!", alert=True)
+
