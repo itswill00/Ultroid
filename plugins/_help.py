@@ -46,19 +46,19 @@ async def _help(ult):
                 output = f"**Plugin** - `{plug}`\n"
                 doc = HELP["Official"][plug]
                 output += doc.replace("{i}", HNDLR)
-                output += "\n© @TeamUltroid"
+                output += ""
                 await ult.eor(output)
             elif HELP.get("Addons") and plug in HELP["Addons"]:
                 output = f"**Plugin** - `{plug}`\n"
                 doc = HELP["Addons"][plug]
                 output += doc.replace("{i}", HNDLR)
-                output += "\n© @TeamUltroid"
+                output += ""
                 await ult.eor(output)
             elif HELP.get("VCBot") and plug in HELP["VCBot"]:
                 output = f"**Plugin** - `{plug}`\n"
                 doc = HELP["VCBot"][plug]
                 output += doc.replace("{i}", HNDLR)
-                output += "\n© @TeamUltroid"
+                output += ""
                 await ult.eor(output)
             else:
                 try:
@@ -66,7 +66,7 @@ async def _help(ult):
                     for d in LIST[plug]:
                         x += HNDLR + d
                         x += "\n"
-                    x += "\n© @TeamUltroid"
+                    x += ""
                     await ult.eor(x)
                 except BaseException:
                     file = None
@@ -101,11 +101,11 @@ async def _help(ult):
                     elif HELP.get("VCBot") and file in HELP["VCBot"]:
                         doc = HELP["VCBot"][file]
                         output += doc.replace("{i}", HNDLR)
-                    output += "\n© @TeamUltroid"
+                    output += ""
                     await ult.eor(output)
         except BaseException as er:
             LOGS.exception(er)
-            await ult.eor("Error 🤔 occured.")
+            await ult.eor("An error occurred.")
     else:
         try:
             results = await ult.client.inline_query(asst.me.username, "ultd")
