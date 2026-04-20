@@ -381,61 +381,65 @@ async def customize():
     rem = None
     try:
         chat_id = udB.get_key("LOG_CHANNEL")
+        if not chat_id:
+            return
         if asst.me.photo:
             return
-        LOGS.info("Customising Your Assistant Bot in @BOTFATHER")
+            
+        LOGS.info("Customizing Your Assistant Bot in @BotFather...")
         UL = f"@{asst.me.username}"
-        if not ultroid_bot.me.username:
-            sir = ultroid_bot.me.first_name
-        else:
-            sir = f"@{ultroid_bot.me.username}"
-        file = random.choice(
-            [
-                "https://graph.org/file/92cd6dbd34b0d1d73a0da.jpg",
-                "https://graph.org/file/a97973ee0425b523cdc28.jpg",
-                "resources/extras/ultroid_assistant.jpg",
-            ]
-        )
+        sir = f"@{ultroid_bot.me.username}" if ultroid_bot.me.username else ultroid_bot.me.first_name
+        
+        file = random.choice([
+            "https://graph.org/file/92cd6dbd34b0d1d73a0da.jpg",
+            "https://graph.org/file/a97973ee0425b523cdc28.jpg",
+            "resources/extras/ultroid_assistant.jpg",
+        ])
+        
         if not os.path.exists(file):
             file, _ = await download_file(file, "profile.jpg")
             rem = True
-        msg = await asst.send_message(
-            chat_id, "**Auto Customisation** Started on @Botfather"
-        )
-        await asyncio.sleep(1)
+
+        msg = await asst.send_message(chat_id, "**Auto Customization** Started on @BotFather")
+
+        async def botfather_step(command, expected_texts):
+            await ultroid_bot.send_message("botfather", command)
+            for _ in range(5):  # Try 5 times to wait for response
+                await asyncio.sleep(2)
+                resp = (await ultroid_bot.get_messages("botfather", limit=1))[0]
+                if any(x.lower() in resp.text.lower() for x in expected_texts):
+                    return True
+            return False
+
+        # 1. Reset state
         await ultroid_bot.send_message("botfather", "/cancel")
         await asyncio.sleep(1)
-        await ultroid_bot.send_message("botfather", "/setuserpic")
-        await asyncio.sleep(1)
-        isdone = (await ultroid_bot.get_messages("botfather", limit=1))[0].text
-        if isdone.startswith("Invalid bot"):
-            LOGS.info("Error while trying to customise assistant, skipping...")
-            return
-        await ultroid_bot.send_message("botfather", UL)
-        await asyncio.sleep(1)
-        await ultroid_bot.send_file("botfather", file)
-        await asyncio.sleep(2)
-        await ultroid_bot.send_message("botfather", "/setabouttext")
-        await asyncio.sleep(1)
-        await ultroid_bot.send_message("botfather", UL)
-        await asyncio.sleep(1)
-        await ultroid_bot.send_message(
-            "botfather", f"✨ Hello ✨!! I'm Assistant Bot of {sir}"
-        )
-        await asyncio.sleep(2)
-        await ultroid_bot.send_message("botfather", "/setdescription")
-        await asyncio.sleep(1)
-        await ultroid_bot.send_message("botfather", UL)
-        await asyncio.sleep(1)
-        await ultroid_bot.send_message(
-            "botfather",
-            f"✨ Powerful Ultroid Assistant Bot ✨\n✨ Master ~ {sir} ✨\n\n✨ Powered By ~ @TeamUltroid ✨",
-        )
-        await asyncio.sleep(2)
-        await msg.edit("Completed **Auto Customisation** at @BotFather.")
-        if rem:
+
+        # 2. Set Profile Pic
+        if await botfather_step("/setuserpic", ["choose a bot", "select a bot"]):
+            if await botfather_step(UL, ["send me the new profile photo"]):
+                await ultroid_bot.send_file("botfather", file)
+                await asyncio.sleep(2)
+
+        # 3. Set About Text
+        if await botfather_step("/setabouttext", ["choose a bot", "select a bot"]):
+            if await botfather_step(UL, ["send me the new 'About' text"]):
+                await ultroid_bot.send_message("botfather", f"✨ Hello ✨!! I'm Assistant Bot of {sir}")
+                await asyncio.sleep(2)
+
+        # 4. Set Description
+        if await botfather_step("/setdescription", ["choose a bot", "select a bot"]):
+            if await botfather_step(UL, ["send me the new description"]):
+                await ultroid_bot.send_message(
+                    "botfather",
+                    f"✨ Powerful Ultroid Assistant Bot ✨\n✨ Master ~ {sir} ✨\n\n✨ Powered By ~ @TeamUltroid ✨"
+                )
+                await asyncio.sleep(2)
+
+        await msg.edit("Completed **Auto Customization** at @BotFather.")
+        if rem and os.path.exists(file):
             os.remove(file)
-        LOGS.info("Customisation Done")
+        LOGS.info("Customization Done")
     except Exception as e:
         LOGS.warning(f"Assistant Bot customization failed: {e}")
 

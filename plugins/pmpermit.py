@@ -64,61 +64,49 @@ from . import *
 
 # ========================= CONSTANTS =============================
 
-COUNT_PM = {}
-LASTMSG = {}
-WARN_MSGS = {}
-U_WARNS = {}
-if isinstance(udB.get_key("PMPERMIT"), (int, str)):
-    value = [udB.get_key("PMPERMIT")]
-    udB.set_key("PMPERMIT", value)
-keym = KeyManager("PMPERMIT", cast=list)
-Logm = KeyManager("LOGUSERS", cast=list)
-PMPIC = udB.get_key("PMPIC")
-LOG_CHANNEL = udB.get_key("LOG_CHANNEL")
-UND = get_string("pmperm_1")
-UNS = get_string("pmperm_2")
-NO_REPLY = get_string("pmperm_3")
+# ========================= PERSISTENCE =============================
 
-UNAPPROVED_MSG = "**{ON}** — Pending Approval\n\n  Warning  `{warn}` / `{twarn}`"
-if udB.get_key("PM_TEXT"):
-    UNAPPROVED_MSG = (
-        "**{ON}** — Pending Approval\n\n"
-        + udB.get_key("PM_TEXT")
-        + "\n\n  Warning  `{warn}` / `{twarn}`"
-    )
-# 1
-WARNS = udB.get_key("PMWARNS") or 4
-PMCMDS = [
-    f"{HNDLR}a",
-    f"{HNDLR}approve",
-    f"{HNDLR}da",
-    f"{HNDLR}disapprove",
-    f"{HNDLR}block",
-    f"{HNDLR}unblock",
-]
+# KeyManager handles the main approved list, but we need another for 
+# transient state like warnings and message IDs to delete.
+PM_DATA = udB.get_key("PMP_DATA") or {}
 
-_not_approved = {}
-_to_delete = {}
-
-my_bot = asst.me.username
-
-
-def update_pm(userid, message, warns_given):
-    try:
-        WARN_MSGS.update({userid: message})
-    except KeyError:
-        pass
-    try:
-        U_WARNS.update({userid: warns_given})
-    except KeyError:
-        pass
-
+def update_pm(userid, message=None, warns_given=None, last_msg=None, to_del_id=None):
+    data = udB.get_key("PMP_DATA") or {}
+    user_data = data.get(str(userid), {})
+    if message:
+        user_data["msg"] = message
+    if warns_given is not None:
+        user_data["warns"] = warns_given
+    if last_msg:
+        user_data["last"] = last_msg
+    if to_del_id:
+        user_data["del"] = to_del_id
+    
+    data[str(userid)] = user_data
+    udB.set_key("PMP_DATA", data)
 
 async def delete_pm_warn_msgs(chat: int):
-    try:
-        await _to_delete[chat].delete()
-    except KeyError:
-        pass
+    data = udB.get_key("PMP_DATA") or {}
+    user_data = data.get(str(chat), {})
+    msg_id = user_data.get("del")
+    if msg_id:
+        try:
+            await ultroid_bot.delete_messages(chat, msg_id)
+        except Exception:
+            pass
+        user_data["del"] = None
+        data[str(chat)] = user_data
+        udB.set_key("PMP_DATA", data)
+
+def get_pm_data(userid):
+    data = udB.get_key("PMP_DATA") or {}
+    return data.get(str(userid), {})
+
+def clear_pm_data(userid):
+    data = udB.get_key("PMP_DATA") or {}
+    if str(userid) in data:
+        del data[str(userid)]
+        udB.set_key("PMP_DATA", data)
 
 
 # =================================================================
@@ -214,6 +202,7 @@ if udB.get_key("PMSETTING"):
     async def permitpm(event):
         inline_pm = Redis("INLINE_PM") or False
         user = event.sender
+        pm_data = get_pm_data(user.id)
         if not keym.contains(user.id) and event.text != UND:
             if Redis("MOVE_ARCHIVE"):
                 try:
@@ -228,7 +217,7 @@ if udB.get_key("PMSETTING"):
             mention = inline_mention(user)
             count = keym.count()
             try:
-                wrn = COUNT_PM[user.id] + 1
+                wrn = pm_data.get("warns", 0) + 1
                 await asst.edit_message(
                     udB.get_key("LOG_CHANNEL"),
                     _not_approved[user.id],
@@ -267,27 +256,30 @@ if udB.get_key("PMSETTING"):
                         count=count,
                         mention=mention,
                     )
-                    update_pm(user.id, message_, wrn)
+                    update_pm(user.id, message=message_, warns_given=wrn)
                     if inline_pm:
                         results = await ultroid_bot.inline_query(
                             my_bot, f"ip_{user.id}"
                         )
                         try:
-                            _to_delete[user.id] = await results[0].click(
+                            msg = await results[0].click(
                                 user.id, reply_to=event.id, hide_via=True
                             )
+                            update_pm(user.id, to_del_id=msg.id)
                         except Exception as e:
                             LOGS.info(str(e))
                     elif PMPIC:
-                        _to_delete[user.id] = await ultroid_bot.send_file(
+                        msg = await ultroid_bot.send_file(
                             user.id,
                             PMPIC,
                             caption=message_,
                         )
+                        update_pm(user.id, to_del_id=msg.id)
                     else:
-                        _to_delete[user.id] = await ultroid_bot.send_message(
+                        msg = await ultroid_bot.send_message(
                             user.id, message_
                         )
+                        update_pm(user.id, to_del_id=msg.id)
 
                 else:
                     await delete_pm_warn_msgs(user.id)
@@ -302,28 +294,31 @@ if udB.get_key("PMSETTING"):
                         count=count,
                         mention=mention,
                     )
-                    update_pm(user.id, message_, wrn)
+                    update_pm(user.id, message=message_, warns_given=wrn)
                     if inline_pm:
                         try:
                             results = await ultroid_bot.inline_query(
                                 my_bot, f"ip_{user.id}"
                             )
-                            _to_delete[user.id] = await results[0].click(
+                            msg = await results[0].click(
                                 user.id, reply_to=event.id, hide_via=True
                             )
+                            update_pm(user.id, to_del_id=msg.id)
                         except Exception as e:
                             LOGS.info(str(e))
                     elif PMPIC:
-                        _to_delete[user.id] = await ultroid_bot.send_file(
+                        msg = await ultroid_bot.send_file(
                             user.id,
                             PMPIC,
                             caption=message_,
                         )
+                        update_pm(user.id, to_del_id=msg.id)
                     else:
-                        _to_delete[user.id] = await ultroid_bot.send_message(
+                        msg = await ultroid_bot.send_message(
                             user.id, message_
                         )
-                LASTMSG.update({user.id: event.text})
+                        update_pm(user.id, to_del_id=msg.id)
+                update_pm(user.id, last_msg=event.text)
             else:
                 await delete_pm_warn_msgs(user.id)
                 message_ = UNAPPROVED_MSG.format(
@@ -337,44 +332,38 @@ if udB.get_key("PMSETTING"):
                     count=count,
                     mention=mention,
                 )
-                update_pm(user.id, message_, wrn)
+                update_pm(user.id, message=message_, warns_given=wrn)
                 if inline_pm:
                     try:
                         results = await ultroid_bot.inline_query(
                             my_bot, f"ip_{user.id}"
                         )
-                        _to_delete[user.id] = await results[0].click(
+                        msg = await results[0].click(
                             user.id, reply_to=event.id, hide_via=True
                         )
+                        update_pm(user.id, to_del_id=msg.id)
                     except Exception as e:
                         LOGS.info(str(e))
                 elif PMPIC:
-                    _to_delete[user.id] = await ultroid_bot.send_file(
+                    msg = await ultroid_bot.send_file(
                         user.id,
                         PMPIC,
                         caption=message_,
                     )
+                    update_pm(user.id, to_del_id=msg.id)
                 else:
-                    _to_delete[user.id] = await ultroid_bot.send_message(
+                    msg = await ultroid_bot.send_message(
                         user.id, message_
                     )
-            LASTMSG.update({user.id: event.text})
-            if user.id not in COUNT_PM:
-                COUNT_PM.update({user.id: 1})
-            else:
-                COUNT_PM[user.id] = COUNT_PM[user.id] + 1
-            if COUNT_PM[user.id] >= WARNS:
+                    update_pm(user.id, to_del_id=msg.id)
+            update_pm(user.id, last_msg=event.text)
+            
+            # Use updated warns count for block logic
+            final_warns = get_pm_data(user.id).get("warns", 0)
+            if final_warns >= WARNS:
                 await delete_pm_warn_msgs(user.id)
-                _to_delete[user.id] = await event.respond(UNS)
-                try:
-                    del COUNT_PM[user.id]
-                    del LASTMSG[user.id]
-                except KeyError:
-                    await asst.send_message(
-                        udB.get_key("LOG_CHANNEL"),
-                        "PMPermit is messed! Pls restart the bot!!",
-                    )
-                    return LOGS.info("COUNT_PM is messed.")
+                await event.respond(UNS)
+                clear_pm_data(user.id)
                 await ultroid_bot(BlockRequest(user.id))
                 await ultroid_bot(ReportSpamRequest(peer=user.id))
                 await asst.edit_message(
