@@ -1,3 +1,8 @@
+"""
+✘ Help for Brainfuck
+
+• {i}help brainfuck - To see available commands.
+"""
 # Made by : @Hackintush || github.com/ToxygenX
 # Made For : https://github.com/TeamUltroid/UltroidAddons
 

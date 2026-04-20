@@ -1,3 +1,8 @@
+"""
+✘ Help for Pokedex
+
+• {i}help pokedex - To see available commands.
+"""
 # Creator - @THE_BL_ACK_HAT @Shivam_Patel
 #
 # Ultroid - UserBot

@@ -1,3 +1,7 @@
+
+from . import get_help
+__doc__ = get_help("help_system")
+
 # Ultroid - System Management & Diagnostics
 # Professional suite for monitoring and resource lifecycle.
 

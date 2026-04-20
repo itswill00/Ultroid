@@ -1,3 +1,8 @@
+"""
+✘ Help for Pypi
+
+• {i}help pypi - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2024 TeamUltroid
 #

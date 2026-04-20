@@ -1,3 +1,8 @@
+"""
+✘ Help for Whichsong
+
+• {i}help whichsong - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #

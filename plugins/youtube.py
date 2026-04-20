@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_youtube")
+
 • `{i}yta <(youtube/any) link>`
    Download audio from the link.
 

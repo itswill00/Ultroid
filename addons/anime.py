@@ -1,3 +1,8 @@
+"""
+✘ Help for Anime
+
+• {i}help anime - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #

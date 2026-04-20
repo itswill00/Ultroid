@@ -1,3 +1,8 @@
+"""
+✘ Help for Speechtool
+
+• {i}help speechtool - To see available commands.
+"""
 #
 # Ultroid - UserBot
 #

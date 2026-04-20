@@ -1,3 +1,8 @@
+"""
+✘ Help for Beautify
+
+• {i}help beautify - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #

@@ -1,3 +1,8 @@
+"""
+✘ Help for Fastly
+
+• {i}help fastly - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

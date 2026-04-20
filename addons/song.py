@@ -1,3 +1,8 @@
+"""
+✘ Help for Song
+
+• {i}help song - To see available commands.
+"""
 #    Ultroid - UserBot
 #    Copyright 2020 (c)
 

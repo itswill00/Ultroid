@@ -1,3 +1,8 @@
+"""
+✘ Help for Encodedecode
+
+• {i}help encodedecode - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

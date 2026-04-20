@@ -5,6 +5,10 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
+from . import get_help
+__doc__ = get_help("help_aiwrapper")
+
+
 """
 ✘ Commands Available -
 
@@ -443,4 +447,3 @@ async def deepseek_ai(event):
             await msg.edit(formatted_response + response)
         except Exception:
             pass
-

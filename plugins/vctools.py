@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_vctools")
+
 • `{i}startvc`
     Start Group Call in a group.
 

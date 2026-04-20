@@ -1,3 +1,7 @@
+
+from . import get_help
+__doc__ = get_help("help_group_intel")
+
 """
 Group Intel — Admin Surveillance Plugin
 Monitor group events and forward alerts to LOG_CHANNEL.

@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_tag")
+
 • `{i}tagall`
     Tag Top 100 Members of chat.
 

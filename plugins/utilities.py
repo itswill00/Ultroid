@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_utilities")
+
 • `{i}kickme` : Leaves the group.
 
 • `{i}date` : Show Calender.
@@ -812,4 +816,3 @@ async def get_restricted_msg(event):
             await event.eor("`Cannot process this type of media.`")
     else:
         await event.eor("`No media found in the message.`")
-

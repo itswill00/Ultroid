@@ -1,3 +1,8 @@
+"""
+✘ Help for Logo
+
+• {i}help logo - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #

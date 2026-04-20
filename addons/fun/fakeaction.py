@@ -1,3 +1,8 @@
+"""
+✘ Help for Fakeaction
+
+• {i}help fakeaction - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #

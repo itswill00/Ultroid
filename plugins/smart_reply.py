@@ -1,5 +1,9 @@
 # Ultroid - Smart Reply Plugin (Refactored)
 # Powered by centralized AI Core Engine
+
+from . import get_help
+__doc__ = get_help("help_smart_reply")
+
 """
 » Commands Available -
 
@@ -164,5 +168,4 @@ async def ai_debug(e):
 
     # Use engine for debug analysis
     await run_ai_task(e, prompt, system_override="You are a professional Python Debugger and Systems Engineer.")
-
 

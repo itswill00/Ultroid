@@ -1,3 +1,8 @@
+"""
+✘ Help for Autoprofile
+
+• {i}help autoprofile - To see available commands.
+"""
 #
 # Ultroid - UserBot
 #

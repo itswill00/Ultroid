@@ -1,3 +1,8 @@
+"""
+✘ Help for Fun
+
+• {i}help fun - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

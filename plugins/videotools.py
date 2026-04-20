@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_videotools")
+
 •`{i}sample <duration in seconds>`
    Creates Short sample of video..
 

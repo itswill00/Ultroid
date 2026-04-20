@@ -1,3 +1,8 @@
+"""
+✘ Help for Random
+
+• {i}help random - To see available commands.
+"""
 #
 # Ultroid - UserBot
 #

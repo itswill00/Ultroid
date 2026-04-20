@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_unsplash")
+
 • {i}unsplash <search query> ; <no of pics>
     Unsplash Image Search.
 """

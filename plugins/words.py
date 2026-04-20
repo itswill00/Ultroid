@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_words")
+
 • `{i}meaning <word>`
     Get the meaning of the word.
 

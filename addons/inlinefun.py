@@ -1,3 +1,8 @@
+"""
+✘ Help for Inlinefun
+
+• {i}help inlinefun - To see available commands.
+"""
 #
 # Ultroid - UserBot
 #

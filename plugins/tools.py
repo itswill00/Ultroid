@@ -7,6 +7,10 @@
 """
 ✘ Commands Available -
 
+
+from . import get_help
+__doc__ = get_help("help_tools")
+
 • `{i}circle`
     Reply to a audio song or gif to get video note.
 
@@ -469,4 +473,3 @@ async def webss(event):
         )
         os.remove(pic)
     await xx.delete()
-

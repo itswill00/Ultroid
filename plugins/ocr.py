@@ -6,6 +6,10 @@ import os
 from . import LOGS, eor, udB, ultroid_cmd
 
 # Free OCR API: https://ocr.space/ocrapi
+
+from . import get_help
+__doc__ = get_help("help_ocr")
+
 OCR_API_KEY = udB.get_key("OCR_API_KEY") or "helloworld"
 
 @ultroid_cmd(pattern="ocr$", fullsudo=True)

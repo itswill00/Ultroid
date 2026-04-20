@@ -1,3 +1,8 @@
+"""
+✘ Help for Wikipedia
+
+• {i}help wikipedia - To see available commands.
+"""
 # Ultroid Userbot
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >

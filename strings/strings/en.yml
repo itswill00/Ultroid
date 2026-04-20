@@ -647,3 +647,63 @@ help_warn: "\n\n•`{i}warn <reply to user> <reason>`\n    Gives Warn.\n\n•`{i
 help_webupload: " -\n\n• `{i}webupload`\n    Upload files on another server.\n"
 help_words: " -\n\n• `{i}meaning <word>`\n    Get the meaning of the word.\n\n• `{i}synonym <word>`\n    Get all synonyms.\n\n• `{i}antonym <word>`\n    Get all antonyms.\n\n• `{i}ud <word>`\n    Fetch word defenition from urbandictionary.\n"
 help_ziptools: "\n\n• `{i}zip <reply to file>`\n    zip the replied file\n    To set password on zip: `{i}zip <password>` reply to file\n\n• `{i}unzip <reply to zip file>`\n    unzip the replied file.\n\n• `{i}azip <reply to file>`\n   add file to batch for batch upload zip\n\n• `{i}dozip`\n   upload batch zip the files u added from `{i}azip`\n   To set Password: `{i}dozip <password>`\n\n"
+
+help_animation: " -\n\n• `{i}fbi`\n    FBI Open Up animation!\n\n• `{i}headshot`\n    Headshot animation!\n\n• `{i}fp`\n    Facepalm!"
+
+help_ai: " -\n\n• `{i}ai <query>`\n    Interact with the AI assistant (Text/Vision).\n\n• `{i}chat <query>`\n    Alias for .ai."
+
+help_aiwrapper: " -\n\n• Interface for AI models.\n"
+
+help_autopic: " -\n\n• `{i}autopic`\n    Automatically change profile picture.\n"
+
+help_bulk_delete: " -\n\n• `{i}purge` / `{i}purgeme`\n    Delete multiple messages easily.\n"
+
+help_compressor: " -\n\n• `{i}compress` \n    Compress video/audio files.\n"
+
+help_db_backup: " -\n\n• `{i}backup` / `{i}restore` \n    Backup or restore the bot database.\n"
+
+help_forcesubscribe: " -\n\n• `{i}fsub <channel>` \n    Force users to subscribe to a channel before using the bot.\n"
+
+help_gdrive: " -\n\n• `{i}gdrive` \n    Upload/Download files from Google Drive.\n"
+
+help_group_intel: " -\n\n• `{i}intel` \n    Gather intelligence on a group.\n"
+
+help_log_analyst: " -\n\n• `{i}loganalyst` \n    Analyze system/bot logs.\n"
+
+help_log_watcher: " -\n\n• `{i}logwatch` \n    Monitor logs in real-time.\n"
+
+help_message_vault: " -\n\n• `{i}vault` \n    Store and retrieve sensitive messages.\n"
+
+help_nightmode: " -\n\n• `{i}nightmode <on/off>` \n    Schedule group settings during night hours.\n"
+
+help_notes_export: " -\n\n• `{i}exportnotes` \n    Export all saved notes.\n\n• `{i}exportmsg <count>` \n    Export the last N messages.\n\n• `{i}exportmd` \n    Export all notes to Markdown.\n"
+
+help_nsfwfilter: " -\n\n• `{i}nsfwscan` \n    Scan media for NSFW content.\n"
+
+help_ocr: " -\n\n• `{i}ocr` \n    Extract text from images.\n"
+
+help_pdftools: " -\n\n• `{i}pdf` \n    Tools for handling PDF files.\n"
+
+help_ping_monitor: " -\n\n• `{i}pingmon` \n    Monitor bot pings over time.\n"
+
+help_session_guard: " -\n\n• `{i}session` \n    Manage active sessions.\n"
+
+help_smart_reply: " -\n\n• `{i}sreply` \n    Set up smart automated replies.\n"
+
+help_speedtest: " -\n\n• `{i}speedtest` \n    Test network speed.\n"
+
+help_stories: " -\n\n• `{i}story` \n    Download/Upload stories.\n"
+
+help_system: " -\n\n• `{i}sys` \n    Show professional health dashboard.\n\n• `{i}sysinfo` \n    Show detailed system specifications.\n\n• `{i}logs (sys/heroku/carbon)` \n    Get the terminal, heroku or carbonized logs.\n"
+
+help_twitter: " -\n\n• `{i}twitter` \n    Download media from Twitter.\n"
+
+help_update_monitor: " -\n\n• `{i}upmon` \n    Monitor for new updates.\n"
+
+help_weather: " -\n\n• `{i}weather <city>` \n    Get current weather report.\n"
+
+help_youtube: " -\n\n• `{i}yt <query/url>` \n    Download audio from YouTube.\n\n• `{i}video <query/url>` \n    Download video from YouTube.\n"
+
+help_addon_manager: " -\n\n• `{i}addaddon <url>`\n    Install an addon from a URL.\n\n• `{i}remaddon <name>`\n    Uninstall an addon.\n"
+
+help_reminder: " -\n\n• `{i}remind <time> <msg>`\n    Set a reminder. Example: `{i}remind 1h take meds`.\n\n• `{i}reminders`\n    Show all your active reminders.\n"

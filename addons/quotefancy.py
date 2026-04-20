@@ -1,3 +1,8 @@
+"""
+✘ Help for Quotefancy
+
+• {i}help quotefancy - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

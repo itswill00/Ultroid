@@ -1,3 +1,8 @@
+"""
+✘ Help for Special_fun
+
+• {i}help special_fun - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #

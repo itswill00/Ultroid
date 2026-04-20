@@ -1,6 +1,10 @@
 # Ultroid - Unified AI Plugin (Text + Vision)
 # Powered by Groq LPU™ Inference Engine
 
+from . import get_help
+__doc__ = get_help("help_ai")
+
+
 from pyUltroid.fns.tools import encode_image_base64
 
 from . import LOGS, udB, ultroid_cmd

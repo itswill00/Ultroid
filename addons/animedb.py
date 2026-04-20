@@ -1,3 +1,8 @@
+"""
+✘ Help for Animedb
+
+• {i}help animedb - To see available commands.
+"""
 # Made by : @Arnab431 || github.com/ArnabXD
 # Made For : https://github.com/TeamUltroid/UltroidAddons
 

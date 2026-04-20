@@ -1,3 +1,8 @@
+"""
+✘ Help for Sticklet
+
+• {i}help sticklet - To see available commands.
+"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

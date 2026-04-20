@@ -1,3 +1,8 @@
+"""
+✘ Help for Clone
+
+• {i}help clone - To see available commands.
+"""
 # Ported From DarkCobra , Originally By Uniborg
 # Ultroid - UserBot
 #

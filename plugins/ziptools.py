@@ -7,6 +7,10 @@
 """
 ✘ Commands Available
 
+
+from . import get_help
+__doc__ = get_help("help_ziptools")
+
 • `{i}zip <reply to file>`
     zip the replied file
     To set password on zip: `{i}zip <password>` reply to file

@@ -1,3 +1,8 @@
+"""
+✘ Help for Typing
+
+• {i}help typing - To see available commands.
+"""
 # (c) Shrimadhav U.K
 # aka Spechide
 #
