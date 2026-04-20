@@ -1,116 +1,101 @@
-# Ultroid: Natural Intelligence
 <p align="center">
-    <img src="https://img.shields.io/github/v/release/itswill00/Ultroid?style=flat-square&color=blue" alt="Release">
-    <img src="https://img.shields.io/github/license/itswill00/Ultroid?style=flat-square&color=green" alt="License">
-    <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/Speed-Turbo_Mode-FF4500?style=flat-square&logo=speedtest" alt="Speed">
+  <img src="./resources/extras/logo_readme.jpg" alt="TeamUltroid Logo">
 </p>
+<h1 align="center">
+  <b>Ultroid - Enhanced UserBot</b>
+</h1>
 
-**A high-performance, minimalist Telegram userbot framework built for those who demand technical excellence and aesthetic precision.**
+<b>A stable pluggable Telegram userbot + Voice & Video Call music bot, based on Telethon.</b>
 
-Ultroid is a professional-grade extension of your Telegram account. Designed to be lightweight and robust, it balances raw power with a "Zero-Gimmick" terminal-inspired aesthetic.
+[![](https://img.shields.io/badge/Ultroid-v0.8-crimson)](#)
+[![Stars](https://img.shields.io/github/stars/itswill00/Ultroid?style=flat-square&color=yellow)](https://github.com/itswill00/Ultroid/stargazers)
+[![Forks](https://img.shields.io/github/forks/itswill00/Ultroid?style=flat-square&color=orange)](https://github.com/itswill00/Ultroid/fork)
+[![Size](https://img.shields.io/github/repo-size/itswill00/Ultroid?style=flat-square&color=green)](https://github.com/itswill00/Ultroid/)   
+[![Python](https://img.shields.io/badge/Python-v3.10+-blue)](https://www.python.org/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/itswill00/Ultroid/graphs/commit-activity)
+[![License](https://img.shields.io/badge/License-AGPL-blue)](https://github.com/itswill00/Ultroid/blob/main/LICENSE)
+----
 
----
+## 🚀 Key Features (Fork Enhancements)
+This fork of Ultroid includes several stability and performance improvements:
 
-## 💎 Key Features
-
-### 🚀 Turbo Media Engine (2026 Edition)
-The industry's most aggressive downloader integration. Powered by a hardened `yt-dlp` core.
-- **Auto-Detection**: Dropping a YouTube, TikTok, Instagram, or Twitter link in a group chat instantly triggers an interactive download prompt — no command needed.
-- **Concurrent Fragments**: Multi-threaded extraction (up to 10 parallel streams) for 5x-10x faster downloads on VPS.
-- **1MB Optimized Buffering**: Tuned for maximum disk throughput and high-speed network saturation.
-- **Shadow Proxy Protocol**: Automatically bypasses Telegram's 50MB file size limit by relaying through a secure Assistant-Proxy, allowing for seamless delivery of files up to **2GB**.
-- **Real-Time Control**: Interactive `[❌ Cancel]` buttons allow you to abort any active task instantly with automatic cleanup.
-### 🧠 Advanced AI & Diagnostics
-Deeply integrated large language models for productivity.
-- **Llama 3.3 (Groq)**: Instant, high-context technical assistance.
-- **Gemini Pro**: Precision coding diagnostics and world-class reasoning.
-- **Indonesian Optimized**: AI Assistant is strictly tuned to respond in **Indonesian** (Bahasa Indonesia) for native Indonesian clarity.
-- **Double-Box UI**: Professional, terminal-style Markdown output for all AI interactions.
-
----
-
-## ⚡ Recent Enhancements (April 2026)
-
-### 📦 Massive Plugin & Addon Collection
-This repository is now fully synchronized with the official **TeamUltroid** ecosystem, featuring **150+ commands** across various categories.
-- **Core Additions**: `_wspr`, `aiwrapper`, `audiotools`, `autopic`, `chatbot`, `echo`, `glitch`, `imagetools`, `logo`, `pdftools`, `qrcode`, and more.
-- **45+ Premium Addons**: `anime`, `autoprofile`, `figlet`, `imdb`, `pokedex`, `quote`, `song`, `spam`, `wikipedia`, etc.
-- **Zero-Config Deployment**: All dependencies are managed in `requirements.txt`.
-
-### 🛠️ Fixed Instagram Downloader
-- Integrated `SONZAIX_API_KEY` support to ensure stable Instagram media extraction on high-traffic servers.
-- Optimized multi-threaded buffering for Reels, IGTV, and Carousel posts.
+- **Enhanced Multi-Layer Upload System**: A robust image/media upload system with 4 layers of redundancy (Uguu.se, Catbox, Telegra.ph, and Graph.org).
+- **Anti-Blocking Strategy**: Uses browser-like headers and automated filename cleaning to bypass IP blocks and API rejections commonly found on VPS servers.
+- **Improved Fallback Logic**: Automatically switches to the next available service if the primary one fails, ensuring your inline commands and media uploads always work.
 
 ---
 
-### 🛡️ Enterprise Security
-- **Session Guard**: Real-time monitoring of account access and automatic revocation of suspicious session ghosts.
-- **Tiered Authorization**: Dynamic multi-level permission system (Owner → Full Sudo → Scoped Sudo → Public) with sub-5-minute stale-cache invalidation.
-- **Captcha Gateway**: Math-challenge verification prevents unauthorized public access to the assistant bot.
+# Deploy
+- [Local Machine](#deploy-locally)
+- [Termux](#deploy-on-termux)
+- [Heroku](#deploy-to-heroku)
+
+# Documentation 
+[![Documentation](https://img.shields.io/badge/Documentation-Ultroid-blue)](http://ultroid.tech/)
 
 ---
 
-## ⚡ Quick Deployment
-
-### Mobile Edition (Termux)
-One-step installation for a native mobile experience:
+## Deploy on Termux (Recommended)
+Get the [Necessary Variables](#Necessary-Variables) and run:
 ```bash
-git clone https://github.com/itswill00/Ultroid && cd Ultroid && bash termux_setup.sh
+pkg update && pkg upgrade
+pkg install python git ffmpeg -y
+git clone https://github.com/itswill00/Ultroid
+cd Ultroid
+bash install-termux
 ```
 
-### Production Environment (VPS / Linux)
-Standard deployment for performance and stability:
-```bash
-git clone https://github.com/itswill00/Ultroid && cd Ultroid
-cp .env.sample .env && nano .env   # Fill in your credentials
-bash installer.sh
-```
+## Deploy Locally
+### Traditional Method
+- Get your [Necessary Variables](#Necessary-Variables)
+- Clone the repository:    
+`git clone https://github.com/itswill00/Ultroid.git`
+- Go to the cloned folder:    
+`cd Ultroid`
+- Create a virtual env:      
+`virtualenv -p /usr/bin/python3 venv`
+`. ./venv/bin/activate`
+- Install the requirements:      
+`pip install -U -r requirements.txt`
+- Generate your `SESSION`:
+  `bash sessiongen`
+- Fill your details in a `.env` file.
+- Run the bot:
+   `bash startup`
 
-### Docker (Containerized)
-The most stable and reproducible deployment method:
-```bash
-cp .env.sample .env && nano .env   # Fill in your credentials
-docker-compose up -d
-```
+---
+## Necessary Variables
+- `SESSION` - SessionString for your accounts login session. 
+
+One of the following database:
+- **Redis** (Recommended)
+  - `REDIS_URI` - Redis endpoint URL.
+  - `REDIS_PASSWORD` - Redis endpoint Password.
+- **MONGODB**
+  - `MONGO_URI` - Get it from [mongodb](https://mongodb.com/atlas).
 
 ---
 
-## 📍 Essential Commands
+# Core Contributor Team (Original)
+We are grateful to the original TeamUltroid for the amazing base project.
 
-| Category | Command | Description |
-| :--- | :--- | :--- |
-| **Media** | `.dl <url>` | Interactive download prompt (YT/TT/IG/TW/NSFW + universal). |
-| **Media** | `.ytv <url>` | Direct video download, skips format prompt. |
-| **Media** | `.yta <url>` | Direct audio (MP3) download, skips format prompt. |
-| **Admin** | `.dlservice` | Toggle the autonomous group link-listener. |
-| **AI** | `.ask <query>` | Context-aware AI technical search (Groq / Gemini). |
-| **System** | `.health` | Real-time system diagnostics and memory audit. |
-| **Sudo** | `.addsudo` | Add a sudo user (with optional scoped command list). |
-| **Universal** | **Runs flawlessly on Mobile, VPS, and Local hosts.** | |
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/xditya"><img src="https://avatars.githubusercontent.com/xditya" width="75px;" alt=""/><br/><sub><b>@xditya</b></sub></a></td>
+    <td align="center"><a href="https://github.com/1danish-00"><img src="https://avatars.githubusercontent.com/1danish-00" width="75px;" alt=""/><br/><sub><b>@1danish_00</b></sub></a></td>
+    <td align="center"><a href="https://github.com/buddhhu"><img src="https://avatars.githubusercontent.com/buddhhu" width="75px;" alt=""/><br/><sub><b>@buddhhu</b></sub></a></td>
+    <td align="center"><a href="https://github.com/TechiError"><img src="https://avatars.githubusercontent.com/TechiError" width="75px;" alt=""/><br/><sub><b>@TechiError</b></sub></a></td>
+  </tr>
+</table>
 
----
-
-## ⚙️ Technical Requirements
-
-| Component | Version | Purpose |
-| :--- | :--- | :--- |
-| Python | 3.10+ (3.12 recommended) | Core runtime |
-| Node.js | 20+ | YouTube PoToken signature solver |
-| FFmpeg | Any recent | Audio/video post-processing & merge |
-| Git | Any | Auto-update support |
-
-### YouTube on VPS
-VPS IPs are commonly blocked by YouTube. You need **both** of these set in `.env`:
-- `PO_TOKEN` — Proof of Origin token
-- `VISITOR_DATA` — Client session context
-
-See [yt-dlp PO Token Guide](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide) to generate these.
-A `cookies.txt` (Netscape format) exported from your browser provides additional authentication.
+# License
+[![License](https://www.gnu.org/graphics/agplv3-155x51.png)](LICENSE)   
+Ultroid is licensed under [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.en.html) v3 or later.
 
 ---
+# Credits
+* [TeamUltroid](https://t.me/TeamUltroid) for the original codebase.
+* [Lonami](https://github.com/LonamiWebs/) for [Telethon.](https://github.com/LonamiWebs/Telethon)
+* [MarshalX](https://github.com/MarshalX) for [PyTgCalls.](https://github.com/MarshalX/tgcalls)
 
-Ultroid — *Intelligence, beautifully simplified.*
-
----
-Copyright (C) 2021-2026 TeamUltroid. Released under GNU Affero General Public License v3.0.
+> Enhanced and Maintained with 💕 by itswill00.
