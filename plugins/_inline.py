@@ -148,14 +148,14 @@ async def setting(event):
         link_preview=False,
         buttons=[
             [
-                Button.inline("•Pɪɴɢ•", data="pkng"),
-                Button.inline("•Uᴘᴛɪᴍᴇ•", data="upp"),
+                Button.inline("Ping",   data="pkng"),
+                Button.inline("Uptime", data="upp"),
             ],
             [
-                Button.inline("•Stats•", data="alive"),
-                Button.inline("•Uᴘᴅᴀᴛᴇ•", data="doupdate"),
+                Button.inline("Stats",  data="alive"),
+                Button.inline("Update", data="doupdate"),
             ],
-            [Button.inline("« Bᴀᴄᴋ", data="open")],
+            [Button.inline("← Back", data="open")],
         ],
     )
 
@@ -184,7 +184,7 @@ async def uptd_plugin(event):
     if "|" in file:
         file, index = file.split("|")
     key_ = HELP.get(key, [])
-    hel_p = f"Plugin Name - `{file}`\n"
+    hel_p = f"Plugin — `{file}`\n"
     help_ = ""
     try:
         doc = key_[file]
@@ -196,8 +196,7 @@ async def uptd_plugin(event):
                 help_ += HNDLR + d
                 help_ += "\n"
     if not help_:
-        help_ = f"{file} has no Detailed Help!"
-    help_ += "\n© @TeamUltroid"
+        help_ = f"`{file}` has no detailed help."
     buttons = []
     if inline_pic():
         data = f"sndplug_{key}_{file}"
@@ -206,7 +205,7 @@ async def uptd_plugin(event):
         buttons.append(
             [
                 Button.inline(
-                    "« Sᴇɴᴅ Pʟᴜɢɪɴ »",
+                    "↗ Send to Chat",
                     data=data,
                 )
             ]
@@ -216,7 +215,7 @@ async def uptd_plugin(event):
         data += f"|{index}"
     buttons.append(
         [
-            Button.inline("« Bᴀᴄᴋ", data=data),
+            Button.inline("← Back to List", data=data),
         ]
     )
     try:
@@ -243,11 +242,11 @@ async def _(event):
         with open("ultroid_updates.txt", "w+") as file:
             file.write(tl_chnglog)
         await event.edit(
-            get_string("upd_5"),
+            get_string("upd_4"),
             file="ultroid_updates.txt",
             buttons=[
-                [Button.inline("• Uᴘᴅᴀᴛᴇ Nᴏᴡ •", data="updatenow")],
-                [Button.inline("« Bᴀᴄᴋ", data="ownr")],
+                [Button.inline("Update Now", data="updatenow")],
+                [Button.inline("← Back",     data="ownr")],
             ],
         )
         remove("ultroid_updates.txt")
@@ -256,7 +255,7 @@ async def _(event):
             changelog_str,
             buttons=[
                 [Button.inline("Update Now", data="updatenow")],
-                [Button.inline("« Bᴀᴄᴋ", data="ownr")],
+                [Button.inline("← Back",     data="ownr")],
             ],
             parse_mode="html",
         )
@@ -267,14 +266,14 @@ async def _(event):
     start = datetime.now()
     end = datetime.now()
     ms = (end - start).microseconds
-    pin = f"🌋Pɪɴɢ = {ms} microseconds"
+    pin = f"Ping: {ms}ms"
     await event.answer(pin, cache_time=0, alert=True)
 
 
 @callback(data="upp", owner=True)
 async def _(event):
     uptime = time_formatter((time.time() - start_time) * 1000)
-    pin = f"🙋Uᴘᴛɪᴍᴇ = {uptime}"
+    pin = f"Uptime: {uptime}"
     await event.answer(pin, cache_time=0, alert=True)
 
 
@@ -289,7 +288,7 @@ async def _(e):
     button = InButtons.copy()
     button.append(
         [
-            Button.inline("« Bᴀᴄᴋ", data="open"),
+            Button.inline("← Back", data="open"),
         ],
     )
     await e.edit(buttons=button, link_preview=False)
@@ -315,8 +314,8 @@ async def opner(event):
 @callback(data="close", owner=True)
 async def on_plug_in_callback_query_handler(event):
     await event.edit(
-        get_string("inline_5"),
-        buttons=Button.inline("Oᴘᴇɴ Aɢᴀɪɴ", data="open"),
+        "**Menu closed.**",
+        buttons=Button.inline("↩ Reopen Menu", data="open"),
     )
 
 
@@ -324,9 +323,8 @@ def page_num(index, key):
     rows = udB.get_key("HELP_ROWS") or 5
     cols = udB.get_key("HELP_COLUMNS") or 2
     loaded = HELP.get(key, [])
-    emoji = udB.get_key("EMOJI_IN_HELP") or "✘"
     List = [
-        Button.inline(f"{emoji} {x} {emoji}", data=f"uplugin_{key}_{x}|{index}")
+        Button.inline(x, data=f"uplugin_{key}_{x}|{index}")
         for x in sorted(loaded)
     ]
     all_ = split_list(List, cols)
@@ -336,22 +334,18 @@ def page_num(index, key):
     except IndexError:
         new_ = fl_[0] if fl_ else []
         index = 0
-    if index == 0 and len(fl_) == 1:
-        new_.append([Button.inline("« Bᴀᴄᴋ »", data="open")])
+    total_pages = len(fl_)
+    if index == 0 and total_pages == 1:
+        new_.append([Button.inline("← Back", data="open")])
     else:
-        new_.append(
-            [
-                Button.inline(
-                    "« Pʀᴇᴠɪᴏᴜs",
-                    data=f"uh_{key}_{index-1}",
-                ),
-                Button.inline("« Bᴀᴄᴋ »", data="open"),
-                Button.inline(
-                    "Nᴇxᴛ »",
-                    data=f"uh_{key}_{index+1}",
-                ),
-            ]
-        )
+        nav = []
+        if index > 0:
+            nav.append(Button.inline("‹ Prev", data=f"uh_{key}_{index-1}"))
+        nav.append(Button.inline(f"{index+1} / {total_pages}", data="do_nothing"))
+        if index < total_pages - 1:
+            nav.append(Button.inline("Next ›", data=f"uh_{key}_{index+1}"))
+        new_.append(nav)
+        new_.append([Button.inline("← Back", data="open")])
     return new_
 
 
