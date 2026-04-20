@@ -120,7 +120,10 @@ class GDriveManager:
         token_data = udB.get_key("GDRIVE_AUTH_TOKEN")
         if token_data:
             try:
-                self._creds = Credentials.from_authorized_user_info(json.loads(token_data), self.scopes)
+                # Handle both JSON string and dictionary formats
+                if isinstance(token_data, str):
+                    token_data = json.loads(token_data)
+                self._creds = Credentials.from_authorized_user_info(token_data, self.scopes)
             except Exception:
                 if os.path.exists(self.token_file):
                     self._creds = Credentials.from_authorized_user_file(self.token_file, self.scopes)

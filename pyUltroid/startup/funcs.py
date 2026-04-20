@@ -147,8 +147,12 @@ async def startup_stuff():
     GT = udB.get_key("GDRIVE_AUTH_TOKEN")
     if GT:
         def _write_gdrive():
+            import json as _json
             with open("resources/auth/gdrive_creds.json", "w") as t_file:
-                t_file.write(GT)
+                if isinstance(GT, dict):
+                    _json.dump(GT, t_file)
+                else:
+                    t_file.write(str(GT))
         await asyncio.to_thread(_write_gdrive)
 
     if udB.get_key("AUTH_TOKEN"):
@@ -302,7 +306,7 @@ async def autopilot():
             r = await ultroid_bot(
                 CreateChannelRequest(
                     title="My Ultroid Logs",
-                    about="My Ultroid Log Group\n\n Join @TeamUltroid",
+                    about="My Ultroid Log Group\n\n Join @ultroid_next",
                     megagroup=True,
                 ),
             )
@@ -432,7 +436,7 @@ async def customize():
             if await botfather_step(UL, ["send me the new description"]):
                 await ultroid_bot.send_message(
                     "botfather",
-                    f"✨ Powerful Ultroid Assistant Bot ✨\n✨ Master ~ {sir} ✨\n\n✨ Powered By ~ @TeamUltroid ✨"
+                    f"✨ Powerful Ultroid Assistant Bot ✨\n✨ Master ~ {sir} ✨\n\n✨ Powered By ~ @ultroid_next ✨"
                 )
                 await asyncio.sleep(2)
 
