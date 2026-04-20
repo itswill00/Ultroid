@@ -9,6 +9,7 @@ import asyncio
 import math
 import os
 import re
+import shlex
 import sys
 import time
 from traceback import format_exc
@@ -629,9 +630,12 @@ async def catbox_upload(path: str):
             LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to transfer.sh...")
             # Fallback to transfer.sh
             filename = os.path.basename(path)
-            # Ensure filename doesn't break curl
-            clean_name = filename.replace(' ', '_').replace("'", "")
-            out, err = await bash(f"curl -s --upload-file '{path}' https://transfer.sh/{clean_name}")
+            # Ensure filename doesn't break curl or transfer.sh
+            # Keep only alphanumeric characters, underscores, and dots for the URL
+            clean_name = re.sub(r'[^a-zA-Z0-9._]', '_', filename)
+            # Quote path to handle special characters for shell execution
+            safe_path = shlex.quote(path)
+            out, err = await bash(f"curl -s --upload-file {safe_path} https://transfer.sh/{clean_name}")
             if not err and out.startswith("https://"):
                 return out.strip()
             raise Exception(f"Upload completely failed. Catbox rejected it, and fallback error: {err or out}") from e
