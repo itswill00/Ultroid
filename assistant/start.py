@@ -54,10 +54,10 @@ _start = [
         Button.inline("Settings ⚙️", data="setter"),
     ],
     [
-        Button.inline("Sᴛᴀᴛs ✨", data="stat"),
-        Button.inline("Bʀᴏᴀᴅᴄᴀsᴛ 📻", data="bcast"),
+        Button.inline("Stats ✨", data="stat"),
+        Button.inline("Broadcast 📻", data="bcast"),
     ],
-    [Button.inline("TɪᴍᴇZᴏɴᴇ 🌎", data="tz")],
+    [Button.inline("Timezone 🌎", data="tz")],
 ]
 
 

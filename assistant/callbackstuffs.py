@@ -52,8 +52,8 @@ _buttons = {
         "text": "Other Variables to set for @TeamUltroid:",
         "buttons": [
             [
-                Button.inline("Tᴀɢ Lᴏɢɢᴇʀ", data="taglog"),
-                Button.inline("SᴜᴘᴇʀFʙᴀɴ", data="cbs_sfban"),
+                Button.inline("Tag Logger", data="taglog"),
+                Button.inline("SuperFban", data="cbs_sfban"),
             ],
             [
                 Button.inline("Sudo Mode", data="sudo"),
@@ -79,44 +79,44 @@ _buttons = {
         "text": "SuperFban Settings:",
         "buttons": [
             [Button.inline("FBᴀɴ Gʀᴏᴜᴘ", data="sfgrp")],
-            [Button.inline("Exᴄʟᴜᴅᴇ Fᴇᴅs", data="abs_sfexf")],
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_otvars")],
+            [Button.inline("Exclude Feds", data="abs_sfexf")],
+            [Button.inline("« Back", data="cbs_otvars")],
         ],
     },
     "apauto": {
         "text": "This'll auto approve on outgoing messages",
         "buttons": [
-            [Button.inline("Aᴜᴛᴏ Aᴘᴘʀᴏᴠᴇ ON", data="apon")],
-            [Button.inline("Aᴜᴛᴏ Aᴘᴘʀᴏᴠᴇ OFF", data="apof")],
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_pmcstm")],
+            [Button.inline("Auto Approve ON", data="apon")],
+            [Button.inline("Auto Approve OFF", data="apof")],
+            [Button.inline("« Back", data="cbs_pmcstm")],
         ],
     },
     "alvcstm": {
         "text": f"Customise your {HNDLR}alive. Choose from the below options -",
         "buttons": [
-            [Button.inline("Aʟɪᴠᴇ Tᴇxᴛ", data="abs_alvtx")],
-            [Button.inline("Aʟɪᴠᴇ ᴍᴇᴅɪᴀ", data="alvmed")],
-            [Button.inline("Dᴇʟᴇᴛᴇ Aʟɪᴠᴇ Mᴇᴅɪᴀ", data="delmed")],
-            [Button.inline("« Bᴀᴄᴋ", data="setter")],
+            [Button.inline("Alive Text", data="abs_alvtx")],
+            [Button.inline("Alive Media", data="alvmed")],
+            [Button.inline("Delete Alive Media", data="delmed")],
+            [Button.inline("« Back", data="setter")],
         ],
     },
     "pmcstm": {
         "text": "Customise your PMPERMIT Settings -",
         "buttons": [
             [
-                Button.inline("Pᴍ Tᴇxᴛ", data="pmtxt"),
-                Button.inline("Pᴍ Mᴇᴅɪᴀ", data="pmmed"),
+                Button.inline("PM Text", data="pmtxt"),
+                Button.inline("PM Media", data="pmmed"),
             ],
             [
-                Button.inline("Aᴜᴛᴏ Aᴘᴘʀᴏᴠᴇ", data="cbs_apauto"),
+                Button.inline("Auto Approve", data="cbs_apauto"),
                 Button.inline("PMLOGGER", data="pml"),
             ],
             [
-                Button.inline("Sᴇᴛ Wᴀʀɴs", data="swarn"),
-                Button.inline("Dᴇʟᴇᴛᴇ Pᴍ Mᴇᴅɪᴀ", data="delpmmed"),
+                Button.inline("Set Warns", data="swarn"),
+                Button.inline("Dᴇʟᴇᴛᴇ PM Media", data="delpmmed"),
             ],
             [Button.inline("PMPermit Type", data="cbs_pmtype")],
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_ppmset")],
+            [Button.inline("« Back", data="cbs_ppmset")],
         ],
     },
     "pmtype": {
@@ -124,42 +124,42 @@ _buttons = {
         "buttons": [
             [Button.inline("Inline", data="inpm_in")],
             [Button.inline("Normal", data="inpm_no")],
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_pmcstm")],
+            [Button.inline("« Back", data="cbs_pmcstm")],
         ],
     },
     "ppmset": {
         "text": "PMPermit Settings:",
         "buttons": [
-            [Button.inline("Tᴜʀɴ PMPᴇʀᴍɪᴛ Oɴ", data="pmon")],
-            [Button.inline("Tᴜʀɴ PMPᴇʀᴍɪᴛ Oғғ", data="pmoff")],
-            [Button.inline("Cᴜsᴛᴏᴍɪᴢᴇ PMPᴇʀᴍɪᴛ", data="cbs_pmcstm")],
-            [Button.inline("« Bᴀᴄᴋ", data="setter")],
+            [Button.inline("Turn PMPermit On", data="pmon")],
+            [Button.inline("Turn PMPermit Off", data="pmoff")],
+            [Button.inline("Customize PMPermit", data="cbs_pmcstm")],
+            [Button.inline("« Back", data="setter")],
         ],
     },
     "chatbot": {
         "text": "From This Feature U can chat with ppls Via ur Assistant Bot.\n[More info](https://t.me/UltroidUpdates/2)",
         "buttons": [
             [
-                Button.inline("Cʜᴀᴛ Bᴏᴛ  Oɴ", data="onchbot"),
-                Button.inline("Cʜᴀᴛ Bᴏᴛ  Oғғ", data="ofchbot"),
+                Button.inline("Chat Bot  Oɴ", data="onchbot"),
+                Button.inline("Chat Bot  Oғғ", data="ofchbot"),
             ],
             [
-                Button.inline("Bᴏᴛ Wᴇʟᴄᴏᴍᴇ", data="bwel"),
-                Button.inline("Bᴏᴛ Wᴇʟᴄᴏᴍᴇ Mᴇᴅɪᴀ", data="botmew"),
+                Button.inline("Bot Welcome", data="bwel"),
+                Button.inline("Bot Welcome Mᴇᴅɪᴀ", data="botmew"),
             ],
-            [Button.inline("Bᴏᴛ Iɴғᴏ Tᴇxᴛ", data="botinfe")],
-            [Button.inline("Fᴏʀᴄᴇ Sᴜʙsᴄʀɪʙᴇ", data="pmfs")],
-            [Button.inline("« Bᴀᴄᴋ", data="setter")],
+            [Button.inline("Bot Info Text", data="botinfe")],
+            [Button.inline("Force Subscribe", data="pmfs")],
+            [Button.inline("« Back", data="setter")],
         ],
     },
     "oofdm": {
         "text": "About [Dual Mode](https://t.me/UltroidUpdates/18)",
         "buttons": [
             [
-                Button.inline("Dᴜᴀʟ Mᴏᴅᴇ Oɴ", "dmof"),
-                Button.inline("Dᴜᴀʟ Mᴏᴅᴇ Oғғ", "dmof"),
+                Button.inline("Dual Mode Oɴ", "dmof"),
+                Button.inline("Dual Mode Oғғ", "dmof"),
             ],
-            [Button.inline("Dᴜᴀʟ Mᴏᴅᴇ Hɴᴅʟʀ", "dmhn")],
+            [Button.inline("Dual Mode Hɴᴅʟʀ", "dmhn")],
             [Button.inline("« Back", data="cbs_otvars")],
         ],
     },
@@ -257,7 +257,7 @@ async def send(eve):
             )
         ],
         [
-            Button.inline("« Bᴀᴄᴋ", data=data),
+            Button.inline("« Back", data=data),
         ],
     ]
     try:
@@ -397,7 +397,7 @@ async def _(e):
         "",
         buttons=[
             [Button.url("Lɪɴᴋ", link), Button.url("Rᴀᴡ", raw)],
-            [Button.inline("« Bᴀᴄᴋ", data=data)],
+            [Button.inline("« Back", data=data)],
         ],
     )
 
@@ -711,7 +711,7 @@ async def pmset(event):
         "ADDONS~ Extra Plugins:",
         buttons=[
             BT,
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_otvars")],
+            [Button.inline("« Back", data="cbs_otvars")],
         ],
     )
 
@@ -747,7 +747,7 @@ async def pmset(event):
         f"SUDO MODE ~ Some peoples can use ur Bot which u selected. To know More use `{HNDLR}help sudo`",
         buttons=[
             BT,
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_otvars")],
+            [Button.inline("« Back", data="cbs_otvars")],
         ],
     )
 
@@ -864,7 +864,7 @@ async def inl_on(event):
     await setit(event, var, "True")
     await event.edit(
         "Done!! PMPermit type has been set to inline!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_pmtype")]],
+        buttons=[[Button.inline("« Back", data="cbs_pmtype")]],
     )
 
 
@@ -874,7 +874,7 @@ async def inl_on(event):
     await setit(event, var, "False")
     await event.edit(
         "Done!! PMPermit type has been set to normal!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_pmtype")]],
+        buttons=[[Button.inline("« Back", data="cbs_pmtype")]],
     )
 
 
@@ -913,7 +913,7 @@ async def name(event):
     m = range(1, 10)
     tultd = [Button.inline(f"{x}", data=f"wrns_{x}") for x in m]
     lst = list(zip(tultd[::3], tultd[1::3], tultd[2::3]))
-    lst.append([Button.inline("« Bᴀᴄᴋ", data="cbs_pmcstm")])
+    lst.append([Button.inline("« Back", data="cbs_pmcstm")])
     await event.edit(
         "Select the number of warnings for a user before getting blocked in PMs.",
         buttons=lst,
@@ -1002,7 +1002,7 @@ async def apon(event):
     await setit(event, var, "True")
     await event.edit(
         "Done!! AUTOAPPROVE  Started!!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_apauto")]],
+        buttons=[[Button.inline("« Back", data="cbs_apauto")]],
     )
 
 
@@ -1012,7 +1012,7 @@ async def apof(event):
         udB.set_key("AUTOAPPROVE", "False")
         return await event.edit(
             "Done! AUTOAPPROVE Stopped!!",
-            buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_apauto")]],
+            buttons=[[Button.inline("« Back", data="cbs_apauto")]],
         )
     except BaseException as er:
         LOGS.exception(er)
@@ -1035,7 +1035,7 @@ async def l_vcs(event):
         buttons=[
             BT,
             [Button.inline("PᴍLᴏɢɢᴇʀ Gʀᴏᴜᴘ", "abs_pmlgg")],
-            [Button.inline("« Bᴀᴄᴋ", data="cbs_pmcstm")],
+            [Button.inline("« Back", data="cbs_pmcstm")],
         ],
     )
 
@@ -1045,7 +1045,7 @@ async def pmlog(event):
     await setit(event, "PMLOG", "True")
     await event.edit(
         "Done!! PMLOGGER  Started!!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="pml")]],
+        buttons=[[Button.inline("« Back", data="pml")]],
     )
 
 
@@ -1055,7 +1055,7 @@ async def pmlogof(event):
         udB.del_key("PMLOG")
         return await event.edit(
             "Done! PMLOGGER Stopped!!",
-            buttons=[[Button.inline("« Bᴀᴄᴋ", data="pml")]],
+            buttons=[[Button.inline("« Back", data="pml")]],
         )
     except BaseException as er:
         LOGS.exception(er)
@@ -1071,7 +1071,7 @@ async def pmonn(event):
     await setit(event, var, "True")
     await event.edit(
         "Done! PMPermit has been turned on!!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_ppmset")]],
+        buttons=[[Button.inline("« Back", data="cbs_ppmset")]],
     )
 
 
@@ -1081,7 +1081,7 @@ async def pmofff(event):
     await setit(event, var, "False")
     await event.edit(
         "Done! PMPermit has been turned off!!",
-        buttons=[[Button.inline("« Bᴀᴄᴋ", data="cbs_ppmset")]],
+        buttons=[[Button.inline("« Back", data="cbs_ppmset")]],
     )
 
 
@@ -1211,7 +1211,7 @@ async def chon(event):
             event.client.add_event_handler(i, events.NewMessage(**e))
     await event.edit(
         "Done! Now u Can Chat With People Via This Bot",
-        buttons=[Button.inline("« Bᴀᴄᴋ", data="cbs_chatbot")],
+        buttons=[Button.inline("« Back", data="cbs_chatbot")],
     )
 
 
@@ -1224,7 +1224,7 @@ async def chon(event):
             event.client.remove_event_handler(i)
     await event.edit(
         "Done! Chat People Via This Bot Stopped.",
-        buttons=[Button.inline("« Bᴀᴄᴋ", data="cbs_chatbot")],
+        buttons=[Button.inline("« Back", data="cbs_chatbot")],
     )
 
 
