@@ -18,7 +18,8 @@ from bs4 import BeautifulSoup as bs
 
 try:
     from pyUltroid.fns.gDrive import GDriveManager
-except ImportError:
+except ImportError as e:
+    LOGS.error(f"GDriveManager import failed: {e}")
     GDriveManager = None
 from telethon import Button, events
 from telethon.tl.types import MessageMediaWebPage
@@ -446,6 +447,8 @@ async def convo_handler(event: events.CallbackQuery):
 async def _(e):
     if not e.is_private:
         return
+    if not GDrive:
+        return await e.edit("`GDrive feature is not available. Please make sure you have installed all requirements:`\n`pip install -r requirements.txt`", buttons=get_back_button("cbs_otvars"))
     url = GDrive._create_token_file()
     if not url.startswith("http"):
         return await e.answer(url, alert=True)
