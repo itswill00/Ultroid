@@ -1,30 +1,31 @@
 # 📜 Ultroid Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to the Ultroid Stable series will be documented here.
 
 ---
 
 ## [3.2.0-STABLE] — 2026-04-21
 
-### 🚀 Major Update: The Stability Reborn
+### 🚀 Major Update: The Stability Release
 
-This release marks a significant milestone in making Ultroid the most transparent and reliable userbot available today.
+This version focuses on performance hardening, interactive security, and a refined user interface to ensure the most stable experience.
 
 ### 🏠 Branding & Identity
--   **Official Channel Migration**: Shifted all update logs and support references to the new home: [@ultroid_next](https://t.me/ultroid_next).
--   **Modernized Splash**: Updated the startup console interface to reflect the v3.2.0 release.
+-   **Official Channel Migration**: Moved official updates and release logs to the new home: [@ultroid_next](https://t.me/ultroid_next).
+-   **Startup Console**: Modernized the launch interface with the new branding and versioning.
 
-### 📚 Documentation (100% Coverage)
--   **The Bridge**: Successfully linked 100% of core plugins (86 modules) to the central documentation registry.
--   **Addon Clarity**: Standardized help headers for all 71 addon modules to ensure professional and actionable command help.
--   **No More Placeholders**: Eliminated all "No description available" messages from the help menu.
+### 🛡️ Security & Intelligence
+-   **Admin Surveillance Suite**: Fully optimized the **Group Intel** monitoring system.
+-   **Risk Scoring v2**: Hardened the logic for identifying suspicious accounts based on account age and profile metrics.
+-   **Global GBan Sync**: Improved connectivity with global spam detection databases.
 
-### 🛠️ Stability & Refinement
--   **Assistant Callback Fix**: Resolved a critical bug where plugins with underscores in their names (e.g., `bulk_delete`) caused the assistant's callback handler to crash.
--   **API Hardening**: Improved error handling for `ActivityGen` (Random Activity) and `Horoscope` modules to gracefully handle rate limits and non-JSON responses.
+### 🎨 Multimedia & Tools
+-   **Rich Media Engine**: Optimized core modules for audio streaming (VC) and dynamic media generation (Logos/Image tools).
+-   **Official Registry**: Standardized command documentation across all 150+ modules (Core & Addons).
 
-### 🧹 Maintenance
--   Cleaned up redundant documentation scripts and finalized the internal docstring registry.
+### 🛠️ Core Optimization
+-   **Assistant Reliability**: Improved callback handling to ensure consistent performance during interactive sessions.
+-   **API Hardening**: Enhanced stability for third-party integrations to prevent crashes during rate-limiting events.
 
 ---
 *Maintained with 💕 by itswill00.*

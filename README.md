@@ -16,31 +16,32 @@
 
 ### 🌟 Why choose Ultroid?
 
-Ultroid is not just another userbot; it's a productivity powerhouse. We focus on providing a seamless experience for both power users and beginners. With v3.2.0, we've achieved full documentation transparency and system-wide stability.
+Ultroid is a productivity powerhouse designed for those who demand excellence. We've stripped away the noise and focused on what matters: performance, security, and a rich feature set that works out of the box.
 
 | **System Stats** | **Metric** |
 | :--- | :--- |
-| **Core Plugins** | 86 (100% Documented) |
+| **Core Plugins** | 86 (Official Modules) |
 | **Addon Modules** | 71 (Extended Utility) |
-| **Documentation** | 100% Registry Coverage |
+| **User Experience** | Fluid & Minimalist |
 | **Engine** | Telethon (Asynchronous) |
 | **License** | AGPL-3.0 |
 
 ---
 
-### 📦 What's New in v3.2.0?
+### 🔥 Key Features
 
-*   **Documentation Bridge**: 100% of core plugins are now linked to a central help registry. No more "No description available."
-*   **Assistant Stability**: Rewritten callback handlers to support complex plugin names (including underscores).
-*   **API Robustness**: Hardened logic for third-party integrations like Horoscope and ActivityGen.
-*   **Official Branding**: Shifted official updates to [@ultroid_next](https://t.me/ultroid_next).
+*   🛡️ **Admin Surveillance Suite**: Keep your communities safe with advanced **Group Intel**. Real-time monitoring with a sophisticated **Risk Scoring** system to identify bad actors instantly.
+*   🎨 **Multipurpose Media Engine**: A complete tools suite for your chat. Create dynamic logos, manipulate images, and stream high-quality audio in Voice Calls.
+*   🔐 **Global Protection**: Integrated **GBan** checks and spam detection database to protect your account and your groups from known malicious entities.
+*   ⌨️ **Developer Toolkit**: Professional-grade dev tools including a built-in code evaluator, terminal shell, and deep database management.
+*   ⚡ **Optimized Deployment**: Scalable architecture optimized for a smooth experience on Termux, VPS, and Cloud environments.
 
 ---
 
 ### 🛠️ Quick Installation
 
 #### **Termux (Android)**
-If you're on the go, Termux is your best friend. Just run:
+Deploy Ultroid right from your phone:
 ```bash
 pkg update && pkg upgrade
 pkg install python git ffmpeg -y
@@ -50,16 +51,16 @@ bash install-termux
 ```
 
 #### **VPS / Local System**
-For a professional deployment on your own server:
+For server-grade performance:
 ```bash
-# Clone the repo
+# Clone and enter directory
 git clone https://github.com/itswill00/Ultroid.git && cd Ultroid
 
-# Set up environment
+# Virtual environment setup
 python3 -m venv venv && source venv/bin/activate
 pip install -U -r requirements.txt
 
-# Start your journey
+# Launch
 bash startup
 ```
 
@@ -67,12 +68,12 @@ bash startup
 
 ### 🤝 Credits & Support
 
-We stand on the shoulders of giants. A huge thanks to the original **TeamUltroid** for creating the foundation of this amazing project.
+Respect to the original **TeamUltroid** for providing the incredible foundation that made this project possible.
 
-*   [TeamUltroid](https://t.me/TeamUltroid) — Original Base.
-*   [Lonami Webs](https://github.com/LonamiWebs/) — For the Telethon library.
-*   [itswill00](https://github.com/itswill00) — Modern Maintenance & Enhanced Stability.
+*   [TeamUltroid](https://t.me/TeamUltroid) — Original Codebase.
+*   [Lonami Webs](https://github.com/LonamiWebs/) — For Telethon.
+*   [itswill00](https://github.com/itswill00) — Modern Maintenance & Performance Hardening.
 
 ---
 
-> **Note:** Ultroid is a free and open-source project. If you find value in it, consider sharing it with others. Stay safe!
+> **Support & Updates:** Join [@ultroid_next](https://t.me/ultroid_next) for the latest release notes and official announcements.
