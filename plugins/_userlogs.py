@@ -56,7 +56,7 @@ async def all_messages_catcher(e):
         return
     buttons = await parse_buttons(e)
     try:
-        sent = await asst.send_message(NEEDTOLOG, e.message, buttons=buttons)
+        sent = await asst.send_message(NEEDTOLOG, e.text, file=e.media, buttons=buttons)
         if TAG_EDITS.get(e.chat_id):
             TAG_EDITS[e.chat_id].update({e.id: {"id": sent.id, "msg": e}})
         else:
@@ -66,7 +66,7 @@ async def all_messages_catcher(e):
         LOGS.debug(f"handling {er}.")
         try:
             msg = await asst.get_messages(e.chat_id, ids=e.id)
-            sent = await asst.send_message(NEEDTOLOG, msg, buttons=buttons)
+            sent = await asst.send_message(NEEDTOLOG, msg.text, file=msg.media, buttons=buttons)
             if TAG_EDITS.get(e.chat_id):
                 TAG_EDITS[e.chat_id].update({e.id: {"id": sent.id, "msg": e}})
             else:
@@ -79,7 +79,7 @@ async def all_messages_catcher(e):
                 try:
                     media = await e.download_media()
                     sent = await asst.send_message(
-                        NEEDTOLOG, e.message.text, file=media, buttons=buttons
+                        NEEDTOLOG, e.text, file=media, buttons=buttons
                     )
                     if TAG_EDITS.get(e.chat_id):
                         TAG_EDITS[e.chat_id].update({e.id: {"id": sent.id, "msg": e}})
@@ -276,24 +276,30 @@ async def parse_buttons(event):
     y, x = event.chat, event.sender
     where_n, who_n = get_display_name(y), get_display_name(x)
     where_l = event.message_link
-    buttons = [[Button.url(where_n, where_l)]]
-    if isinstance(x, User) and x.username:
-        try:
-            buttons.append(
-                [Button.mention(who_n, await asst.get_input_entity(x.username))]
-            )
-        except Exception as er:
-            LOGS.exception(er)
-            buttons.append([Button.url(who_n, f"t.me/{x.username}")])
-    elif getattr(x, "username"):
-        buttons.append([Button.url(who_n, f"t.me/{x.username}")])
+    buttons = []
+    if where_l:
+        buttons.append([Button.url(where_n, where_l)])
     else:
+        buttons.append([Button.inline(where_n, data="do_nothing")])
+
+    if isinstance(x, User):
+        if x.username:
+            buttons.append([Button.url(who_n, f"https://t.me/{x.username}")])
+        else:
+            buttons.append([Button.url(who_n, f"tg://user?id={x.id}")])
+    elif getattr(x, "username", None):
+        buttons.append([Button.url(who_n, f"https://t.me/{x.username}")])
+    elif where_l:
         buttons.append([Button.url(who_n, where_l)])
+    else:
+        buttons.append([Button.inline(who_n, data="do_nothing")])
+
     replied = await event.get_reply_message()
     if replied and replied.out:
-        button = Button.url("Replied to", replied.message_link)
-        if len(who_n) > 7:
-            buttons.append([button])
-        else:
-            buttons[-1].append(button)
+        if r_link := replied.message_link:
+            button = Button.url("Replied to", r_link)
+            if len(who_n) > 7:
+                buttons.append([button])
+            else:
+                buttons[-1].append(button)
     return buttons
