@@ -2,7 +2,7 @@
 # Powered by Groq LPU™ Inference Engine
 
 from . import get_help
-__doc__ = get_help("help_ai")
+__doc__ = get_help("ai")
 
 
 from pyUltroid.fns.tools import encode_image_base64

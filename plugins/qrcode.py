@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_qrcode")
+__doc__ = get_help("qrcode")
 
 • `{i}qrcode <text/reply to text>`
    `Makes qrcode of text`

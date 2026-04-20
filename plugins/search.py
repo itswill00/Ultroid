@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_search")
+__doc__ = get_help("search")
 
 • `{i}saavn <search query>`
     Download songs from Saavn.

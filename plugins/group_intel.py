@@ -1,6 +1,6 @@
 
 from . import get_help
-__doc__ = get_help("help_group_intel")
+__doc__ = get_help("group_intel")
 
 """
 Group Intel — Admin Surveillance Plugin

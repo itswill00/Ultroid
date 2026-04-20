@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_reminder")
+__doc__ = get_help("reminder")
 
 • `{i}remind <time> <message>`
     Set a reminder. Time formats: 30s, 10m, 2h, 1d

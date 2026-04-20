@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_utilities")
+__doc__ = get_help("utilities")
 
 • `{i}kickme` : Leaves the group.
 

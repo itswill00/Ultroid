@@ -7,7 +7,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_webupload")
+__doc__ = get_help("webupload")
 
 """
 ✘ Commands Available -

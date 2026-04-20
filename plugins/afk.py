@@ -7,7 +7,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_afk")
+__doc__ = get_help("afk")
 
 
 import asyncio

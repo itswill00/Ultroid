@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_variables")
+__doc__ = get_help("variables")
 
 • `{i}get var <variable name>`
    Get value of the given variable name.

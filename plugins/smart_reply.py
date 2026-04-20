@@ -2,7 +2,7 @@
 # Powered by centralized AI Core Engine
 
 from . import get_help
-__doc__ = get_help("help_smart_reply")
+__doc__ = get_help("smart_reply")
 
 """
 » Commands Available -

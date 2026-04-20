@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_warn")
+__doc__ = get_help("warn")
 
 •`{i}warn <reply to user> <reason>`
     Gives Warn.

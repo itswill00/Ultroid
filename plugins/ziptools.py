@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_ziptools")
+__doc__ = get_help("ziptools")
 
 • `{i}zip <reply to file>`
     zip the replied file

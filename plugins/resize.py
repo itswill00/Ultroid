@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_resize")
+__doc__ = get_help("resize")
 
 •`{i}size <reply to media>`
    To get size of it.

@@ -8,7 +8,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_core")
+__doc__ = get_help("core")
 
 
 import os

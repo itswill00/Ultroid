@@ -8,7 +8,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_database")
+__doc__ = get_help("database")
 
 
 import re

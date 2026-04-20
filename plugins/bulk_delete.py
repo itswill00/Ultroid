@@ -6,7 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
-__doc__ = get_help("help_bulk_delete")
+__doc__ = get_help("bulk_delete")
 
 """
 » Commands Available -

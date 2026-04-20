@@ -1,5 +1,5 @@
 from . import get_help
-__doc__ = get_help("help_animation")
+__doc__ = get_help("animation")
 import asyncio
 from pyUltroid.base import ultroid_cmd
 
@@ -52,4 +52,4 @@ async def fbi(e):
 async def fp(e):
     await e.eor("\ud83e\udd26\u200d\u2642")
 
-__doc__ = get_help("help_animation")
+__doc__ = get_help("animation")

@@ -29,7 +29,7 @@ from pyUltroid.fns.helper import fast_download
 
 from . import LOGS, get_help, get_string, udB, ultroid_bot, ultroid_cmd
 
-__doc__ = get_help("help_autopic")
+__doc__ = get_help("autopic")
 
 
 async def get_google_images(query: str):

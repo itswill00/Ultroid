@@ -6,7 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 from . import get_help
 
-__doc__ = get_help("help_chats")
+__doc__ = get_help("chats")
 
 
 from telethon.errors import ChatAdminRequiredError as no_admin

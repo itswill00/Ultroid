@@ -7,7 +7,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_weather")
+__doc__ = get_help("weather")
 
 """
 **Get Weather Data using OpenWeatherMap API**

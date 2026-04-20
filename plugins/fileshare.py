@@ -7,7 +7,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_fileshare")
+__doc__ = get_help("fileshare")
 
 import os
 

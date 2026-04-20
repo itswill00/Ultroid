@@ -7,7 +7,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_cleanaction")
+__doc__ = get_help("cleanaction")
 
 
 from telethon.utils import get_display_name

@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_youtube")
+__doc__ = get_help("youtube")
 
 • `{i}yta <(youtube/any) link>`
    Download audio from the link.

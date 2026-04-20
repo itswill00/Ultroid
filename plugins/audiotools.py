@@ -36,7 +36,7 @@ from . import (
     ultroid_cmd,
 )
 
-__doc__ = get_help("help_audiotools")
+__doc__ = get_help("audiotools")
 
 
 @ultroid_cmd(pattern="makevoice$")

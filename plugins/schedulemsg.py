@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_schedulemsg")
+__doc__ = get_help("schedulemsg")
 
 •`{i}schedule <text/reply to msg> <time>`
     In time u can use second as number, or like 1h or 1m

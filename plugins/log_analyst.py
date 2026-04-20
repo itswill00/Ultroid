@@ -1,6 +1,6 @@
 
 from . import get_help
-__doc__ = get_help("help_log_analyst")
+__doc__ = get_help("log_analyst")
 
 """
 AOSP Log Analyst — AI Powered Diagnostic Tool

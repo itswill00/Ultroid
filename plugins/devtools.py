@@ -7,7 +7,7 @@
 
 from . import get_help
 
-__doc__ = get_help("help_devtools")
+__doc__ = get_help("devtools")
 
 import inspect
 import sys

@@ -6,7 +6,7 @@
 # <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
-__doc__ = get_help("help_echo")
+__doc__ = get_help("echo")
 
 
 """

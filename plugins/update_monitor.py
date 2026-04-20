@@ -9,7 +9,7 @@
 
 
 from . import get_help
-__doc__ = get_help("help_update_monitor")
+__doc__ = get_help("update_monitor")
 
 • `{i}upmonitor`
     Check the status of the automated update monitor.
