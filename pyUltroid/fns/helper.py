@@ -21,9 +21,10 @@ if run_as_module:
 
 
 try:
-    from aiohttp import ClientSession as aiohttp_client
+    from aiohttp import ClientSession as aiohttp_client, ContentTypeError
 except ImportError:
     aiohttp_client = None
+    ContentTypeError = Exception
     try:
         import requests
     except ImportError:
@@ -359,16 +360,24 @@ async def async_searcher(
     if aiohttp_client:
         async with aiohttp_client(headers=headers) as client:
             method = client.head if head else (client.post if post else client.get)
-            data = await method(url, *args, **kwargs)
-            if evaluate:
-                return await evaluate(data)
-            if re_json:
-                return await data.json()
-            if re_content:
-                return await data.read()
-            if head or object:
-                return data
-            return await data.text()
+            try:
+                data = await method(url, *args, **kwargs)
+                if evaluate:
+                    return await evaluate(data)
+                if re_json:
+                    try:
+                        return await data.json()
+                    except ContentTypeError:
+                        return {}
+                if re_content:
+                    return await data.read()
+                if head or object:
+                    return data
+                return await data.text()
+            except Exception as er:
+                if "LOGS" in globals() or "LOGS" in locals():
+                    LOGS.error(f"API Error in async_searcher: {er} | URL: {url}")
+                return {} if re_json else (None if re_content else "")
     # elif requests:
     #     method = requests.head if head else (requests.post if post else requests.get)
     #     data = method(url, headers=headers, *args, **kwargs)

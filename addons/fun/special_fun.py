@@ -117,6 +117,8 @@ async def hbd(event):
         post=True,
         re_json=True,
     )
+    if not json:
+        return await event.eor("`API Error: Failed to fetch horoscope data. Please try again later.`")
     dd = json.get("current_date")
     ds = json.get("description")
     lt = json.get("lucky_time")

@@ -21,6 +21,8 @@ async def bored_cmd(event):
     content = await async_searcher(
         "https://bored-api.appbrewery.com/random", re_json=True
     )
+    if not content:
+        return await msg.edit("`API Error: Failed to fetch an activity. Please try again later.`")
     m = f"**Activity:** `{content['activity']}`"
     if content.get("link"):
         m += f"\n**Read More:** {content['link']}"
