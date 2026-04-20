@@ -58,8 +58,15 @@ class GDriveManager:
         return f"https://drive.google.com/folderview?id={folderId}"
 
     def _get_client_config(self):
-        client_id = udB.get_key("GDRIVE_CLIENT_ID") or "458306970678-jhfbv6o5sf1ar63o1ohp4c0grblp8qba.apps.googleusercontent.com"
-        client_secret = udB.get_key("GDRIVE_CLIENT_SECRET") or "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"
+        c_id = udB.get_key("GDRIVE_CLIENT_ID")
+        c_secret = udB.get_key("GDRIVE_CLIENT_SECRET")
+        if c_id and c_secret:
+            client_id = str(c_id).strip().strip('"').strip("'")
+            client_secret = str(c_secret).strip().strip('"').strip("'")
+        else:
+            client_id = "458306970678-jhfbv6o5sf1ar63o1ohp4c0grblp8qba.apps.googleusercontent.com"
+            client_secret = "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"
+
         return {
             "installed": {
                 "client_id": client_id,
