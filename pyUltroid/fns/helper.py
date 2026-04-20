@@ -636,10 +636,17 @@ async def catbox_upload(path: str):
                         data = aiohttp.FormData()
                         data.add_field("file", f, filename=os.path.basename(path))
                         async with session.post("https://graph.org/upload", data=data) as resp:
-                            res = await resp.json()
-                            if isinstance(res, list) and res[0].get("src"):
+                            try:
+                                res = await resp.json()
+                            except Exception:
+                                res = await resp.text()
+
+                            if isinstance(res, list) and len(res) > 0 and isinstance(res[0], dict) and res[0].get("src"):
                                 return "https://graph.org" + res[0]["src"]
-                            error_info = res.get("error", await resp.text())
+                            elif isinstance(res, dict) and res.get("error"):
+                                error_info = res["error"]
+                            else:
+                                error_info = str(res)
             except Exception as fe:
                 error_info = str(fe)
             raise Exception(f"Upload completely failed. Catbox: {e}, Fallback error: {error_info}") from e
