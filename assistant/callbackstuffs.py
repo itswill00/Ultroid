@@ -16,21 +16,13 @@ from random import choice
 
 from bs4 import BeautifulSoup as bs
 
+from . import *
+
 try:
     from pyUltroid.fns.gDrive import GDriveManager
 except ImportError as e:
     LOGS.error(f"GDriveManager import failed: {e}")
     GDriveManager = None
-from telethon import Button, events
-from telethon.tl.types import MessageMediaWebPage
-from telethon.utils import get_peer_id
-
-from pyUltroid.dB.verify_db import add_captcha_verified, add_verified
-from pyUltroid.fns.helper import catbox_upload, fast_download, progress
-from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
-from pyUltroid.startup.loader import Loader
-
-from . import *
 
 # --------------------------------------------------------------------#
 telegraph = telegraph_client()
