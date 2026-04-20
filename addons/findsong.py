@@ -19,7 +19,7 @@ async def _(event):
         return await event.eor("Reply to an audio message.")
     reply_message = await event.get_reply_message()
     chat = "@auddbot"
-    snku = await event.eor("Identifying the song")
+    snku = await event.eor("Searching for the song...")
     async with event.client.conversation(chat) as conv:
         try:
             await conv.send_message("/start")

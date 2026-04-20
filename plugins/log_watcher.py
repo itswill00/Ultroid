@@ -126,7 +126,7 @@ async def log_watch(e):
 
         _watch_task = asyncio.get_event_loop().create_task(_watcher())
         await e.eor(
-            f"`Logwatch | Active — scanning for errors every {_WATCH_INTERVAL}s.`"
+            f"`Logwatch | Active — checking for errors every {_WATCH_INTERVAL}s.`"
         )
 
     elif action == "stop":

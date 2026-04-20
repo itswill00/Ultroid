@@ -64,7 +64,7 @@ async def assistant_ask_ai(event):
         # Interface with Groq/OpenAI if configured
         api_key = udB.get_key("GROQ_API_KEY")
         if not api_key:
-            return await x.edit("`[ERROR] AI not configured.`")
+            return await x.edit("`Error: AI not configured.`")
         
         from groq import Groq
         client = Groq(api_key=api_key)

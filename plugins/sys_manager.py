@@ -51,7 +51,7 @@ async def auto_cleaner():
             if ram_usage > 85:
                 is_emergency = True
                 min_age_seconds = 300  # Aggressive: 5 minutes if RAM is high
-                LOGS.warning(f"Adaptive Resource Manager: High RAM ({ram_usage:.1f}%). Triggering aggressive cleanup.")
+                LOGS.warning(f"Adaptive Resource Manager: High RAM ({ram_usage:.1f}%). Triggering cleanup completed.")
 
             now = time.time()
             cleared_size = 0
@@ -81,7 +81,7 @@ async def auto_cleaner():
                             log_ch,
                             f"⚠️ **High Memory Alert**\n"
                             f"RAM usage critically high: `{ram_usage:.1f}%`.\n"
-                            f"System performed an aggressive cleanup, freeing `{humanbytes(cleared_size)}`."
+                            f"System performed an cleanup completed, freeing `{humanbytes(cleared_size)}`."
                         )
                 except Exception:
                     pass
@@ -111,7 +111,7 @@ async def manual_cleanup(e):
                     cleaned += size
                 except Exception:
                     continue
-    await ok.edit(f"✅ **Cleanup Success!**\n**Space Freed:** `{humanbytes(cleaned)}`")
+    await ok.edit(f"Cleanup completed.\n**Space Freed:** `{humanbytes(cleaned)}`")
 
 @ultroid_cmd(pattern="sysstats$", fullsudo=True)
 async def system_stats(e):

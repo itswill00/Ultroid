@@ -85,7 +85,7 @@ async def tldr(e):
     if not collected:
         return await xx.edit("`[AI] No text messages found to summarize.`")
 
-    await xx.edit("`[AI] Analyzing conversation...`")
+    await xx.edit("`Thinking...`")
     conversation = "\n".join(reversed(collected))[:4000]
     prompt = (
         "The following is a conversation from a Telegram group. "
@@ -141,7 +141,7 @@ async def web_search_cmd(e):
 
 @ultroid_cmd(pattern="debug$", fullsudo=True)
 async def ai_debug(e):
-    xx = await e.eor("`[AI] Analyzing system logs...`")
+    xx = await e.eor("`Checking logs...`")
     log_file = "ultroid.log"
     if not os.path.exists(log_file):
         return await xx.edit("`Debug | log file (ultroid.log) not found.`")

@@ -184,7 +184,7 @@ async def dler_process(event, url, fmt):
 
         total_size = sum(os.path.getsize(f) for f in valid_files)
         if total_size > 2 * 1024 * 1024 * 1024:
-            return await status_msg.edit(f"`[DL ERROR] File too large ({humanbytes(total_size)}).`")
+            return await status_msg.edit(f"`Download error: File too large ({humanbytes(total_size)}).`")
         
         # Hybrid Payload Router
         source = (
@@ -266,7 +266,7 @@ async def dler_process(event, url, fmt):
         already_uploaded = False
         if total_size > 10 * 1024 * 1024 and isinstance(file_to_send, str):
             await status_msg.edit(
-                f"`[🚀 Turbo-Upload] {humanbytes(total_size)} — Opening parallel MTProto senders...`"
+                f"`[🚀 Upload] {humanbytes(total_size)} — Uploading...`"
             )
             with open(file_to_send, 'rb') as f:
                 file_to_send = await uploadable(
@@ -277,7 +277,7 @@ async def dler_process(event, url, fmt):
             await status_msg.edit("`[📤] Upload complete. Committing to chat...`")
         elif total_size > 50 * 1024 * 1024:
             return await status_msg.edit(
-                f"`[Error] Cannot send large media directly. Use Turbo-Upload path (>10MB trigger failed).`"
+                f"`[Error] Cannot send large media directly. Use Upload path (>10MB trigger failed).`"
             )
 
         await sender_client.send_file(
@@ -300,7 +300,7 @@ async def dler_process(event, url, fmt):
             await status_msg.edit("`[DL] Task aborted by user.`")
         else:
             LOGS.error(f"Downloader Error: {e}")
-            await status_msg.edit(f"`[DL ERROR] {str(e)[:100]}`")
+            await status_msg.edit(f"`Download error: {str(e)[:100]}`")
     finally:
         _ult_cache["cancel_jobs"].discard(job_id)
         _ult_cache["job_owners"].pop(job_id, None)

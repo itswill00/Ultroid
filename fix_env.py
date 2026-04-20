@@ -29,7 +29,7 @@ def mask(val: str, key: str) -> str:
 
 def fix_and_validate(path: str):
     if not os.path.exists(path):
-        print(f"[ERROR] File tidak ditemukan: {path}")
+        print(f"Error: File tidak ditemukan: {path}")
         sys.exit(1)
 
     with open(path, "rb") as f:

@@ -77,7 +77,7 @@ async def _(e):
         file_name = (file.name).split("/")[-1]
         out = file_name.replace(file_name.split(".")[-1], "compressed.mkv")
         await xxx.edit(
-            f"`Downloaded {file.name} of {humanbytes(o_size)} in {diff}.\nNow Compressing...`"
+            f"`Downloaded {file.name} of {humanbytes(o_size)} in {diff}.\nCompressing...`"
         )
         x, y = await bash(
             f'mediainfo --fullscan """{file.name}""" | grep "Frame count"'

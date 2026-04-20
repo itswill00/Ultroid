@@ -322,7 +322,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
     except Exception as e:
         LOGS.exception(e)
         from traceback import format_exc
-        err_msg = f"`[AI ERROR] {str(e)}`"
+        err_msg = f"`AI error: {str(e)}`"
         if is_admin:
              err_msg += f"\n\n**Traceback:**\n`{format_exc()[:500]}`"
         try:

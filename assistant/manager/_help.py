@@ -8,7 +8,7 @@
 from . import *
 
 START = """
-✨ **Ultroid Assistant Help Menu** ✨
+Help Menu
 
 I am your powerful assistant bot, working alongside your UserBot to provide seamless management and utility features.
 

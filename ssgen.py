@@ -58,7 +58,7 @@ def telethon_session():
         import telethon
         x = "\bFound an existing installation of Telethon...\nSuccessfully Imported.\n\n"
     except ImportError:
-        print("\n[ERROR] Telethon tidak terinstall!")
+        print("\nError: Telethon tidak terinstall!")
         print("Jalankan perintah ini lalu coba lagi:")
         print("  pip install telethon")
         print("Atau jika menggunakan venv:")
@@ -120,7 +120,7 @@ def pyro_session():
         from pyrogram import Client
         x = "\bFound an existing installation of Pyrogram...\nSuccessfully Imported.\n\n"
     except ImportError:
-        print("\n[ERROR] Pyrogram tidak terinstall!")
+        print("\nError: Pyrogram tidak terinstall!")
         print("Jalankan perintah ini lalu coba lagi:")
         print("  pip install pyrogram tgcrypto")
         exit(1)

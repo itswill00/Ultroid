@@ -82,7 +82,7 @@ async def _(event):
         text += f"「 Duration: {duration} 」\n"
         text += f"「 Views: {views} 」\n"
         text += f"「 Publisher: {publisher} 」\n"
-        text += f"「 Published on: {published_on} 」`"
+        text += f"「 Published on: {published_on}`"
         desc = f"{title}\n{duration}"
         file = wb(thumb, 0, "image/jpeg", [])
         buttons = [
@@ -276,7 +276,7 @@ async def _(event):
     text += f"「 Artist: {artist} 」\n"
     text += f"「 Views: {views} 」\n"
     text += f"「 Likes: {likes} 」\n"
-    text += f"「 Size: {humanbytes(size)} 」`"
+    text += f"`Size: {humanbytes(size)}`"
     button = Button.switch_inline("Search More", query="yt ", same_peer=True)
     try:
         await event.edit(
