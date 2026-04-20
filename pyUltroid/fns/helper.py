@@ -629,9 +629,10 @@ async def catbox_upload(path: str):
             from .. import LOGS
             # Fallback to graph.org (Telegra.ph) - more reliable for images
             LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to graph.org...")
-            safe_path = shlex.quote(path)
+            # Quote the entire argument to handle special characters correctly
+            file_arg = shlex.quote(f"file=@{path}")
             # Telegra.ph/graph.org upload API
-            out, err = await bash(f"curl -s -F 'file=@{safe_path}' https://graph.org/upload")
+            out, err = await bash(f"curl -s -F {file_arg} https://graph.org/upload")
             try:
                 import json
                 res = json.loads(out)
