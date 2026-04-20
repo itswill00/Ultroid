@@ -73,7 +73,7 @@ NOSPAM_CHAT = [
 ]
 
 KANGING_STR = [
-    "Copying sticker to your pack...",
+    "Processing sticker...",
 ]
 
 
