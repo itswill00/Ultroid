@@ -163,7 +163,7 @@ async def get_chat_info(chat, event):
         caption += f'📹 <b>{chat_type} stickers:</b> <a href="t.me/addstickers/{full.stickerset.short_name}">{group_stickers}</a>\n'
     if not broadcast:
         if getattr(chat, "slowmode_enabled", None):
-            caption += f"👉 <b>Slow mode:</b> <code>True</code>"
+            caption += "👉 <b>Slow mode:</b> <code>True</code>"
             caption += f", 🕐 <code>{full.slowmode_seconds}s</code>\n"
         else:
             caption += f"🦸‍♂ <b>Supergroup:</b> {supergroup}\n"
@@ -176,7 +176,7 @@ async def get_chat_info(chat, event):
     if getattr(chat, "scam", None):
         caption += "⚠ <b>Scam:</b> <b>Yes</b>\n"
     if getattr(chat, "verified", None):
-        caption += f"✅ <b>Verified by Telegram:</b> <code>Yes</code>\n\n"
+        caption += "✅ <b>Verified by Telegram:</b> <code>Yes</code>\n\n"
     if full.about:
         caption += f"🗒 <b>Description:</b> \n<code>{full.about}</code>\n"
     return chat_photo, caption

@@ -123,7 +123,7 @@ def pyro_session():
         os.system("pip install pyrogram tgcrypto")
         x = "\bDone. Installed and imported Pyrogram."
         from pyrogram import Client
-        
+
     clear_screen()
     print(ULTROID)
     print(x)

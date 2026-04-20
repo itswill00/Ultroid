@@ -23,14 +23,13 @@ from pyUltroid.fns.tools import make_html_telegraph
 
 from . import (
     LOGS,
-    Telegraph,
     bash,
     downloader,
     get_string,
-    upload_file,
     is_url_ok,
     mediainfo,
     ultroid_cmd,
+    upload_file,
 )
 
 try:

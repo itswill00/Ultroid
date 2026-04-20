@@ -205,17 +205,20 @@ heroku_api = Var.HEROKU_API
 async def restartbt(ult):
     ok = await ult.eor("`Rebooting process... Please wait.`")
     call_back()
-    who = "bot" if ult.client._bot else "user"
-    udB.set_key("_RESTART", f"{who}_{ult.chat_id}_{ok.id}")
-    
+
+    # Standardize on JSON for reliability
+    import json
+    data = {"chat_id": ult.chat_id, "msg_id": ok.id}
+    udB.set_key("_RESTART", json.dumps(data))
+
     if heroku_api:
         return await restart(ok)
-    
+
     # Simple process replacement for speed and stability
     args = [sys.executable, "-m", "pyUltroid"]
     if len(sys.argv) > 1:
         args = [sys.executable, "main.py"]
-        
+
     os.execl(sys.executable, *args)
 
 

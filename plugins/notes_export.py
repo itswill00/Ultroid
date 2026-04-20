@@ -20,7 +20,7 @@
 import os
 from datetime import datetime
 
-from . import udB, ultroid_cmd, LOGS
+from . import LOGS, ultroid_cmd
 
 help_exportnotes = __doc__
 

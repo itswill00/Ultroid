@@ -9,14 +9,12 @@ import asyncio
 import math
 import os
 import re
-import shlex
 import sys
 import time
 from traceback import format_exc
 from urllib.parse import unquote
-from urllib.request import urlretrieve
 
-from .. import run_as_module, ULTConfig
+from .. import ULTConfig, run_as_module
 
 if run_as_module:
     from ..configs import Var
@@ -43,7 +41,6 @@ except ImportError:
     Repo = None
 
 
-import asyncio
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial, wraps
@@ -63,7 +60,6 @@ if run_as_module:
 from ..version import ultroid_version
 from .FastTelethon import download_file as downloadable
 from .FastTelethon import upload_file as uploadable
-
 
 _shared_executor = ThreadPoolExecutor(
     max_workers=max(multiprocessing.cpu_count() * 5, 4)
@@ -476,14 +472,14 @@ def time_formatter(milliseconds):
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
     weeks, days = divmod(days, 7)
-    
+
     parts = []
     if weeks: parts.append(f"{weeks}w")
     if days: parts.append(f"{days}d")
     if hours: parts.append(f"{hours}h")
     if minutes: parts.append(f"{minutes}m")
     if seconds: parts.append(f"{seconds}s")
-    
+
     return ":".join(parts) if parts else "0s"
 
 
@@ -658,8 +654,10 @@ async def catbox_upload(path: str):
                 return str(e)
 
     try:
-        import aiohttp
         import json
+
+        import aiohttp
+
         from .. import LOGS
         async with aiohttp.ClientSession() as session:
             # 1. Uguu.se (Very reliable for blocked IPs)
@@ -670,12 +668,12 @@ async def catbox_upload(path: str):
             LOGS.warning(f"Uguu failed ({res_u}). Trying Catbox...")
             res = await upload_to_service("https://catbox.moe/user/api.php", session, "fileToUpload", path)
             if res.startswith("https://"): return res
-            
+
             # 3. Telegra.ph
             LOGS.warning(f"Catbox failed ({res}). Trying Telegra.ph...")
             res2 = await upload_to_service("https://telegra.ph/upload", session, "file", path)
             if res2.startswith("https://"): return res2
-            
+
             raise Exception(f"All services failed. Uguu: {res_u}, Catbox: {res}, Telegra: {res2}")
     except Exception as e:
         raise Exception(f"Upload process failed: {str(e)}") from e
@@ -724,7 +722,7 @@ async def aexec(code, event):
         '__builtins__': __builtins__,
     }
 
-    wrapped_code = f"async def __aexec(e, client):\n" + "".join(f"    {line}\n" for line in code.split("\n"))
+    wrapped_code = "async def __aexec(e, client):\n" + "".join(f"    {line}\n" for line in code.split("\n"))
 
     try:
         exec(wrapped_code, exec_globals)

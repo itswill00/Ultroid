@@ -124,7 +124,7 @@ def pyro_session():
         print("Jalankan perintah ini lalu coba lagi:")
         print("  pip install pyrogram tgcrypto")
         exit(1)
-        
+
     clear_screen()
     print(ULTROID)
     print(x)

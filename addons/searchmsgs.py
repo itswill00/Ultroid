@@ -16,7 +16,8 @@
    •  `{i}search -r Heroku : 10`
 """
 
-from . import ultroid_cmd, eod
+from . import eod, ultroid_cmd
+
 
 @ultroid_cmd(pattern="search( -r|) ?(.*)")
 async def searcher(e):

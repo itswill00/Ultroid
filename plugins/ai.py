@@ -1,11 +1,9 @@
 # Ultroid - Unified AI Plugin (Text + Vision)
 # Powered by Groq LPU™ Inference Engine
 
-import os
-from . import udB, ultroid_cmd, LOGS, HNDLR, eor
-from pyUltroid._misc import owner_and_sudos
-from pyUltroid.fns.helper import async_searcher
 from pyUltroid.fns.tools import encode_image_base64
+
+from . import LOGS, udB, ultroid_cmd
 
 GROQ_API_KEY = udB.get_key("GROQ_API_KEY")
 
@@ -22,12 +20,11 @@ DEFAULT_SYSTEM_PROMPT = (
 @ultroid_cmd(pattern="(ai|chat)( (.*)|$)")
 async def unified_ai(e):
     from pyUltroid.fns.ai_engine import run_ai_task
-    from pyUltroid.fns.tools import encode_image_base64
-    
+
     query = e.pattern_match.group(2).strip()
     image_b64 = None
     reply = await e.get_reply_message()
-    
+
     # Vision logic (Keep in plugin for media handling, but pass to engine)
     if reply and (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
         dl = await reply.download_media()
@@ -41,7 +38,7 @@ async def unified_ai(e):
 
     if not query and reply and reply.text:
         query = reply.text
-    
+
     # Process via Unified Engine
     await run_ai_task(e, query, image_b64=image_b64)
 

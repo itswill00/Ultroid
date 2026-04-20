@@ -10,7 +10,7 @@ from datetime import datetime
 from os import path, system
 from time import sleep
 
-from colorama import Back, Fore, Style
+from colorama import Fore
 
 
 # clear screen
@@ -48,9 +48,9 @@ COPYRIGHT = f"©️ TeamUltroid {datetime.now().year}"
 HEADER = f"""{Fore.CYAN}
    __  ____  __                _     __
   / / / / /_/ /__________  identity_/ /
- / / / / / __/ ___/ __ \ \/ / __  / __/
+ / / / / / __/ ___/ __ \\ \\/ / __  / __/
 / /_/ / / /_/ /  / /_/ />  < /_/ / /_  
-\____/_/\__/_/   \____/_/\_\____/\__/  
+\\____/_/\\__/_/   \\____/_/\\_\\____/\\__/  
 \n{Fore.RESET}
 """
 

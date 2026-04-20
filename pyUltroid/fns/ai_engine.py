@@ -1,14 +1,16 @@
 # Ultroid AI Core Engine
 # Centralized logic for Banking, Persona, and Groq Interaction
 
+import asyncio
+import html
 import os
 import re
 import time
-import html
-import asyncio
 from io import BytesIO
+
 from pyUltroid.dB.base import KeyManager
-from .. import udB, LOGS
+
+from .. import LOGS, udB
 
 # Database Managers
 Bank = KeyManager("ULTROID_AI_TOKENS", cast=dict)
@@ -95,12 +97,12 @@ async def _call_gemini(messages, model=None):
     keys = _get_api_keys("GEMINI_API_KEY")
     if not keys:
         return None, "No Gemini API Keys."
-    
+
     # Use the first key for now (rotation can be added if needed)
     key = keys[0]
     model = model or "gemini-1.5-flash"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    
+
     # Adapt messages for Gemini structure
     gemini_contents = []
     system_instruction = ""
@@ -140,22 +142,22 @@ async def _call_groq(messages, model=None, vision_model=None):
     """Internal helper to call Groq API with Multi-Key Rotation."""
     import aiohttp
     keys = _get_api_keys("GROQ_API_KEY")
-    
+
     if not keys:
         return None, "Groq API Key Missing."
-    
+
     # Priority: model > vision_model (legacy) > udB > default
     if not model:
         model = vision_model or udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
 
     url = "https://api.groq.com/openai/v1/chat/completions"
-    
+
     # Try every key in the pool
     last_err = "No Result."
     for api_key in keys:
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {"model": model, "messages": messages, "temperature": 0.2}
-        
+
         for attempt in range(max_retries := 2):
             try:
                 async with aiohttp.ClientSession() as session:
@@ -171,13 +173,13 @@ async def _call_groq(messages, model=None, vision_model=None):
                         if resp.status != 200:
                             last_err = await resp.text()
                             break # Move to next key
-                        
+
                         data = await resp.json()
                         return data['choices'][0]['message']['content'], data.get('usage', {}).get('total_tokens', 0)
             except Exception as e:
                 last_err = str(e)
                 break
-    
+
     # ----------------------------------------------------------------------
     # LEVEL 2 FALLBACK: Switch to Gemini if Groq fails
     # ----------------------------------------------------------------------
@@ -193,14 +195,15 @@ async def _call_groq(messages, model=None, vision_model=None):
 async def run_ai_task(event, query, image_b64=None, system_override=None, use_search=False):
     """Unified AI processor for all plugins."""
     from pyUltroid._misc import owner_and_sudos
+
     from .._misc._wrappers import eor
-    
+
     uid = event.sender_id
     is_admin = uid in owner_and_sudos()
-    
-    from .. import udB, LOGS
+
+    from .. import LOGS, udB
     LOGS.info(f"run_ai_task started. sender={uid}, is_admin={is_admin}")
-    
+
     try:
         # 1. Authorization & Auto-registration
         if not is_admin:
@@ -211,14 +214,14 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
                 current_bank[str(uid)] = current_bank.get(str(uid), 0) + STARTING_GIFT
                 Bank.add(current_bank)
                 # First time notification (silent or integrated)
-            
+
             balance = Bank.get().get(str(uid), 0)
             if balance <= 0:
                 return await eor(event, "`[Ultroid Bank] Insufficient balance. Please contact owner for refill.`")
 
         # 2. Preparation (System Prompt)
         system_prompt = system_override or udB.get_key("GROQ_SYSTEM_PROMPT") or DEFAULT_SYSTEM_PROMPT
-        
+
         # 3. Handle Web Search
         context = ""
         sources = []
@@ -238,14 +241,14 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
 
         # 4. Construct Messages
         messages = [{"role": "system", "content": system_prompt}]
-        
+
         # Inject History
         chat_id = str(event.chat_id)
         if chat_id not in CHAT_HISTORY:
             CHAT_HISTORY[chat_id] = []
         for past_msg in CHAT_HISTORY[chat_id][-MAX_HISTORY:]:
             messages.append(past_msg)
-        
+
         content = []
         # Jika ada gambar tapi tidak ada teks, pakai prompt default DULU
         if not query and image_b64:
@@ -254,9 +257,9 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
             content.append({"type": "text", "text": query})
         if image_b64:
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
-                
+
         messages.append({"role": "user", "content": content})
-        
+
         # 5. Execution (Timing)
         # Otomatis pakai vision model jika ada gambar
         start_time = time.time()
@@ -265,20 +268,20 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
             vision_model=VISION_MODEL if image_b64 else None
         )
         duration = round(time.time() - start_time, 2)
-        
+
         if not ans:
             # Re-fetch logic if it was a search query that failed
             return await msg.edit(f"`[GROQ ERROR] {usage_or_err}`")
-            
+
         # Update History
         clean_user_text = query if query else "Attached an image for analysis."
         CHAT_HISTORY[chat_id].append({"role": "user", "content": clean_user_text})
         CHAT_HISTORY[chat_id].append({"role": "assistant", "content": ans.strip()})
-        
+
         # Prune memory
         if len(CHAT_HISTORY[chat_id]) > MAX_HISTORY * 2:
             CHAT_HISTORY[chat_id] = CHAT_HISTORY[chat_id][-(MAX_HISTORY * 2):]
-        
+
         # 6. Token Deduction
         total_tokens = usage_or_err if isinstance(usage_or_err, int) else 0
         if not is_admin and total_tokens > 0:
@@ -292,9 +295,9 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         model = udB.get_key("GROQ_AI_MODEL") or "llama-3.3-70b-versatile"
         short_model = model.split('/')[-1] if '/' in model else model
         q_preview = query[:100].replace('\n', ' ') if query else "Visual Request"
-        if "CONTEXT:" in q_preview: 
+        if "CONTEXT:" in q_preview:
             q_preview = q_preview.split("USER QUESTION:")[-1].strip()
-            
+
         output = f"> \"{q_preview}\"\n\n{ans.strip()}"
         if sources:
             output += "\n\n**Sources**:\n" + "\n".join([f"• {s}" for s in sources[:3]])
@@ -308,7 +311,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
             tg_url = await fast_telegraph(f"Ultroid AI: {q_preview[:30]}...", output)
             if tg_url:
                 return await msg.edit(f"> \"{q_preview}\"\n\n**Read Full Response**: [Telegraph]({tg_url}){footer}", link_preview=True)
-            
+
             # Internal Fallback to File
             with BytesIO(str.encode(output)) as out_file:
                 out_file.name = "response.md"
@@ -318,7 +321,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
 
         # Final edit
         await msg.edit(output + footer, link_preview=False)
-        
+
     except Exception as e:
         LOGS.exception(e)
         from traceback import format_exc

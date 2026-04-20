@@ -17,8 +17,7 @@
 """
 
 
-from . import ultroid_cmd, async_searcher
-
+from . import async_searcher, ultroid_cmd
 
 API = {"g": "lmgtfy.com/?q={}%26iie=1", "d": "lmddgtfy.net/?q={}"}
 

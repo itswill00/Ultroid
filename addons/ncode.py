@@ -12,10 +12,13 @@
    Use - Paste the contents of file and send as pic.
 """
 
-import os, pygments
+import os
+
+import pygments
 from pygments.formatters import ImageFormatter
 from pygments.lexers import Python3Lexer
-from . import ultroid_cmd, check_filename
+
+from . import check_filename, ultroid_cmd
 
 
 @ultroid_cmd(pattern="ncode$")

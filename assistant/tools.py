@@ -1,27 +1,23 @@
 # Ultroid - Assistant Tools
 # Part of Universal Assistant Control Suite
 
-import json
-from datetime import datetime
-from telethon import events
-from telethon.utils import get_peer_id
 
-from . import asst, asst_cmd, udB, ultroid_bot
-from pyUltroid.fns.helper import time_formatter
+from . import asst_cmd
+
 
 @asst_cmd(pattern="id", public=True)
 async def assistant_id(event):
     """Extract IDs of users, chats, and replied media."""
-    text = f"**System Identification**\n---"
+    text = "**System Identification**\n---"
     text += f"\n**Chat ID:** `{event.chat_id}`"
     text += f"\n**User ID:** `{event.sender_id}`"
-    
+
     if event.is_reply:
         reply = await event.get_reply_message()
         if reply.sender_id:
             text += f"\n**Replied User:** `{reply.sender_id}`"
         if reply.media:
-            text += f"\n**Media Detected**"
+            text += "\n**Media Detected**"
 
     await event.reply(text)
 
@@ -32,14 +28,14 @@ async def assistant_info(event):
     if event.is_reply:
         reply = await event.get_reply_message()
         target = reply.sender_id
-    
+
     chat = await event.client.get_entity(target)
-    
+
     first = getattr(chat, 'first_name', 'N/A')
     last = getattr(chat, 'last_name', '')
     user = getattr(chat, 'username', 'No Username')
     bio = getattr(chat, 'about', 'No Bio')
-    
+
     text = (
         f"**Profile Info**\n"
         f"---"
@@ -56,7 +52,7 @@ async def assistant_json(event):
     """Raw metadata audit for debugging."""
     if not event.is_reply:
         return await event.reply("`Reply to a message to audit its raw JSON metadata.`")
-    
+
     reply = await event.get_reply_message()
     try:
         raw = reply.to_json(indent=4)

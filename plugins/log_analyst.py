@@ -6,15 +6,12 @@ Commands:
     .analyze / .analise <reply_to_file> [instruction]
 """
 
-import os
-import re
 import gzip
+import re
 import time
-import asyncio
 from io import BytesIO
 
-from telethon import events
-from . import udB, LOGS, ultroid_cmd, asst, OWNER_NAME, get_string
+from . import LOGS, ultroid_cmd
 
 # Configuration
 
@@ -57,7 +54,7 @@ def _smart_sample(content: str) -> str:
     """Extracts critical chunks from a large log file to fit AI context."""
     lines = content.splitlines()
     total_lines = len(lines)
-    
+
     if total_lines <= MAX_DIGEST_LINES:
         return content
 
@@ -79,33 +76,33 @@ def _smart_sample(content: str) -> str:
 
     # 4. Reconstruct and sort
     sorted_indices = sorted(list(digest_lines))
-    
+
     # 5. Build final digest with ellipsis markers
     digest = []
     last_idx = -1
     for idx in sorted_indices:
         if last_idx != -1 and idx > last_idx + 1:
             digest.append("... [lines skipped] ...")
-        
+
         # Truncate overly long individual lines (noise reduction)
         line = lines[idx]
         if len(line) > 500:
             line = line[:500] + " ... [long line truncated]"
-            
+
         digest.append(line)
         last_idx = idx
-        
+
         # Guard against overly large digests
         if len(digest) > MAX_DIGEST_LINES:
             break
 
     final_text = "\n".join(digest)
-    
+
     # 6. 'Safe Pro' character limit (approx 4k-6k tokens)
     # 15,000 chars is a safe buffer for 6k-12k TPM accounts.
     if len(final_text) > 15000:
         final_text = final_text[:15000] + "\n... [truncated for token safety]"
-        
+
     return final_text
 
 
@@ -117,7 +114,7 @@ def _detect_type(content: str) -> str:
     # Sampling first 50 lines for detection
     sample = content.splitlines()[:50]
     sample_text = "\n".join(sample)
-    
+
     if "*** *** ***" in sample_text or "Build fingerprint:" in sample_text:
         return "Tombstone / Native Crash"
     if TYPE_LOGCAT.search(sample_text):
@@ -126,7 +123,7 @@ def _detect_type(content: str) -> str:
         return "Kernel Dmesg / Kmsg"
     if "ninja: build stopped" in content or "FAILED:" in content:
         return "AOSP Build Log"
-    
+
     return "Generic Log / Text"
 
 # AI Integration
@@ -134,7 +131,7 @@ def _detect_type(content: str) -> str:
 async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = ""):
     """Specialized AI call for log analysis."""
     from pyUltroid.fns.ai_engine import _call_groq
-    
+
     # Deterministic behavior: analyze log technically.
     # Include instruction to respond in user's language.
     system_prompt = (
@@ -147,20 +144,20 @@ async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = 
         "2. Keep it technical and minimalist (Zero-Gimmick).\n"
         "3. Do not apologize or use conversational filler."
     )
-    
+
     query = (
         f"LOG TYPE: {log_type}\n"
         f"USER INSTRUCTION: {user_instruction or 'Analyze this log for errors.'}\n\n"
         f"LOG DIGEST:\n```\n{log_content}\n```"
     )
-    
+
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": query}
     ]
-    
+
     # Use a high-TPM model for heavy log processing
-    # llama-3.1-8b-instant typically has 30k-100k TPM limits, 
+    # llama-3.1-8b-instant typically has 30k-100k TPM limits,
     # preventing the 413 error seen on the 70b model.
     ans, usage = await _call_groq(messages, model="llama-3.1-8b-instant")
     return ans, usage
@@ -172,19 +169,19 @@ async def _call_log_ai(log_content: str, log_type: str, user_instruction: str = 
 async def _log_analyst(ult):
     # Determine the instruction (text after command)
     instruction = (ult.pattern_match.group(1) or "").strip()
-    
+
     # Must reply to a file/document
     reply = await ult.get_reply_message()
     if not (reply and reply.document):
         return await ult.eor("`Reply to a .log, .txt, or .gz file to analyze.`")
 
     msg = await ult.eor("`[..] Downloading Log...`")
-    
+
     try:
         # 1. Download File
         media = await ult.client.download_media(reply.document, BytesIO())
         media.seek(0)
-        
+
         # 2. Handle Gzip
         file_name = reply.file.name or "log.txt"
         if file_name.endswith(".gz") or reply.file.mime_type == "application/gzip":
@@ -203,19 +200,19 @@ async def _log_analyst(ult):
         await msg.edit("`[..] Sampling & Detecting Patterns...`")
         log_type = _detect_type(content)
         digest = _smart_sample(content)
-        
+
         # 4. AI Process
         await msg.edit("`[..] AI Processing Root Cause...`")
         start_time = time.time()
         analysis, usage = await _call_log_ai(digest, log_type, instruction)
         duration = round(time.time() - start_time, 2)
-        
+
         if not analysis:
             return await msg.edit(f"`[AI FAIL] {usage}`")
 
         # 5. Output (Zero Gimmick / Professional)
         from pyUltroid.fns.ai_engine import fast_telegraph
-        
+
         # Prepare Telegraph content (Use Markdown, fast_telegraph handles conversion)
         telegraph_title = f"AOSP Analysis: {file_name}"
         telegraph_content = (
@@ -228,7 +225,7 @@ async def _log_analyst(ult):
             f"**Generated by Ultroid AI Analyst** | `{duration}s` | `{usage} tokens`"
         )
 
-        
+
         # Telegram Monospace Summary
         # Extract first 3-5 lines for a quick summary in Telegram
         summary_lines = analysis.strip().splitlines()
@@ -249,7 +246,7 @@ async def _log_analyst(ult):
              msg_text += f"**Read Full Report**: [Telegraph]({url})"
         else:
              msg_text += "`Error | Telegraph upload failed.`"
-        
+
         msg_text += f"\n`time: {duration}s | tokens: {usage}`"
         await msg.edit(msg_text, link_preview=True)
 

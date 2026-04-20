@@ -33,11 +33,11 @@ def get_buttons():
             Button.inline("🎁 Misc", "hlp_Misc"),
         ]
     ]
-    
+
     # Add Dual Mode Info if active
     if udB.get_key("DUAL_MODE"):
         BTTS.append([Button.inline("🚀 UserBot Commands (Dual Mode)", "hlp_dualinfo")])
-    
+
     # Bottom buttons
     url = f"https://t.me/{asst.me.username}?startgroup=true"
     BTTS.append([Button.url("➕ Add to Group", url)])
@@ -57,9 +57,9 @@ Most plugins are synchronized between both clients for maximum reliability and e
 """
 
 STRINGS = {
-    "Admintools": ADMINTOOLS, 
-    "locks": LOCKS, 
-    "Utils": UTILITIES, 
+    "Admintools": ADMINTOOLS,
+    "locks": LOCKS,
+    "Utils": UTILITIES,
     "Misc": MISC,
     "dualinfo": DUAL_INFO
 }
@@ -69,7 +69,7 @@ async def helpish(event):
     if not event.is_private:
         url = f"https://t.me/{asst.me.username}?start=help"
         return await event.reply(
-            "**Need help?**\nContact me in Private for the full interactive menu!", 
+            "**Need help?**\nContact me in Private for the full interactive menu!",
             buttons=Button.url("📂 Open Help Menu", url)
         )
     await event.reply(START, buttons=get_buttons())

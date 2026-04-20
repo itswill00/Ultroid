@@ -11,12 +11,12 @@ __doc__ = get_help("help_button")
 
 import os
 
-from . import upload_file as uf
 from telethon.utils import pack_bot_file_id
 
 from pyUltroid.fns.tools import create_tl_btn, get_msg_button
 
 from . import HNDLR, get_string, mediainfo, ultroid_cmd
+from . import upload_file as uf
 from ._inline import something
 
 

@@ -22,17 +22,19 @@
 • `{i}aimodel`
     View or switch the active AI model.
 """
-from . import udB, ultroid_cmd, LOGS, HNDLR
-from pyUltroid._misc import owner_and_sudos
-from pyUltroid.fns.ai_engine import run_ai_task, google_search
 import os
+
+from pyUltroid.fns.ai_engine import google_search, run_ai_task
+
+from . import udB, ultroid_cmd
+
 
 @ultroid_cmd(pattern="ask( (.*)|$)")
 async def ask_ai(e):
     """Unified AI assistant via .ask command."""
     question = e.pattern_match.group(1).strip()
     use_search = False
-    
+
     if question.startswith("--search "):
         use_search = True
         question = question.replace("--search ", "", 1).strip()
@@ -61,7 +63,7 @@ async def summarize_msg(e):
 
     xx = await e.eor("`[AI] Summarizing...`")
     prompt = f"Summarize the following message in 2-3 concise sentences:\n\n{reply.text[:3000]}"
-    
+
     # Use engine for consistency
     await run_ai_task(e, prompt, system_override="You are a professional summarizer. Be concise.")
 
@@ -92,7 +94,7 @@ async def tldr(e):
         "Summarize it in up to 5 bullet points covering the key topics discussed:\n\n"
         f"{conversation}"
     )
-    
+
     # Use engine for consistency
     await run_ai_task(e, prompt, system_override="You are a conversation analyst. Provide a professional TL;DR.")
 
@@ -127,15 +129,15 @@ async def web_search_cmd(e):
 
     xx = await e.eor("`Search | Researching...`")
     results = await google_search(query)
-    
+
     if not results:
         return await xx.edit("`Search | No results found for your query.`")
-    
+
     output = f"🖥 **Web Search Results**\n`Query: {query}`\n\n"
     for i, r in enumerate(results[:5], 1):
         output += f"{i}. **[{r['title']}]({r['link']})**\n"
         output += f"   `{r['body'][:150]}...`\n\n"
-    
+
     await xx.edit(output, link_preview=False)
 
 
@@ -159,7 +161,7 @@ async def ai_debug(e):
         "Explain what happened and provide a code fix or solution if possible.\n\n"
         f"LOGS:\n{logs}"
     )
-    
+
     # Use engine for debug analysis
     await run_ai_task(e, prompt, system_override="You are a professional Python Debugger and Systems Engineer.")
 

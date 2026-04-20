@@ -19,7 +19,13 @@ from oauth2client.client import logger as _logger
 from oauth2client.file import Storage
 
 from .. import udB
-from .helper import humanbytes, time_formatter, run_async, No_Flood, _NO_FLOOD_PRUNE_THRESHOLD
+from .helper import (
+    _NO_FLOOD_PRUNE_THRESHOLD,
+    No_Flood,
+    humanbytes,
+    run_async,
+    time_formatter,
+)
 
 for log in [LOGGER, logger, _logger]:
     log.setLevel(WARNING)
@@ -100,7 +106,7 @@ class GDriveManager:
         if not filename:
             filename = path.split("/")[-1]
         mime_type = guess_type(path)[0] or "application/octet-stream"
-        
+
         # 25MB chunksize optimized for high-speed VPS bandwidth saturation
         media_body = MediaFileUpload(path, mimetype=mime_type, resumable=True, chunksize=25*1024*1024)
         body = {
@@ -112,11 +118,11 @@ class GDriveManager:
             body["parents"] = [{"id": folder_id}]
         elif self.folder_id:
             body["parents"] = [{"id": self.folder_id}]
-        
+
         insert_op = self._build.files().insert(
             body=body, media_body=media_body, supportsAllDrives=True
         )
-        
+
         start = time.time()
         _status = None
         while not _status:
@@ -134,7 +140,7 @@ class GDriveManager:
                             if now - No_Flood[c_id][m_id] > 30:
                                 del No_Flood[c_id][m_id]
                         if not No_Flood[c_id]: del No_Flood[c_id]
-                
+
                 if chat_id in No_Flood:
                     if msg_id in No_Flood[chat_id] and (now - No_Flood[chat_id][msg_id]) < 1.1:
                         continue
@@ -148,10 +154,10 @@ class GDriveManager:
                 percentage = (completed / total_size) * 100
                 speed = completed / diff if diff > 0 else 0
                 eta = round((total_size - completed) / speed) * 1000 if speed > 0 else 0
-                
+
                 filled = math.floor(percentage / 5)
                 progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
-                
+
                 tmp = (
                     f"{progress_str}\n\n"
                     f"`{humanbytes(completed)} of {humanbytes(total_size)}`\n\n"
@@ -180,13 +186,13 @@ class GDriveManager:
                 # get() and execute() are blocking
                 info = await run_async(self._build.files().get(fileId=fileId, supportsAllDrives=True).execute)()
                 filename = info["title"]
-            
+
             downloader = self._build.files().get_media(
                 fileId=fileId, supportsAllDrives=True
             )
         except Exception as ex:
             return False, str(ex)
-        
+
         with FileIO(filename, "wb") as file:
             start = time.time()
             # 25MB chunksize for high-speed download saturation
@@ -207,7 +213,7 @@ class GDriveManager:
                                 if now - No_Flood[c_id][m_id] > 30:
                                     del No_Flood[c_id][m_id]
                             if not No_Flood[c_id]: del No_Flood[c_id]
-                    
+
                     if chat_id in No_Flood:
                         if msg_id in No_Flood[chat_id] and (now - No_Flood[chat_id][msg_id]) < 1.1:
                             continue
@@ -221,10 +227,10 @@ class GDriveManager:
                     percentage = (completed / total_size) * 100
                     speed = completed / diff if diff > 0 else 0
                     eta = round((total_size - completed) / speed) * 1000 if speed > 0 else 0
-                    
+
                     filled = math.floor(percentage / 5)
                     progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
-                    
+
                     tmp = (
                         f"{progress_str}\n\n"
                         f"`{humanbytes(completed)} of {humanbytes(total_size)}`\n\n"
@@ -258,7 +264,7 @@ class GDriveManager:
         }
         if self.folder_id:
             body["parents"] = [{"id": self.folder_id}]
-        
+
         file = await run_async(self._build.files().insert(
             body=body, supportsAllDrives=True
         ).execute)()
@@ -270,7 +276,7 @@ class GDriveManager:
         query = f"title contains '{title}'"
         if self.folder_id:
             query = f"'{self.folder_id}' in parents and (title contains '{title}')"
-        
+
         _items = await run_async(self._build.files().list(
             supportsTeamDrives=True,
             includeTeamDriveItems=True,

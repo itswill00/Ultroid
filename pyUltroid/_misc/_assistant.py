@@ -17,8 +17,8 @@ from telethon.events import CallbackQuery, InlineQuery, NewMessage
 from telethon.tl.types import InputWebDocument
 
 from .. import LOGS, asst, udB, ultroid_bot
+from ..dB.verify_db import UsageLogs, is_fully_authorized, is_verified
 from ..fns.admins import admin_check
-from ..dB.verify_db import is_verified, is_fully_authorized, UsageLogs
 from . import append_or_update, owner_and_sudos
 
 OWNER = ultroid_bot.full_name
@@ -57,10 +57,10 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
         async def handler(event):
             sender_id = event.sender_id
             is_owner_or_sudo = sender_id in owner_and_sudos()
-            
+
             if owner and not is_owner_or_sudo:
                 return
-            
+
             # --- Verification Gateway (Identity & Logic Challenge) ---
             if not is_owner_or_sudo:
                 is_command = event.text and event.text.startswith("/")
@@ -99,7 +99,7 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
                     opts = list({ans, ans+1, ans-1, random.randint(2, 18)})
                     random.shuffle(opts)
                     btn_row = [Button.inline(str(o), data=f"captcha|{sender_id}|{o}|{ans}") for o in opts]
-                    
+
                     auth_text = (
                         f"**Captcha Challenge**\n"
                         f"---\n"
@@ -127,12 +127,13 @@ def asst_cmd(pattern=None, load=None, owner=False, public=False, **kwargs):
         asst.add_event_handler(handler, NewMessage(**kwargs))
         if load is not None:
             append_or_update(load, func, name, kwargs)
-            
+
         # Hook into Help Engine registry to prevent "Not Valid Plugin" mismatch
         if pattern:
-            from ..dB._core import LIST
             import inspect
             from pathlib import Path
+
+            from ..dB._core import LIST
             file_stem = Path(inspect.stack()[1].filename).stem
             # Prefix with '/' to distinguish assistant commands
             LIST.setdefault(file_stem, []).append(f"/{pattern}")

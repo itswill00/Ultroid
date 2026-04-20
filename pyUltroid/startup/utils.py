@@ -85,11 +85,11 @@ def load_addons(plugin_name):
 
     spec.loader.exec_module(mod)
     modules[name] = mod
-    
+
     # Store plugin in global HELP for counting
     if "Addons" not in HELP:
         HELP["Addons"] = {}
-    
+
     HELP["Addons"][base_name] = mod.__doc__ or "No description available."
 
     return mod

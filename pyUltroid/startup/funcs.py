@@ -11,16 +11,16 @@ import random
 import re
 import shutil
 import time
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
 from random import randint
-
-from ..configs import Var
 
 try:
     from pytz import timezone
 except ImportError:
     timezone = None
 
+from decouple import RepositoryEnv, config
 from telethon.errors import (
     ChannelsTooMuchError,
     ChatAdminRequiredError,
@@ -34,8 +34,8 @@ from telethon.tl.functions.channels import (
     EditAdminRequest,
     EditPhotoRequest,
     InviteToChannelRequest,
+    JoinChannelRequest,
 )
-from telethon.tl.functions.channels import JoinChannelRequest
 from telethon.tl.functions.contacts import UnblockRequest
 from telethon.tl.types import (
     ChatAdminRights,
@@ -44,10 +44,10 @@ from telethon.tl.types import (
     InputMessagesFilterDocument,
 )
 from telethon.utils import get_peer_id
-from decouple import config, RepositoryEnv
+
 from .. import LOGS, ULTConfig
 from ..fns import KEEP_SAFE
-from ..fns.helper import download_file, inline_mention, updater
+from ..fns.helper import download_file, updater
 
 db_url = 0
 REDIS_KEEPALIVE_KEY = "KEEP_ACTIVE"
@@ -500,13 +500,13 @@ async def plug(plugin_channels):
 
 
 async def ready():
-    from .. import asst, udB, ultroid_bot
-    import platform
     import json as _json
+    import platform
     import time as _time
-    from ..version import __version__ as pyver, ultroid_version as ult_ver
+
+    from .. import asst, udB, ultroid_bot
     from ..dB._core import HELP, LIST
-    from telethon import __version__ as telever
+    from ..version import ultroid_version as ult_ver
 
     chat_id = udB.get_key("LOG_CHANNEL")
     if not chat_id:
@@ -541,7 +541,7 @@ async def ready():
     # ── Build Human-Friendly Card ─────────────────────────────
     header_emoji = "🚀" if not rs_info else "🔄"
     status_text = "System Online" if not rs_info else "Restart Complete"
-    
+
     CARD = (
         f"{header_emoji} **{status_text}**\n"
         f"---"
@@ -559,7 +559,7 @@ async def ready():
         downtime = round(_time.time() - float(rs_info.get("ts", _time.time())), 1)
         dt_str = f"{downtime / 3600:.1f}h" if downtime > 3600 else f"{downtime / 60:.1f}m" if downtime > 60 else f"{downtime}s"
         CARD += f"\n📉 **Downtime:** {dt_str}"
-        
+
         # Version change detection
         prev_v = rs_info.get("version", "?")
         if prev_v != "?" and prev_v != str(ult_ver):
@@ -633,25 +633,38 @@ async def WasItRestart(udb):
         if key:
             udb.del_key("_RESTART")
         return
-    from .. import asst, ultroid_bot
     import json as _json
+
+    from .. import asst, ultroid_bot
 
     try:
         data = key if isinstance(key, dict) else _json.loads(key)
         chat_id = int(data["chat_id"])
         msg_id  = int(data["msg_id"])
-        
-        # Professional cleanup: delete the old 'Initiating Restart' message
-        # This prevents redundant notifications and keeps the chat clean.
+    except (_json.JSONDecodeError, TypeError, KeyError):
+        # Fallback for legacy format: who_chatid_msgid
         try:
-            await asst.delete_messages(chat_id, msg_id)
-        except Exception:
-            try:
-                await ultroid_bot.delete_messages(chat_id, msg_id)
-            except Exception:
-                pass
+            parts = str(key).split("_")
+            if len(parts) == 3:
+                chat_id = int(parts[1])
+                msg_id = int(parts[2])
+            else:
+                return udb.del_key("_RESTART")
+        except (ValueError, IndexError):
+            return udb.del_key("_RESTART")
     except Exception as e:
         LOGS.debug(f"Error during WasItRestart cleanup: {e}")
+        return udb.del_key("_RESTART")
+
+    # Professional cleanup: delete the old 'Initiating Restart' message
+    # This prevents redundant notifications and keeps the chat clean.
+    try:
+        await asst.delete_messages(chat_id, msg_id)
+    except Exception:
+        try:
+            await ultroid_bot.delete_messages(chat_id, msg_id)
+        except Exception:
+            pass
 
     udb.del_key("_RESTART")
 

@@ -14,8 +14,9 @@
 
 import asyncio
 
-from . import *
 from telethon.errors.rpcerrorlist import InlineBotRequiredError
+
+from . import *
 
 
 @ultroid_cmd(pattern="wreplace")

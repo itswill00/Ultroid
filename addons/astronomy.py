@@ -14,7 +14,7 @@
 
 from bs4 import BeautifulSoup as bs
 
-from . import get_help, eod, ultroid_cmd, async_searcher
+from . import async_searcher, eod, ultroid_cmd
 
 
 @ultroid_cmd(pattern="apod$")

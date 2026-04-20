@@ -5,9 +5,7 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>
 
-import re
-from telethon.tl.types import InputWebDocument as wb
-from . import get_string, async_searcher, in_pattern, InlinePlugin, async_searcher, asst
+from . import InlinePlugin, asst, async_searcher, get_string, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
@@ -15,6 +13,7 @@ __doc__ = f"""
     Searches for the query on Winget and returns the results.
 """
 from telethon.tl.custom import Button
+
 
 @in_pattern("winget", owner=True)
 async def search_winget(event):

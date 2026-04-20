@@ -10,9 +10,7 @@ import os
 import random
 import re
 import string
-from logging import WARNING
 from random import choice, randrange, shuffle
-from traceback import format_exc
 
 from pyUltroid.exceptions import DependencyMissingError
 
@@ -123,13 +121,13 @@ async def YtDataScraper(url: str):
 async def google_search(query):
     """Perform a web search using Google (with DuckDuckGo fallback)."""
     from urllib.parse import unquote
-    
+
     clean_query = query.replace(" ", "+")
     headers = {
         "User-Agent": choice(some_random_headers),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     }
-    
+
     # Try Google First
     try:
         con = await async_searcher(f"https://www.google.com/search?q={clean_query}&hl=en", headers=headers)
@@ -151,7 +149,7 @@ async def google_search(query):
                     "link": link,
                     "description": desc_div.text if desc_div else "No description."
                 })
-        
+
         # Original fallback parsing if class-based fails
         if not result:
             pdata = soup.find_all("a", href=re.compile("url="))
@@ -165,7 +163,7 @@ async def google_search(query):
                         "description": data.find_all("div")[-1].text,
                     })
                 except Exception: continue
-                
+
         if result:
              return result[:8]
     except Exception as e:
@@ -492,4 +490,4 @@ def random_string(length=3):
     return "".join(random.choices(string.ascii_uppercase, k=length))
 
 
-setattr(random, "random_string", random_string)
+random.random_string = random_string

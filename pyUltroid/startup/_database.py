@@ -7,7 +7,6 @@
 
 import ast
 import os
-import re
 import sys
 import time
 
@@ -386,7 +385,7 @@ def UltroidDB():
         elif Var.DATABASE_URL:
             if psycopg2:
                 return SqlDB(Var.DATABASE_URL)
-        
+
         # Default to LocalDB silently
         return LocalDB()
     except Exception as err:

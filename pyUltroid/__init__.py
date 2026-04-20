@@ -13,8 +13,9 @@ import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="google.api_core")
 
 import telethonpatch
-from .version import __version__
+
 from .fns import KEEP_SAFE
+from .version import __version__
 
 run_as_module = __package__ in sys.argv or sys.argv[0] == "-m"
 
@@ -47,8 +48,8 @@ if run_as_module:
 
     # Safe Global Imports for Media Plugins
     try:
-        import numpy as np
         import cv2
+        import numpy as np
     except (ImportError, Exception):
         np = cv2 = None
 

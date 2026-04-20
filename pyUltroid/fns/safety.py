@@ -23,14 +23,14 @@ class KEEP_SAFE:
             r"(?i)REDISHOST",
             r"(?i)DATABASE_URL",
             r"(?i)DYNO", # Heroku specific
-            
+
             # Destructive Shell Operations
             r"rm -rf",
             r"mkfs",
             r":\(\)\{ :\|:& \};:", # Fork bomb
             r"mv / .* /dev/null",
             r"> /dev/sda",
-            
+
             # Potential Information Leakage
             r"os\.environ",
             r"getattr\(Var",

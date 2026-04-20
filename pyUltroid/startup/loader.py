@@ -6,12 +6,8 @@
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
 import os
-import subprocess
-import sys
-from shutil import rmtree
 
 from decouple import config
-from git import Repo
 
 from .. import *
 from ..dB._core import HELP
@@ -23,15 +19,15 @@ from .utils import load_addons
 def _after_load(loader, module, plugin_name=""):
     if not module or plugin_name.startswith("_"):
         return
-    
+
     # Clean plugin name: remove path and .py extension
     p_name = plugin_name.split("/")[-1].split("\\")[-1].replace(".py", "")
-    
+
     # Ensure key exists in global HELP
     key = loader.key
     if key not in HELP:
         HELP[key] = {}
-    
+
     # Store plugin in HELP for counting and reference
     HELP[key][p_name] = module.__doc__ or "No description available."
 

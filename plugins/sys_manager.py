@@ -11,12 +11,14 @@
 - Background Auto-Cleaner: Automatically clears temporary files older than 30 minutes every hour.
 """
 
+import asyncio
 import os
 import shutil
 import time
-import asyncio
-from . import ultroid_cmd, udB, eor, HNDLR, LOGS, start_time
-from pyUltroid.fns.helper import time_formatter, humanbytes, time_cache
+
+from pyUltroid.fns.helper import humanbytes, time_cache, time_formatter
+
+from . import LOGS, eor, start_time, udB, ultroid_cmd
 
 # List of folders to clean
 CLEAN_DIRECTORIES = ["downloads", "temp", "cache"]
@@ -62,7 +64,7 @@ async def auto_cleaner():
                         try:
                             if now - os.path.getmtime(file_path) < min_age_seconds:
                                 continue
-                            
+
                             size = os.path.getsize(file_path) if os.path.isfile(file_path) else 0
                             if os.path.isfile(file_path) or os.path.islink(file_path):
                                 os.unlink(file_path)
@@ -71,7 +73,7 @@ async def auto_cleaner():
                             cleared_size += size
                         except Exception:
                             continue
-            
+
             if is_emergency and cleared_size > 1024 * 1024:
                 try:
                     from pyUltroid import asst, udB
@@ -129,17 +131,17 @@ async def system_stats(e):
         battery = "Unavailable"
 
     uptime = time_formatter((time.time() - start_time) * 1000)
-    
+
     # RAM usage
     total, used, free = shutil.disk_usage(".")
-    
-    msg = f"🖥 **System Monitor**\n\n"
+
+    msg = "🖥 **System Monitor**\n\n"
     msg += f"🔋 **Battery**: `{battery}`\n"
     msg += f"⏱ **Uptime**: `{uptime}`\n"
     msg += f"💽 **Disk Used**: `{humanbytes(used)} / {humanbytes(total)}`\n"
     msg += f"🧠 **RAM Load**: `{await get_ram_usage():.1f}%`\n"
-    msg += f"📁 **DB Type**: `LocalDB (JSON)`\n"
-    
+    msg += "📁 **DB Type**: `LocalDB (JSON)`\n"
+
     await eor(e, msg)
 
 # Start background cleaner if not already running

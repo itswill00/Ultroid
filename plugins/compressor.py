@@ -12,8 +12,6 @@
    Compress the video to a smaller size for easier sharing.
 """
 
-import os
-
 import asyncio
 import os
 import re
@@ -35,7 +33,6 @@ from . import (
     mediainfo,
     time_formatter,
     ultroid_cmd,
-    uploader,
 )
 
 

@@ -13,22 +13,21 @@
 
 import asyncio
 from datetime import datetime
+
 from git import Repo
 from telethon import Button
 
+from pyUltroid.fns.helper import gen_chlog
+
 from . import (
-    HNDLR,
-    LOGS,
     LOG_CHANNEL,
-    OWNER_NAME,
+    LOGS,
     asst,
     bash,
     callback,
     udB,
-    ultroid_bot,
     ultroid_cmd,
 )
-from pyUltroid.fns.helper import gen_chlog, updater
 
 _INTERVAL = 3600  # 1 Hour
 _monitor_task = None
@@ -44,19 +43,19 @@ async def check_for_updates():
             if _UPSTREAM_REMOTE not in repo.remotes:
                 # Add upstream if missing (standard Ultroid practice)
                 repo.create_remote(_UPSTREAM_REMOTE, repo.remotes[0].url)
-            
+
             ups_rem = repo.remote(_UPSTREAM_REMOTE)
             ac_br = repo.active_branch.name
             ups_rem.fetch(ac_br)
 
             # 2. Check diff
             changelog, tl_chnglog = await gen_chlog(repo, f"HEAD..{_UPSTREAM_REMOTE}/{ac_br}")
-            
+
             if changelog:
                 # 3. Deduplication Check
                 latest_commit = str(repo.commit(f"{_UPSTREAM_REMOTE}/{ac_br}"))
                 last_notified = udB.get_key("LAST_UPDATE_NOTIFICATION")
-                
+
                 if latest_commit != last_notified:
                     # 4. Notify via Assistant Bot
                     target = udB.get_key("LOG_CHANNEL") or LOG_CHANNEL
@@ -83,7 +82,7 @@ async def check_for_updates():
                             LOGS.warning(f"UpdateMonitor | Notification failed: {e}")
         except Exception as er:
             LOGS.debug(f"UpdateMonitor | Silent Fail: {er}")
-            
+
         await asyncio.sleep(_INTERVAL)
 
 
@@ -98,7 +97,7 @@ async def monitor_status(e):
         status = "✅ Active"
     else:
         status = "⭕ Inactive"
-    
+
     last = udB.get_key("LAST_UPDATE_NOTIFICATION") or "None"
     await e.eor(
         f"**Update Monitor Status**\n"

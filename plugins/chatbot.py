@@ -17,7 +17,6 @@
 
 from pyUltroid.fns.tools import get_chatbot_reply
 
-
 from . import LOGS, eod, get_string, inline_mention, udB, ultroid_cmd
 
 

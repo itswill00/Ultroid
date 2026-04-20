@@ -20,7 +20,6 @@ from datetime import datetime, timezone
 
 from telethon import events
 from telethon.tl import types
-from telethon.tl.functions.channels import GetParticipantRequest
 
 from pyUltroid.dB.gban_mute_db import is_gbanned
 
@@ -207,7 +206,7 @@ def _risk_score(user, message_text: str = "") -> tuple[int, str, list[str]]:
         if any(kw in text_lower for kw in PROMO_KEYWORDS):
             score += 2
             reasons.append("suspicious keywords in message")
-        
+
         link_count = text_lower.count("http") + text_lower.count("t.me")
         if link_count >= 2:
             score += 3
@@ -249,7 +248,7 @@ async def _send_alert(
     _rate_cache[rate_key] = now
 
     ts = datetime.now(timezone.utc).strftime("%H:%M:%S UTC")
-    
+
     # Aesthetic Minimalist Header
     text = (
         f"🛡️ **Intel Alert: {event_type.title()}**\n\n"
@@ -258,7 +257,7 @@ async def _send_alert(
     )
     if risk_label:
         text += f"\n🚨 **Risk:** {risk_label}"
-    
+
     text += f"\n\n⏱️ `{ts}`"
 
     try:
@@ -310,7 +309,7 @@ async def _handle_join_batch(group_id: int, group_title: str):
     ids_preview = ", ".join(f"`{uid}`" for uid, _ in entries[:3])
     if len(entries) > 3:
         ids_preview += "..."
-    
+
     body = (
         f"👥 **Count:** {len(entries)} joins\n"
         f"⏳ **Window:** {JOIN_BATCH_WINDOW}s\n"
@@ -359,7 +358,7 @@ async def _intel_chat_action(event):
             if risk_reasons:
                 flags = ", ".join(risk_reasons)
                 body += f"\n🚩 **Flags:** {flags}"
-            
+
             await _send_alert("join", event.chat_id, group_title, body, risk_label, user.id)
 
     # ── Member left / kicked / banned ─────────────────────────
@@ -370,7 +369,7 @@ async def _intel_chat_action(event):
 
         user = await _get_user(event.user_id)
         actor_id = event.action_message.sender_id if event.action_message else None
-        
+
         body = (
             f"👤 **User:** {_format_user(user)}\n"
             f"🚫 **Action:** {action_type}"

@@ -14,7 +14,6 @@
 """
 
 import os
-
 import time
 from datetime import datetime as dt
 
@@ -34,7 +33,7 @@ from . import (
     mediainfo,
     stdr,
     time_formatter,
-    ultroid_cmd
+    ultroid_cmd,
 )
 
 __doc__ = get_help("help_audiotools")

@@ -30,15 +30,15 @@
     Shows the desired place in the map.
 """
 
-import random, os
+import os
+import random
 
 import requests
-from bs4 import BeautifulSoup as bs
+from phlogo import generate
 from pyjokes import get_joke
 from telethon.errors import ChatSendMediaForbiddenError
-from phlogo import generate
 
-from . import ultroid_cmd, get_string, HNDLR, async_searcher
+from . import HNDLR, async_searcher, get_string, ultroid_cmd
 
 
 @ultroid_cmd(pattern="joke$")
@@ -92,7 +92,7 @@ async def make_logog(ult):
     if not match and (reply and reply.text):
         match = reply.text
     else:
-        return await msg.edit(f"`Provide a name to make logo...`")
+        return await msg.edit("`Provide a name to make logo...`")
     first, last = "", ""
     if len(match.split()) >= 2:
         first, last = match.split()[:2]

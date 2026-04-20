@@ -23,8 +23,10 @@
 """
 
 import os
+
 from twikit import Client
-from . import LOGS, eor, get_string, udB, ultroid_cmd
+
+from . import udB, ultroid_cmd
 
 # Store client globally
 twitter_client = None
@@ -36,17 +38,17 @@ async def get_client():
     global twitter_client
     if twitter_client:
         return twitter_client
-        
+
     if not all(udB.get_key(key) for key in ["TWITTER_USERNAME", "TWITTER_EMAIL", "TWITTER_PASSWORD"]):
         raise Exception("Set TWITTER_USERNAME, TWITTER_EMAIL and TWITTER_PASSWORD in vars first!")
-    
+
     # Create auth directory if it doesn't exist
     os.makedirs(os.path.dirname(COOKIES_FILE), exist_ok=True)
-        
+
     client = Client()
     await client.login(
         auth_info_1=udB.get_key("TWITTER_USERNAME"),
-        auth_info_2=udB.get_key("TWITTER_EMAIL"), 
+        auth_info_2=udB.get_key("TWITTER_EMAIL"),
         password=udB.get_key("TWITTER_PASSWORD"),
         cookies_file=COOKIES_FILE
     )
@@ -96,7 +98,7 @@ async def twitter_details(event):
             text += f"🔄 **Retweets:** `{tweet.metrics.retweets}`\n"
             text += f"💬 **Replies:** `{tweet.metrics.replies}`\n"
             text += f"👁 **Views:** `{tweet.metrics.views}`\n"
-        
+
         await msg.edit(text)
     except Exception as e:
         await msg.edit(f"❌ **Error:**\n`{str(e)}`")
@@ -122,7 +124,7 @@ async def twitter_user(event):
         text += f"🐦 **Total Tweets:** `{user.statuses_count}`\n"
         text += f"📍 **Location:** `{user.location or 'Not Set'}`\n"
         text += f"✅ **Verified:** `{user.verified}`\n"
-        
+
         if user.profile_image_url:
             image_url = user.profile_image_url.replace("_normal.", ".")
             await event.client.send_file(
@@ -134,7 +136,7 @@ async def twitter_user(event):
             await msg.delete()
         else:
             await msg.edit(text)
-            
+
     except Exception as e:
         await msg.edit(f"❌ **Error:**\n`{str(e)}`")
 
@@ -155,7 +157,7 @@ async def twitter_media(event):
             tweet_id = match
 
         tweet = await client.get_tweet_by_id(tweet_id)
-        
+
         if not hasattr(tweet, "media"):
             return await msg.edit("😕 `No media found in tweet!`")
 
@@ -169,7 +171,7 @@ async def twitter_media(event):
         for media in tweet.media:
             if media.type == "photo":
                 await event.client.send_file(
-                    event.chat_id, 
+                    event.chat_id,
                     media.url,
                     caption=caption if media_count == 0 else None  # Only add caption to first media
                 )
@@ -178,7 +180,7 @@ async def twitter_media(event):
                 if hasattr(media, "video_info") and isinstance(media.video_info, dict):
                     variants = media.video_info.get("variants", [])
                     mp4_variants = [
-                        v for v in variants 
+                        v for v in variants
                         if v.get("content_type") == "video/mp4" and "bitrate" in v
                     ]
                     if mp4_variants:
@@ -188,7 +190,7 @@ async def twitter_media(event):
                             video_caption += f"\n🎥 Video Quality: {best_video['bitrate']/1000:.0f}kbps"
                         else:
                             video_caption = f"🎥 Video Quality: {best_video['bitrate']/1000:.0f}kbps"
-                            
+
                         await event.client.send_file(
                             event.chat_id,
                             best_video["url"],

@@ -63,14 +63,8 @@ try:
 except ImportError:
     Image = None
 
-from pyUltroid._misc._assistant import asst_cmd
-from pyUltroid.dB.gban_mute_db import is_gbanned
-from pyUltroid.fns.tools import get_chat_and_msgid
-
-from . import upload_file as uf
-
-from telethon.errors.rpcerrorlist import ChatForwardsRestrictedError, UserBotError
 from telethon.errors import MessageTooLongError
+from telethon.errors.rpcerrorlist import ChatForwardsRestrictedError, UserBotError
 from telethon.events import NewMessage
 from telethon.tl.custom import Dialog
 from telethon.tl.functions.channels import (
@@ -84,20 +78,21 @@ from telethon.tl.functions.users import GetFullUserRequest
 from telethon.tl.types import (
     Channel,
     Chat,
+    DocumentAttributeVideo,
     InputMediaPoll,
+    MessageMediaDocument,
+    MessageMediaPhoto,
     Poll,
     PollAnswer,
     TLObject,
     User,
-    UserStatusOffline,
-    UserStatusOnline,
-    MessageMediaPhoto,
-    MessageMediaDocument,
-    DocumentAttributeVideo,
 )
 from telethon.utils import get_peer_id
 
+from pyUltroid._misc._assistant import asst_cmd
+from pyUltroid.dB.gban_mute_db import is_gbanned
 from pyUltroid.fns.info import get_chat_info
+from pyUltroid.fns.tools import get_chat_and_msgid
 
 from . import (
     HNDLR,
@@ -119,6 +114,7 @@ from . import (
     udB,
     ultroid_cmd,
 )
+from . import upload_file as uf
 
 # =================================================================#
 
@@ -334,7 +330,7 @@ async def _(event):
         dc_id = user.photo.dc_id
     else:
         dc_id = "N/A"
-    
+
     caption = f"""👤 <b>USER INFORMATION</b>
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
 <b>Name</b>: {first_name} {last_name}
@@ -356,7 +352,7 @@ async def _(event):
         caption += f"\n<b>Global Ban</b>: <code>Banned 🚫</code>\n<b>Reason</b>: <code>{chk}</code>"
     else:
         caption += "\n<b>Global Ban</b>: <code>Clean ✅</code>"
-        
+
     caption += f"\n\n🔗 <a href='tg://user?id={user_id}'>Permanent Profile Link</a>"
 
     await event.client.send_message(
@@ -728,7 +724,7 @@ async def get_restricted_msg(event):
     if not match:
         await event.eor("`Please provide a link!`", time=5)
         return
-    
+
     xx = await event.eor("`Loading...`")
     chat, msg = get_chat_and_msgid(match)
     if not (chat and msg):
@@ -738,23 +734,23 @@ async def get_restricted_msg(event):
             "`https://t.me/c/1313492028/3`\n"
             "`tg://openmessage?user_id=1234567890&message_id=1`"
         )
-    
+
     try:
         input_entity = await event.client.get_input_entity(chat)
         message = await event.client.get_messages(input_entity, ids=msg)
     except BaseException as er:
         return await event.eor(f"**ERROR**\n`{er}`")
-    
+
     if not message:
         return await event.eor("`Message not found or may not exist.`")
-    
+
     try:
         await event.client.send_message(event.chat_id, message)
         await xx.try_delete()
         return
     except ChatForwardsRestrictedError:
         pass
-    
+
     if message.media:
         if isinstance(message.media, (MessageMediaPhoto, MessageMediaDocument)):
             media_path, _ = await event.client.fast_downloader(message.document, show_progress=True, event=xx, message=get_string("com_5"))
@@ -764,14 +760,14 @@ async def get_restricted_msg(event):
             attributes = []
             if message.video:
                 duration = await get_video_duration(media_path.name)
-                
+
                 width, height = 0, 0
                 for attribute in message.document.attributes:
                     if isinstance(attribute, DocumentAttributeVideo):
                         width = attribute.w
                         height = attribute.h
                         break
-                
+
                 thumb_path = media_path.name + "_thumb.jpg"
                 await get_thumbnail(media_path.name, thumb_path)
 

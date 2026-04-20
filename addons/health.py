@@ -16,6 +16,7 @@
 """
 
 import random
+
 from . import ultroid_cmd
 
 HEALTH_TIPS = [
@@ -41,24 +42,24 @@ async def calculate_bmi(event):
     input_str = event.pattern_match.group(1).strip()
     if not input_str or " " not in input_str:
         return await event.eor("Usage: `{i}bmi <weight_kg> <height_cm>`\nExample: `{i}bmi 70 175`", time=5)
-    
+
     try:
         weight, height = map(float, input_str.split())
         height_m = height / 100
         bmi = weight / (height_m * height_m)
-        
+
         category = ""
         if bmi < 18.5: category = "Underweight (Kekurangan berat badan)"
         elif 18.5 <= bmi < 25: category = "Normal weight (Ideal)"
         elif 25 <= bmi < 30: category = "Overweight (Kelebihan berat badan)"
         else: category = "Obese (Obesitas)"
-        
-        res = f"📊 **BMI Calculator**\n\n"
+
+        res = "📊 **BMI Calculator**\n\n"
         res += f"• **Weight:** {weight} kg\n"
         res += f"• **Height:** {height} cm\n"
         res += f"• **BMI Score:** `{bmi:.2f}`\n"
         res += f"• **Category:** `{category}`"
-        
+
         await event.eor(res)
     except Exception:
         await event.eor("Please provide valid numbers for weight and height.")

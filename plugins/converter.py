@@ -25,8 +25,6 @@ except ImportError:
     LOGS.info(f"{__file__}: PIL  not Installed.")
     Image = None
 
-from . import upload_file as uf
-
 from . import (
     ULTConfig,
     bash,
@@ -36,8 +34,8 @@ from . import (
     get_string,
     udB,
     ultroid_cmd,
-    uploader,
 )
+from . import upload_file as uf
 
 opn = []
 

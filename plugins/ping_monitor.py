@@ -23,7 +23,7 @@ import asyncio
 import time
 from datetime import datetime
 
-from . import udB, ultroid_bot, ultroid_cmd, LOGS
+from . import ultroid_bot, ultroid_cmd
 
 help_ping_monitor = __doc__
 

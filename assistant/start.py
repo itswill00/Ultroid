@@ -147,7 +147,7 @@ async def asst_help(event):
     """Adaptive Help Interface for Sudo and Public tiers."""
     sender_id = event.sender_id
     is_owner_or_sudo = sender_id in owner_and_sudos()
-    
+
     if is_owner_or_sudo:
         header = "**Sudo Commands**"
         content = (

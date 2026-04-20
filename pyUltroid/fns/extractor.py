@@ -3,11 +3,12 @@
 
 import os
 import re
-import asyncio
+
+from yt_dlp import YoutubeDL
+
 from pyUltroid import LOGS
 from pyUltroid.configs import Var
-from pyUltroid.fns.helper import run_async, bash
-from yt_dlp import YoutubeDL
+from pyUltroid.fns.helper import run_async
 
 # Regex Patterns
 TIKTOK_RE = re.compile(r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/\S+")
@@ -98,7 +99,7 @@ class MediaExtractor:
             opts["js_runtime"] = self._js_runtime
         if self._cookie_file:
             opts["cookiefile"] = self._cookie_file
-        
+
         if format_type == "audio":
             opts["format"] = "bestaudio/best"
             opts["postprocessors"] = [{
@@ -119,10 +120,10 @@ class MediaExtractor:
 
         if custom_opts:
             opts.update(custom_opts)
-            
+
         if progress_callback:
             opts["progress_hooks"] = [progress_callback]
-            
+
         return opts
 
     @run_async
@@ -140,7 +141,7 @@ class MediaExtractor:
                     results = res.get("result") or []
                     if not isinstance(results, list):
                         results = [results]
-                    
+
                     entries = []
                     for item in results:
                         u = item.get("url")
@@ -152,7 +153,7 @@ class MediaExtractor:
                                 "id": "sonzaix",
                                 "uploader": "Instagram",
                             })
-                    
+
                     if entries:
                         if len(entries) == 1:
                             info = entries[0]
@@ -163,7 +164,7 @@ class MediaExtractor:
                                 "uploader": "Instagram",
                                 "uploader_url": url,
                             }
-                        
+
                         self._extract_cache[url] = info
                         return info
             except Exception as e:
@@ -195,14 +196,14 @@ class MediaExtractor:
                         err_msg += f" | Available IDs: {f_list[:10]}"
                     except:
                         pass
-                
+
                 if "Sign in to confirm" in err_msg:
                     err_msg = "YouTube blocked this IP (Needs Cookies)."
                 elif "403" in err_msg:
                     err_msg = "Access Forbidden (403)."
                 elif "Video unavailable" in err_msg:
                     err_msg = "Video is private or unavailable."
-                
+
                 LOGS.warning(f"Extraction failed for {url}: {err_msg}")
                 return {"error": err_msg}
 
@@ -235,10 +236,10 @@ class MediaExtractor:
         """Download media and return the file path(s)."""
         if job_id:
             os.makedirs(os.path.join(self.download_path, job_id), exist_ok=True)
-            
+
         # Use cached info if available to avoid double extraction
         info = self._extract_cache.get(url)
-        
+
         opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:
@@ -284,7 +285,7 @@ class MediaExtractor:
             scraper = cloudscraper.create_scraper()
             api_key = Var.SONZAIX_API_KEY
             key_param = f"&apikey={api_key}" if api_key else ""
-            
+
             # Try /api/igdl first
             res = scraper.get(f"http://Api.sonzaix.indevs.in/api/igdl?url={url}{key_param}", timeout=15)
             if res.status_code == 200:

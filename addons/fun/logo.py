@@ -17,16 +17,20 @@ import glob
 import os
 import random
 
-from telethon.tl.types import InputMessagesFilterPhotos
-
 try:
     from PIL import Image
 except ImportError:
     Image = None
+from plugins import (
+    OWNER_ID,
+    OWNER_NAME,
+    download_file,
+    get_string,
+    mediainfo,
+    ultroid_cmd,
+)
 from pyUltroid.fns.misc import unsplashsearch
 from pyUltroid.fns.tools import LogoHelper
-
-from plugins import OWNER_ID, OWNER_NAME, download_file, get_string, mediainfo, ultroid_cmd
 
 
 @ultroid_cmd(pattern="logo( (.*)|$)")

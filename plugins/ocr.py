@@ -2,8 +2,8 @@
 # Integrated by Antigravity (Minimalist Edition)
 
 import os
-from . import ultroid_cmd, eor, get_string, LOGS, udB, bash
-from pyUltroid.fns.helper import async_searcher
+
+from . import LOGS, eor, udB, ultroid_cmd
 
 # Free OCR API: https://ocr.space/ocrapi
 OCR_API_KEY = udB.get_key("OCR_API_KEY") or "helloworld"
@@ -12,25 +12,25 @@ OCR_API_KEY = udB.get_key("OCR_API_KEY") or "helloworld"
 async def ocr_reader(e):
     if not e.reply_to_msg_id:
         return await eor(e, "`Reply to an image or document to extract text.`")
-    
+
     reply = await e.get_reply_message()
     if not (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
         return await eor(e, "`Reply to an image file only.`")
-    
+
     msg = await eor(e, "`Extracting text...`")
-    
+
     # Download the media
     dl = await reply.download_media("temp/")
-    
+
     try:
         from pyUltroid.fns.tools import ocr_space
         results = await ocr_space(dl, api_key=OCR_API_KEY)
-        
+
         if results:
             await msg.edit(f"**OCR Result:**\n\n`{results}`")
         else:
             await msg.edit("`Could not find any text in this image or processing failed.`")
-            
+
     except Exception as er:
         LOGS.exception(er)
         await msg.edit(f"`Error: {str(er)}`")

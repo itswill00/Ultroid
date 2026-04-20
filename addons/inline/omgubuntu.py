@@ -6,10 +6,11 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 
+from bs4 import BeautifulSoup as bs
 from telethon.tl.custom import Button
 from telethon.tl.types import InputWebDocument as wb
-from .. import async_searcher, in_pattern, InlinePlugin, asst
-from bs4 import BeautifulSoup as bs
+
+from .. import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -

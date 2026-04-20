@@ -19,7 +19,6 @@ from telethon.tl.types import DocumentAttributeAudio, DocumentAttributeVideo
 from telethon.tl.types import InputWebDocument as wb
 
 from pyUltroid.fns.helper import (
-    bash,
     fast_download,
     humanbytes,
     numerize,
@@ -296,7 +295,7 @@ async def _(event):
             thumb=thumb,
         )
         await event.edit(text, file=file.media, buttons=button)
-    
+
     # Native Python I/O instead of OS Subprocess
     try:
         os.remove(f"{vid_id}.jpg")

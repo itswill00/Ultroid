@@ -38,8 +38,6 @@ import glob
 import io
 import os
 import re
-import secrets
-from asyncio.exceptions import TimeoutError as AsyncTimeout
 
 try:
     import cv2
@@ -55,7 +53,7 @@ try:
 except ImportError:
     WebShot = None
 
-from telethon import functions, types
+from telethon import types
 from telethon.errors.rpcerrorlist import MessageTooLongError, YouBlockedUserError
 from telethon.tl.types import (
     ChannelParticipantAdmin,
@@ -69,17 +67,20 @@ from . import (
     HNDLR,
     LOGS,
     ULTConfig,
-    async_searcher,
     bash,
     check_filename,
     con,
     download_file,
     eor,
     get_string,
+    inline_mention,
+    is_url_ok,
+    json_parser,
+    mediainfo,
     ultroid_bot,
+    ultroid_cmd,
 )
 from . import humanbytes as hb
-from . import inline_mention, is_url_ok, json_parser, mediainfo, ultroid_cmd
 
 
 @ultroid_cmd(pattern="tr( (.*)|$)", manager=True)

@@ -358,7 +358,7 @@ async def _internal_transfer_to_telegram(
     hash_md5 = hashlib.md5()
     uploader = ParallelTransferrer(client)
     part_size, part_count, is_large = await uploader.init_upload(file_id, file_size)
-    
+
     # Background Progress Reporter
     async def progress_reporter():
         while uploader.senders is not None:
@@ -372,7 +372,7 @@ async def _internal_transfer_to_telegram(
             await asyncio.sleep(1) # Faster refresh rate for VPS speed
 
     reporter_task = asyncio.create_task(progress_reporter())
-    
+
     buffer = bytearray()
     try:
         # Use part_size as chunk_size for perfect alignment
@@ -391,10 +391,10 @@ async def _internal_transfer_to_telegram(
                 buffer.extend(data[cutoff:])
             else:
                 buffer.extend(data)
-        
+
         if len(buffer) > 0:
             await uploader.upload(bytes(buffer))
-            
+
         await uploader.finish_upload()
     finally:
         reporter_task.cancel()

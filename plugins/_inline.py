@@ -67,7 +67,7 @@ async def inline_alive(o):
         mime_type = "video/mp4"
     else:
         mime_type = "image/jpg"
-    
+
     RES = [
         await o.builder.article(
             text=MSG,
@@ -369,7 +369,7 @@ async def ibuild(e):
     builder = e.builder
     if not (n and n.isdigit()):
         return
-    
+
     # Retrieve from DB instead of memory
     ok = udB.get_key(f"STUFF_{n}")
     if not ok:
@@ -380,7 +380,7 @@ async def ibuild(e):
     btn = ok.get("button")
     if not (pic or txt):
         txt = "Hey!"
-    
+
     if pic:
         try:
             include_media = True
@@ -432,7 +432,7 @@ async def ibuild(e):
             return await e.answer(results)
         except Exception as er:
             LOGS.exception(er)
-    
+
     result = [
         await builder.article("Ultroid Op", text=txt, link_preview=False, buttons=btn)
     ]
@@ -442,14 +442,14 @@ async def ibuild(e):
 async def something(e, msg, media, button, reply=True, chat=None):
     if e.client._bot:
         return await e.reply(msg, file=media, buttons=button)
-    
+
     # Increment counter in DB
     num = (udB.get_key("STUFF_COUNT") or 0) + 1
     udB.set_key("STUFF_COUNT", num)
-    
+
     # Save to DB instead of memory
     udB.set_key(f"STUFF_{num}", {"msg": msg, "media": media, "button": button})
-    
+
     try:
         res = await e.client.inline_query(asst.me.username, f"stf{num}")
         return await res[0].click(

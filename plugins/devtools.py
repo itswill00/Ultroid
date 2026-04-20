@@ -34,8 +34,9 @@ try:
 except ImportError:
     from pyUltroid.fns.tools import safe_load
 
-from . import upload_file as uf
 from telethon.tl import functions
+
+from . import upload_file as uf
 
 fn = functions
 
@@ -334,13 +335,13 @@ async def aexec(code, event):
         '__builtins__': __builtins__,
         '__name__': __name__
     }
-    
+
     # Format the async function definition
     wrapped_code = (
         'async def __aexec(e, client):\n' +
         '\n'.join(f'    {line}' for line in code.split('\n'))
     )
-    
+
     try:
         # Execute the wrapped code in our custom namespace
         exec(wrapped_code, exec_globals)

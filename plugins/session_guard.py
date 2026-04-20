@@ -35,7 +35,7 @@ except ImportError:
     # Telethon rename/move fallback
     from telethon.tl.functions.auth import ResetAuthorizationsRequest
 
-from . import udB, ultroid_bot, ultroid_cmd, LOGS
+from . import LOGS, udB, ultroid_bot, ultroid_cmd
 
 help_session_guard = __doc__
 

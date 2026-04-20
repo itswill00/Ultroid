@@ -21,7 +21,7 @@ from pyUltroid._misc._wrappers import eod, eor
 
 from .. import *
 from ..dB._core import LIST
-from . import CMD_HELP, SUDO_M  # ignore: pylint
+from . import SUDO_M  # ignore: pylint
 
 ALIVE_NAME = ultroid_bot.me.first_name
 BOTLOG_CHATID = BOTLOG = udB.get_key("LOG_CHANNEL")

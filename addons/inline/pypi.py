@@ -4,16 +4,11 @@
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
-from . import *
 import hashlib
-import inspect
 import os
 import re
-from datetime import datetime
-from html import unescape
-from random import choice
-from re import compile as re_compile
-from bs4 import BeautifulSoup as bs
+
+from . import *
 
 try:
     from markdownify import markdownify as md
@@ -22,8 +17,6 @@ except ImportError:
     from markdownify import markdownify as md
 
 from telethon import Button
-from telethon.tl.alltlobjects import LAYER, tlobjects
-from telethon.tl.types import DocumentAttributeAudio as Audio
 from telethon.tl.types import InputWebDocument as wb
 from telethon.tl.types import MessageEntityTextUrl
 
@@ -84,7 +77,7 @@ async def inline_pypi_handler(event):
                     title="sᴇᴀʀᴄʜ ᴘʏᴘɪ",
                     thumb=wb(pypimg, 0, "image/jpeg", []),
                     content=wb(pypimg, 0, "image/jpeg", []),
-                    text=f"**ᴘʏᴘɪ sᴇᴀʀᴄʜ**\n\nʏᴏᴜ ᴅɪᴅɴ'ᴛ sᴇᴀʀᴄʜ ғᴏʀ ᴀɴʏᴛʜɪɴɢ.",
+                    text="**ᴘʏᴘɪ sᴇᴀʀᴄʜ**\n\nʏᴏᴜ ᴅɪᴅɴ'ᴛ sᴇᴀʀᴄʜ ғᴏʀ ᴀɴʏᴛʜɪɴɢ.",
                     buttons=[
                         Button.switch_inline(
                             "sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",

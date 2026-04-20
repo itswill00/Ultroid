@@ -72,7 +72,6 @@ except ImportError:
     Image = None
     LOGS.info(f"{__file__}: PIL  not Installed.")
 
-from . import upload_file as upf
 from telethon.errors.rpcerrorlist import (
     ChatSendMediaForbiddenError,
     MessageDeleteForbiddenError,
@@ -87,6 +86,7 @@ from . import (
     udB,
     ultroid_cmd,
 )
+from . import upload_file as upf
 
 
 @ultroid_cmd(pattern="color$")

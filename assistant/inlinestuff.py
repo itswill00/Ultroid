@@ -394,7 +394,7 @@ async def piston_run(event):
     output_text = output["run"].get("output") or get_string("instu_4")
     if len(output_text) > 3000:
         output_text = f"{output_text[:3000]}..."
-    
+
     result = await event.builder.article(
         title="Result",
         description=output_text,

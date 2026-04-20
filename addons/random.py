@@ -20,8 +20,9 @@
 • `{i}random celebrity`
 """
 
-from bs4 import BeautifulSoup as bs
 import re
+
+from bs4 import BeautifulSoup as bs
 
 from . import HNDLR, async_searcher, ultroid_cmd
 

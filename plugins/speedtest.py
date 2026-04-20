@@ -17,7 +17,7 @@
 import asyncio
 from datetime import datetime
 
-from . import HOSTED_ON, LOGS, ultroid_cmd, get_string, humanbytes, asst_cmd
+from . import HOSTED_ON, LOGS, asst_cmd, humanbytes, ultroid_cmd
 
 try:
     import speedtest
@@ -30,7 +30,7 @@ def _run_speedtest(use_image=False):
     """Execution logic in a separate thread."""
     if not speedtest:
         return {"error": "'speedtest-cli' package is missing. Install it: pip install speedtest-cli"}
-    
+
     try:
         s = speedtest.Speedtest()
         s.get_best_server()
@@ -62,37 +62,37 @@ async def turbo_speedtest(ult):
     except (IndexError, AttributeError):
         match = ""
     x = await ult.eor("`Measuring network performance...`")
-    
+
     try:
         # Step 1: Initialize
         loop = asyncio.get_running_loop()
         s = speedtest.Speedtest()
-        
+
         await x.edit("`Selecting optimal service node...`")
         best = await asyncio.to_thread(s.get_best_server)
-        
+
         # Step 2: Download
         await x.edit(f"`Measuring download throughput...` \n**Node:** `{best['sponsor']} ({best['name']})`")
         await asyncio.to_thread(s.download)
-        
+
         # Step 3: Upload
         await x.edit("`Measuring upload throughput...` \n**Latency:** `{:.2f} ms`".format(s.results.ping))
         await asyncio.to_thread(s.upload)
-        
+
         # Step 4: Finalize
         if "image" in match:
             await x.edit("`Exporting diagnostic report...`")
             share_url = await asyncio.to_thread(s.results.share)
-        
+
         res = s.results.dict()
-        
+
         # UI Formatting (Professional & Neutral)
-        down = humanbytes(res['download'] / 8) + "/s" 
+        down = humanbytes(res['download'] / 8) + "/s"
         up = humanbytes(res['upload'] / 8) + "/s"
         isp = res['client']['isp']
         server = f"{res['server']['sponsor']} ({res['server']['name']})"
         ping = f"{res['ping']:.2f} ms"
-        
+
         text = (
             f"**Network Statistics**\n"
             f"---"
@@ -105,7 +105,7 @@ async def turbo_speedtest(ult):
             f"\n---"
             f"\n⚙️ `{HOSTED_ON}` | `{datetime.now().strftime('%H:%M %Z')}`"
         )
-        
+
         if "image" in match and share_url:
             await ult.client.send_file(
                 ult.chat_id,
@@ -116,7 +116,7 @@ async def turbo_speedtest(ult):
             await x.delete()
         else:
             await x.edit(text)
-            
+
     except Exception as e:
         LOGS.exception(e)
         await x.edit(f"**[ ❌ ] Speedtest Error:**\n`{str(e)}`")

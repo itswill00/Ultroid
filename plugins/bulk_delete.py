@@ -20,11 +20,9 @@
     Reply to an old message, then delete all your messages from that point to current.
 """
 
-import asyncio
 
-from telethon.tl.functions.channels import DeleteMessagesRequest as ChannelDeleteMsg
 
-from . import udB, ultroid_cmd, LOGS
+from . import LOGS, ultroid_cmd
 
 help_bulkdelete = __doc__
 

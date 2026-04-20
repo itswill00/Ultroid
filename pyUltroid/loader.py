@@ -54,7 +54,7 @@ class Loader:
                             and not entry.name.startswith("__")
                         ):
                             files.append(entry.path)
-            
+
             if exclude:
                 exclude_set = {f"{self.path}/{x}.py" for x in exclude if not x.startswith("_")}
                 files = [f for f in files if f not in exclude_set]
@@ -63,7 +63,7 @@ class Loader:
             self._logger.info(
                 f"• Installing {self.key} Plugins || Count : {len(files)} •"
             )
-        
+
         for plugin in sorted(files):
             if func == import_module:
                 plugin = plugin.replace(".py", "").replace("/", ".").replace("\\", ".")
@@ -74,7 +74,7 @@ class Loader:
             except Exception as exc:
                 self._logger.error(f"pyUltroid - {self.key} - ERROR - {plugin}: {exc}")
                 continue
-            
+
             if callable(after_load):
                 p_name = plugin.split(".")[-1] if func == import_module else plugin
                 after_load(self, modl, plugin_name=p_name)

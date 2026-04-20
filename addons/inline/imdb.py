@@ -19,7 +19,7 @@ except ImportError:
 
 from telethon.tl.types import InputWebDocument as wb
 
-from . import LOGS, callback, in_pattern, udB, async_searcher, asst
+from . import LOGS, asst, async_searcher, callback, in_pattern, udB
 
 __doc__ = f"""
 ✘ Commands Available -
@@ -189,12 +189,12 @@ async def inline_imdb_command(event):
             noresult = movie_name.replace("y=", "")
         else:
             noresult = movie_name
-        
+
         return await event.answer(
             [
                 await event.builder.article(
                     title="Nᴏ ʀᴇsᴜʟᴛs ғᴏᴜɴᴅ",
-                    text=f"**IMDʙ**\nTʀʏ ᴀɴᴏᴛʜᴇʀ sᴇᴀʀᴄʜ",
+                    text="**IMDʙ**\nTʀʏ ᴀɴᴏᴛʜᴇʀ sᴇᴀʀᴄʜ",
                     thumb=wb(imdbp, 0, "image/jpeg", []),
                     buttons=[
                         Button.switch_inline(

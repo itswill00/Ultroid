@@ -12,11 +12,12 @@ __doc__ = get_help("help_beautify")
 
 import os
 import random
+from secrets import token_hex
+from urllib.parse import urlencode
 
 from telethon.utils import get_display_name
-from urllib.parse import urlencode
-from . import Carbon, ultroid_cmd, get_string, inline_mention, LOGS
-from secrets import token_hex
+
+from . import LOGS, Carbon, get_string, inline_mention, ultroid_cmd
 
 try:
     import playwright
@@ -143,7 +144,7 @@ async def pass_on(ult):
             if not theme and spli[1] in RaySoTheme:
                 theme = spli[1]
         except Exception as sam:
-            LOGS.exception(sam)    
+            LOGS.exception(sam)
     if not text:
         await proc.eor("No text to beautify!")
         return

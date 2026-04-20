@@ -27,7 +27,7 @@ import asyncio
 import os
 from datetime import datetime
 
-from . import udB, ultroid_bot, ultroid_cmd, LOGS
+from . import LOGS, udB, ultroid_bot, ultroid_cmd
 
 help_log_watcher = __doc__
 

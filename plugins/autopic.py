@@ -16,16 +16,16 @@
 """
 
 import asyncio
-
 import os
 import random
-from random import shuffle
-import aiohttp
 import re
-from telethon.tl.functions.photos import UploadProfilePhotoRequest
-from PIL import Image
+from random import shuffle
 
-from pyUltroid.fns.helper import download_file, fast_download
+import aiohttp
+from PIL import Image
+from telethon.tl.functions.photos import UploadProfilePhotoRequest
+
+from pyUltroid.fns.helper import fast_download
 
 from . import LOGS, get_help, get_string, udB, ultroid_bot, ultroid_cmd
 
@@ -34,13 +34,13 @@ __doc__ = get_help("help_autopic")
 
 async def get_google_images(query: str):
     """Extract image URLs from Google Images search results with fallbacks"""
-    
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
-    
+
     search_url = f"https://www.google.com/search?q={query}&tbm=isch"
-    
+
     # Domains to exclude
     excluded_domains = [
         'gstatic.com',
@@ -48,10 +48,10 @@ async def get_google_images(query: str):
         'googleusercontent.com',
         'ssl.google.com'
     ]
-    
+
     def is_valid_url(url):
         return not any(domain in url.lower() for domain in excluded_domains)
-    
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(search_url, headers=headers) as response:
@@ -102,7 +102,7 @@ async def get_google_images(query: str):
                     img_urls.append(url)
 
         return img_urls
-                
+
     except Exception as e:
         print(f"Error fetching Google images: {e}")
         return []

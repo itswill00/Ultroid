@@ -17,7 +17,7 @@ def _fix_logging(handler):
         open_func = self._builtin_open
         return open_func(self.baseFilename, self.mode)
 
-    setattr(handler, "_open", _new_open)
+    handler._open = _new_open
 
 
 def _ask_input():

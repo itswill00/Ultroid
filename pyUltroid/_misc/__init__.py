@@ -34,7 +34,7 @@ class _SudoManager:
         sudos = db.get_key("SUDOS") or []
         if isinstance(sudos, str):
             sudos = [x for x in sudos.split()]
-        
+
         # Robust integer casting
         cleaned = []
         for x in sudos:
@@ -100,7 +100,7 @@ class _SudoManager:
         fsudos = db.get_key("FULLSUDO") or []
         if isinstance(fsudos, str):
             fsudos = fsudos.split()
-        
+
         # Ensure all IDs are integers
         cleaned_fs = []
         for x in fsudos:
@@ -108,11 +108,11 @@ class _SudoManager:
                 cleaned_fs.append(int(x))
             except (ValueError, TypeError):
                 continue
-        
+
         # Combine with owner
         if self.owner and self.owner not in cleaned_fs:
             cleaned_fs.append(self.owner)
-            
+
         self._fullsudos = cleaned_fs
         return self._fullsudos
 
@@ -145,7 +145,7 @@ class _SudoManager:
         if match:
             cmd_name = match.group(0).lower()
 
-        # If we can't extract a name, allow for safety or block? 
+        # If we can't extract a name, allow for safety or block?
         # Blocking is safer but might break weird patterns.
         if not cmd_name:
             return True
@@ -153,7 +153,7 @@ class _SudoManager:
         allowed = scopes[sender_id]
         if isinstance(allowed, str):
             allowed = [allowed]
-        
+
         # Check against allowed list
         return cmd_name in [c.lower() for c in allowed]
 

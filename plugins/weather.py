@@ -23,9 +23,7 @@ from datetime import timedelta
 import aiohttp
 import pytz
 
-from . import LOGS
-
-from . import async_searcher, get_string, udB, ultroid_cmd
+from . import LOGS, async_searcher, get_string, udB, ultroid_cmd
 
 
 async def get_timezone(offset_seconds, use_utc=False):
@@ -138,7 +136,7 @@ async def air_pollution(event):
         await event.eor("`No Location was Given...`", time=5)
         return
     if input_str.lower() == "perth":
-        geo_url = f"https://geocode.xyz/perth%20au?json=1"
+        geo_url = "https://geocode.xyz/perth%20au?json=1"
     else:
         geo_url = f"https://geocode.xyz/{input_str}?json=1"
     geo_data = await async_searcher(geo_url, re_json=True)

@@ -2,7 +2,6 @@
 # Backup seluruh key-value DB ke Telegram (Log Channel)
 # Restore dari file backup yang di-reply
 
-from . import get_help
 
 __doc__ = """
 » Commands Available -
@@ -20,7 +19,6 @@ __doc__ = """
 """
 
 import json
-import re as re_module
 from datetime import datetime
 from io import BytesIO
 
@@ -35,7 +33,6 @@ from . import (
     eod,
     eor,
     udB,
-    ultroid_bot,
     ultroid_cmd,
 )
 
@@ -352,6 +349,7 @@ async def cb_restore_cancel(event):
 # Background Tasks (Self-Healing Backup)
 # ──────────────────────────────────────────────────────────────
 import asyncio
+
 
 async def auto_backup_loop():
     """Jalankan backup otomatis setiap 24 jam."""

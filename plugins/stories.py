@@ -18,14 +18,21 @@
 import os
 import re
 from contextlib import suppress
-from . import ultroid_cmd, get_string, LOGS
 
 from telethon import TelegramClient
-from telethon.tl.functions.channels import GetFullChannelRequest
-from telethon.tl.types import User, UserFull, InputPeerSelf, InputPrivacyValueAllowAll, Channel, InputUserSelf
-from telethon.tl.functions.stories import SendStoryRequest, GetStoriesByIDRequest
-from telethon.tl.functions.users import GetFullUserRequest
 from telethon.events import NewMessage
+from telethon.tl.functions.channels import GetFullChannelRequest
+from telethon.tl.functions.stories import GetStoriesByIDRequest, SendStoryRequest
+from telethon.tl.functions.users import GetFullUserRequest
+from telethon.tl.types import (
+    Channel,
+    InputPeerSelf,
+    InputPrivacyValueAllowAll,
+    User,
+    UserFull,
+)
+
+from . import LOGS, get_string, ultroid_cmd
 
 
 @ultroid_cmd("setstory")
@@ -41,7 +48,7 @@ async def setStory(event: NewMessage.Event):
             InputPeerSelf(),
             reply.media,
             privacy_rules=[
-             InputPrivacyValueAllowAll()   
+             InputPrivacyValueAllowAll()
             ]
         )
     )
@@ -55,22 +62,22 @@ async def setStory(event: NewMessage.Event):
 async def downloadUserStories(event: NewMessage.Event):
     replied = await event.get_reply_message()
     message = await event.eor(get_string("com_1"))
-    
+
     try:
         text_input = event.text.split(maxsplit=1)[1]
         # Check if input is a Telegram story link
         story_link_pattern = r"https?://t\.me/([^/]+)/s/(\d+)"
         match = re.match(story_link_pattern, text_input)
-        
+
         if match:
             # Extract username and story ID from link
             username = match.group(1)
             story_id = int(match.group(2))
-            
+
             try:
                 # Get the entity for the username
                 entity = await event.client.get_entity(username)
-                
+
                 # Using GetStoriesByIDRequest to fetch the specific story
                 stories_response = await event.client(
                     GetStoriesByIDRequest(
@@ -79,7 +86,7 @@ async def downloadUserStories(event: NewMessage.Event):
                     )
                 )
                 print(stories_response)
-                
+
                 if not stories_response.stories:
                     return await message.eor("ERROR: Story not found or expired!")
 
@@ -93,18 +100,18 @@ async def downloadUserStories(event: NewMessage.Event):
                         file=file
                     )
                     os.remove(file)
-                
+
                 return await message.eor("**Uploaded Story!**", time=5)
 
             except Exception as er:
                 await message.eor(f"ERROR while fetching story: __{er}__")
                 LOGS.exception(er)
                 return
-        
+
         # If not a story link, proceed with the original functionality
         username = text_input
-        
-    except IndexError as er:
+
+    except IndexError:
         LOGS.exception
         if replied and isinstance(replied.sender, User):
             username = replied.sender_id
@@ -112,12 +119,12 @@ async def downloadUserStories(event: NewMessage.Event):
             return await message.eor(
                 "Please reply to a user, provide username or story link!"
             )
-            
+
     with suppress(ValueError):
         username = int(username)
 
     stories = None
-    
+
     try:
         entity = await event.client.get_entity(username)
         if isinstance(entity, Channel):
@@ -128,7 +135,7 @@ async def downloadUserStories(event: NewMessage.Event):
         else:
             full_user: UserFull = (
                 await event.client(GetFullUserRequest(id=username))
-            ).full_user 
+            ).full_user
             stories = full_user.stories
     except Exception as er:
         await message.eor(f"ERROR: __{er}__")

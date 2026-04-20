@@ -182,7 +182,7 @@ async def _(event):
             input_ = previous_message.message
         else:
             return await eod(event, "Give me some text to encode!", time=5)
-    
+
     output = bf(input_)
     if not output:
         return await event.eor("Failed to generate Brainfuck code.")
@@ -198,7 +198,7 @@ async def _(event):
             input_ = previous_message.message
         else:
             return await eod(event, "Give me some Brainfuck code to interpret!", time=5)
-    
+
     try:
         output = evaluate(input_)
         if not output:

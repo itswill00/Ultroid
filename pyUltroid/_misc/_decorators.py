@@ -14,7 +14,6 @@ from pathlib import Path
 from time import gmtime, strftime
 from traceback import format_exc
 
-from telethon import Button
 from telethon import __version__ as telever
 from telethon import events
 from telethon.errors.common import AlreadyInConversationError
@@ -37,17 +36,16 @@ from telethon.utils import get_display_name
 from pyUltroid.exceptions import DependencyMissingError
 from strings import get_string
 
-from ._wrappers import eod, eor
 from .. import *
 from .. import _ignore_eval
 from ..dB import DEVLIST
 from ..dB._core import LIST, LOADED
 from ..fns.admins import admin_check
-from ..fns.helper import bash
 from ..fns.helper import time_formatter as tf
 from ..version import __version__ as pyver
 from ..version import ultroid_version as ult_ver
-from . import SUDO_M, owner_and_sudos, ULT_CONFIG
+from . import SUDO_M, ULT_CONFIG, owner_and_sudos
+from ._wrappers import eod
 
 # Static Info for logging (optimized)
 _SYS_INFO = f"""
@@ -104,7 +102,7 @@ def ultroid_cmd(
         async def wrapp(ult):
             # Background logging to avoid blocking
             asyncio.create_task(command_logger(ult, pattern))
-            
+
             if not ult.out:
                 if fullsudo and only_devs:
                     return
@@ -116,21 +114,21 @@ def ultroid_cmd(
                     return await eod(ult, get_string("py_d1"))
                 if fullsudo and ult.sender_id not in SUDO_M.fullsudos:
                     return await eod(ult, get_string("py_d2"), time=15)
-            
+
             chat = ult.chat
             if hasattr(chat, "title"):
                 if (
                     "#noub" in chat.title.lower()
                     and not (chat.admin_rights or chat.creator)
-                    and not (ult.sender_id in DEVLIST)
+                    and ult.sender_id not in DEVLIST
                 ):
                     return
-            
+
             if ult.is_private and (groups_only or admins_only):
                 return await eod(ult, get_string("py_d3"))
             elif admins_only and not (chat.admin_rights or chat.creator):
                 return await eod(ult, get_string("py_d5"))
-            
+
             if only_devs and not ULT_CONFIG.get("I_DEV"):
                 return await eod(ult, get_string("py_d4").format(HNDLR), time=10)
 
@@ -162,21 +160,21 @@ def ultroid_cmd(
                 log_channel = ULT_CONFIG.get("LOG_CHANNEL")
                 if not log_channel:
                     return
-                
+
                 date = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 naam = get_display_name(chat)
                 ftext = f"**Ultroid Client Error:** @UltroidSupportChat\n{_SYS_INFO}\n"
                 ftext += f"--------START CRASH LOG--------\n**Date:** `{date}`\n**Group:** `{ult.chat_id}` {naam}\n"
                 ftext += f"**Sender:** `{ult.sender_id}`\n**Event:** `{ult.text}`\n"
                 ftext += f"**Traceback:**\n`{format_exc()}`\n--------END CRASH LOG--------"
-                
+
                 if len(ftext) > 4096:
                     with BytesIO(ftext.encode()) as file:
                         file.name = "logs.txt"
                         error_log = await asst.send_file(log_channel, file, caption="**Crash Log**")
                 else:
                     error_log = await asst.send_message(log_channel, ftext)
-                    
+
                 if ult.out:
                     await ult.edit(f"<b><a href={error_log.message_link}>[An error occurred]</a></b>", parse_mode="html")
 
@@ -185,7 +183,7 @@ def ultroid_cmd(
         _add_new = allow_sudo and HNDLR != SUDO_HNDLR
         black_list_chats = ULT_CONFIG.get("BLACKLIST_CHATS")
         chats = list(black_list_chats) if black_list_chats else None
-        
+
         # Main Handler registration
         cmd = compile_pattern(pattern, HNDLR) if pattern else None
         ultroid_bot.add_event_handler(
@@ -199,12 +197,12 @@ def ultroid_cmd(
                 blacklist_chats=bool(chats),
             ),
         )
-        
+
         # Sudo & Edits Handler registration (kept same as before)
         if _add_new and pattern:
             scmd = compile_pattern(pattern, SUDO_HNDLR)
             ultroid_bot.add_event_handler(wrapp, NewMessage(pattern=scmd, incoming=True, forwards=False, func=func, chats=chats, blacklist_chats=bool(chats)))
-            
+
         if ULT_CONFIG.get("TAKE_EDITS"):
             ultroid_bot.add_event_handler(wrapp, MessageEdited(pattern=cmd, forwards=False, func=lambda x: not x.via_bot_id and not (x.is_channel and x.chat.broadcast), chats=chats, blacklist_chats=bool(chats)))
 
@@ -225,7 +223,7 @@ def ultroid_cmd(
                     await dec(ult)
                 except Exception as er:
                     LOGS.exception(er)
-            
+
             # Use assistant handler (default "/")
             mcmd = compile_pattern(pattern, "/") if pattern else None
             asst.add_event_handler(manager_cmd, NewMessage(pattern=mcmd, forwards=False, incoming=True, func=func, chats=chats, blacklist_chats=bool(chats)))

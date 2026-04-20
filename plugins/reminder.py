@@ -25,9 +25,7 @@ import asyncio
 import time
 from datetime import datetime
 
-from pyUltroid.fns.admins import ban_time
-
-from . import udB, ultroid_bot, ultroid_cmd, LOGS
+from . import LOGS, ultroid_bot, ultroid_cmd
 
 help_reminder = __doc__
 

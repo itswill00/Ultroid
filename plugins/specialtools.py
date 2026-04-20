@@ -19,7 +19,7 @@
 import os
 import time
 
-from telethon.tl.types import InputWebDocument, DocumentAttributeVideo
+from telethon.tl.types import DocumentAttributeVideo
 
 from pyUltroid.fns.tools import metadata
 

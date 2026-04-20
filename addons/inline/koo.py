@@ -6,9 +6,10 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from telethon.tl.types import InputWebDocument as wb
 from telethon.tl.custom import Button
-from . import in_pattern, InlinePlugin, async_searcher, asst
+from telethon.tl.types import InputWebDocument as wb
+
+from . import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -

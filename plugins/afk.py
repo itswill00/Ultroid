@@ -27,7 +27,7 @@ from . import (
     udB,
     ultroid_bot,
     ultroid_cmd,
-    upload_file
+    upload_file,
 )
 
 old_afk_msg = []

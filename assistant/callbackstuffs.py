@@ -24,9 +24,9 @@ from telethon import Button, events
 from telethon.tl.types import MessageMediaWebPage
 from telethon.utils import get_peer_id
 
-from pyUltroid.fns.helper import fast_download, progress, catbox_upload
+from pyUltroid.dB.verify_db import add_captcha_verified, add_verified
+from pyUltroid.fns.helper import catbox_upload, fast_download, progress
 from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
-from pyUltroid.dB.verify_db import add_verified, add_captcha_verified
 from pyUltroid.startup.loader import Loader
 
 from . import *
@@ -1094,7 +1094,7 @@ async def hhh(e):
             return await conv.send_message(
                 "Terminated!", buttons=get_back_button("cbs_chatbot")
             )
-        
+
         # Phase 4 Bugfix: Bypass Telethon's PhotoSize ID generation bug
         if (
             not (msg.text).startswith("/")
@@ -1115,7 +1115,7 @@ async def hhh(e):
                     f"**Upload Failed:**\n`{str(er)}`",
                     buttons=get_back_button("cbs_chatbot"),
                 )
-        
+
         udB.set_key("STARTMEDIA", url)
         await conv.send_message("Done!", buttons=get_back_button("cbs_chatbot"))
 
@@ -1337,10 +1337,10 @@ async def fdroid_dler(event):
 async def process_verification(event):
     """Signals success for identity verify."""
     user_id = int(event.pattern_match.group(1).decode("utf-8"))
-    
+
     if event.sender_id != user_id:
         return await event.answer("❌ This verification is not for you.", alert=True)
-    
+
     add_verified(user_id)
     await event.answer("Identity recognized.", alert=True)
     await event.edit(
@@ -1356,13 +1356,13 @@ async def process_captcha(event):
     user_id = int(event.pattern_match.group(1).decode("utf-8"))
     got = int(event.pattern_match.group(2).decode("utf-8"))
     ans = int(event.pattern_match.group(3).decode("utf-8"))
-    
+
     if event.sender_id != user_id:
         return await event.answer("❌ This challenge is not for you.", alert=True)
-        
+
     if got != ans:
         return await event.answer("❌ Incorrect answer. Please try again.", alert=True)
-    
+
     add_captcha_verified(user_id)
     await event.answer("Verification complete.", alert=True)
     await event.edit(

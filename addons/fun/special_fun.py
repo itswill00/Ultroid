@@ -5,25 +5,24 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-import os
-import time
 import asyncio
-import pytz
+import os
 from datetime import datetime as dt
 from random import choice
-from bs4 import BeautifulSoup as bs
-from requests import Session
-from cloudscraper import create_scraper
 
-from pyUltroid.fns.tools import get_google_images
+import pytz
+from bs4 import BeautifulSoup as bs
+from cloudscraper import create_scraper
+from requests import Session
+
 from plugins import (
     async_searcher,
-    eod,
     get_string,
     quotly,
     ultroid_bot,
     ultroid_cmd,
 )
+from pyUltroid.fns.tools import get_google_images
 
 from .beautify import all_col
 
@@ -82,7 +81,7 @@ async def hbd(event):
         hp = f"{okk} Days Left 🥳"
     elif dan > 0:
         hp = f"{ish} Days Left 🥳"
-    
+
     if month == "01": sign = "Capricorn" if (day < 20) else "Aquarius"
     elif month == "02": sign = "Aquarius" if (day < 19) else "Pisces"
     elif month == "03": sign = "Pisces" if (day < 21) else "Aries"
@@ -95,7 +94,7 @@ async def hbd(event):
     elif month == "10": sign = "Libra" if (day < 23) else "Scorpio"
     elif month == "11": sign = "Scorpio" if (day < 22) else "Sagittarius"
     elif month == "12": sign = "Sagittarius" if (day < 22) else "Capricorn"
-    
+
     json = await async_searcher(
         f"https://aztro.sameerkumar.website/?sign={sign}&day=today",
         post=True,

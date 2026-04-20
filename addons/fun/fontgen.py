@@ -14,7 +14,6 @@
 
 import string
 
-
 from . import eod, ultroid_cmd
 
 _default = string.ascii_letters

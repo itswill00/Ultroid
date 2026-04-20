@@ -11,7 +11,6 @@ import sys
 import time
 from logging import Logger
 
-from telethonpatch import TelegramClient
 from telethon import utils as telethon_utils
 from telethon.errors import (
     AccessTokenExpiredError,
@@ -19,6 +18,7 @@ from telethon.errors import (
     ApiIdInvalidError,
     AuthKeyDuplicatedError,
 )
+from telethonpatch import TelegramClient
 
 from ..configs import Var
 from . import *
@@ -69,7 +69,7 @@ class UltroidClient(TelegramClient):
             self.logger.critical("API ID and API_HASH combination does not match!")
 
             sys.exit()
-        except (AuthKeyDuplicatedError, EOFError) as er:
+        except (AuthKeyDuplicatedError, EOFError):
             if self._handle_error:
                 self.logger.critical("String session expired. Create new!")
                 return sys.exit()
@@ -87,7 +87,7 @@ class UltroidClient(TelegramClient):
         if self.me.bot:
             me = f"@{self.me.username}"
         else:
-            setattr(self.me, "phone", None)
+            self.me.phone = None
             me = self.full_name
         if self._log_at:
             self.logger.info(f"Logged in as {me}")

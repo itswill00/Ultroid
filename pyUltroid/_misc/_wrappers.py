@@ -34,9 +34,9 @@ async def eor(event, text=None, time=None, link_preview=False, edit_time=None, *
             except MessageNotModifiedError:
                 ok = event
     else:
-        from pyUltroid import asst, udB
+        from pyUltroid import asst
         if (
-            asst 
+            asst
             and asst.me.id != event.client.me.id
         ):
             try:
@@ -46,7 +46,7 @@ async def eor(event, text=None, time=None, link_preview=False, edit_time=None, *
                 )
             except Exception:
                 pass # Fallback to Userbot if Asst fails
-        
+
         ok = await event.client.send_message(
             event.chat_id, text, link_preview=link_preview, reply_to=reply_to, **args
         )
@@ -74,5 +74,5 @@ async def _try_delete(event):
         LOGS.exception(er)
 
 
-setattr(Message, "eor", eor)
-setattr(Message, "try_delete", _try_delete)
+Message.eor = eor
+Message.try_delete = _try_delete

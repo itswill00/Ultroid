@@ -9,24 +9,33 @@ as well as manual `/dl`, `/yta`, and `/ytv` command triggers.
 # Ultroid Media Downloader Service
 # Automatic TikTok, Instagram, and More
 
+import asyncio
 import os
 import re
+import shutil
 import time
 import uuid
-import asyncio
-import shutil
+
 try:
     from yt_dlp.utils import DownloadCancelled
 except ImportError:
     class DownloadCancelled(Exception): pass
 from telethon import Button
-from pyUltroid import asst, udB, LOGS, _ult_cache, ultroid_bot
+
+from pyUltroid import LOGS, _ult_cache, asst, udB, ultroid_bot
 from pyUltroid._misc import owner_and_sudos
-from pyUltroid.dB.base import KeyManager
-from pyUltroid.fns.extractor import extractor, TIKTOK_RE, INSTAGRAM_RE, TWITTER_RE, ADULT_RE, YOUTUBE_RE
-from pyUltroid.fns.helper import humanbytes, time_formatter, progress, uploadable
-from pyUltroid.fns.admins import admin_check
 from pyUltroid._misc._assistant import asst_cmd, callback
+from pyUltroid.dB.base import KeyManager
+from pyUltroid.fns.admins import admin_check
+from pyUltroid.fns.extractor import (
+    ADULT_RE,
+    INSTAGRAM_RE,
+    TIKTOK_RE,
+    TWITTER_RE,
+    YOUTUBE_RE,
+    extractor,
+)
+from pyUltroid.fns.helper import humanbytes, progress, uploadable
 
 # Database Manager for Disabled Chats
 DisabledDL = KeyManager("DISABLED_DL_CHATS", cast=list)
@@ -84,9 +93,9 @@ async def show_dl_prompt(event, url):
         "sender": event.sender_id,
         "time": _now
     }
-    
+
     source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
-    
+
     if "NSFW" in source or "Universal" in source:
         buttons = [
             [
@@ -104,7 +113,7 @@ async def show_dl_prompt(event, url):
             ],
             [Button.inline("🗑️ Dismiss", data="close_dl")]
         ]
-    
+
     await asst.send_message(
         event.chat_id,
         f"**[ {source} | Downloader ]**\nSelect download format:",
@@ -117,13 +126,13 @@ async def dler_process(event, url, fmt):
     start_time = time.time()
     # If the event is a callback, edit it. If it's a message, reply/send.
     is_callback = hasattr(event, "answer")
-    
+
     status_msg = await asst.send_message(event.chat_id, f"`[DL] Processing {fmt.upper()}...`")
-    
+
     valid_files = []
     job_id = str(uuid.uuid4())[:8]
     _ult_cache["job_owners"][job_id] = event.sender_id
-    
+
     # --- Progress Hooks ---
     loop = asyncio.get_running_loop()
     last_update = [0]
@@ -144,7 +153,7 @@ async def dler_process(event, url, fmt):
                     try:
                         header = f"📥 Downloading {fmt.upper()} to VPS..."
                         asyncio.run_coroutine_threadsafe(
-                            progress(current, total, status_msg, start_time, header, buttons=cancel_btn), 
+                            progress(current, total, status_msg, start_time, header, buttons=cancel_btn),
                             loop
                         )
                     except Exception:
@@ -152,7 +161,7 @@ async def dler_process(event, url, fmt):
 
     # --- Resource Governance & Download ---
     is_admin_or_sudo = event.sender_id in owner_and_sudos()
-    
+
     try:
         # Step 1: Extract Metadata (Info)
         info = await extractor.extract(url)
@@ -174,7 +183,7 @@ async def dler_process(event, url, fmt):
         # Step 3: Execute Download with Progress Hook
         files = await extractor.download(url, format_type=fmt, job_id=job_id, progress_callback=dl_progress_hook)
         duration = round(time.time() - start_time, 2)
-        
+
         if not files:
             return await status_msg.edit("`[Error] Download failed.`")
 
@@ -185,7 +194,7 @@ async def dler_process(event, url, fmt):
         total_size = sum(os.path.getsize(f) for f in valid_files)
         if total_size > 2 * 1024 * 1024 * 1024:
             return await status_msg.edit(f"`Download error: File too large ({humanbytes(total_size)}).`")
-        
+
         # Hybrid Payload Router
         source = (
             "TikTok" if "tiktok" in url else
@@ -208,7 +217,7 @@ async def dler_process(event, url, fmt):
             f"\n⏱️ **Duration:** `{duration}s`"
             f"\n📦 **Size:** `{humanbytes(total_size)}`"
         )
-        
+
         # --- Upload Progress Hooks ---
         # IMPORTANT: Two separate hooks are needed to avoid the double-callback
         # bottleneck. Calling event.edit() inside the FastTelethon upload loop
@@ -277,7 +286,7 @@ async def dler_process(event, url, fmt):
             await status_msg.edit("`[📤] Upload complete. Committing to chat...`")
         elif total_size > 50 * 1024 * 1024:
             return await status_msg.edit(
-                f"`[Error] Cannot send large media directly. Use Upload path (>10MB trigger failed).`"
+                "`[Error] Cannot send large media directly. Use Upload path (>10MB trigger failed).`"
             )
 
         await sender_client.send_file(
@@ -315,14 +324,14 @@ async def toggle_dl_service(event):
     """Enable or disable auto-downloader in the group."""
     if not await admin_check(event):
         return
-    
+
     cmd = event.pattern_match.group(2)
     chat_id = event.chat_id
-    
+
     if not cmd:
         status = "DISABLED" if DisabledDL.contains(chat_id) else "ENABLED"
         return await event.reply(f"`[DL SERVICE] Current status: {status}`\nUsage: `/dlservice on` or `/dlservice off`")
-    
+
     if cmd == "on":
         if DisabledDL.contains(chat_id):
             DisabledDL.remove(chat_id)
@@ -341,16 +350,16 @@ async def manual_downloader(event):
     """Explicitly trigger downloader via command."""
     cmd = event.pattern_match.group(1)
     url = event.pattern_match.group(2).strip()
-    
+
     if not url:
         return await event.reply(f"`Usage: /{cmd} <link>`")
-    
+
     # Clean URL
     match = re.search(r"https?://\S+", url)
     if not match:
         return await event.reply("`Invalid or missing URL.`")
     url = match.group(0)
-    
+
     if cmd == "yta":
         await dler_process(event, url, "audio")
     elif cmd == "ytv":
@@ -376,7 +385,7 @@ async def auto_media_downloader(event):
 
     if not event.text or event.text.startswith("/") or DisabledDL.contains(event.chat_id):
         return
-    
+
     text = event.text
     match = (
         TIKTOK_RE.search(text)
@@ -385,7 +394,7 @@ async def auto_media_downloader(event):
         or YOUTUBE_RE.search(text)
         or ADULT_RE.search(text)
     )
-    
+
     if match:
         await show_dl_prompt(event, match.group(0))
 
@@ -398,11 +407,11 @@ async def process_media_selection(event):
     """Handles format selection for media downloads."""
     fmt = event.pattern_match.group(1).decode("utf-8")
     msg_id = event.pattern_match.group(2).decode("utf-8")
-    
+
     data = _ult_cache["media_dl"].get(msg_id)
     if not data:
         return await event.answer("Download prompt expired.", alert=True)
-    
+
     url = data["url"]
     # Deleting picker immediately for UI cleanup
     await event.delete()
@@ -417,12 +426,12 @@ async def close_media(event):
 async def process_media_cancel(event):
     """Signals a background download job to terminate with Auth Check."""
     job_id = event.pattern_match.group(1).decode("utf-8")
-    
+
     # Authorization Check
     owner_id = _ult_cache["job_owners"].get(job_id)
     is_admin = await admin_check(event, silent=True)
     is_sudo = event.sender_id in (owner_and_sudos())
-    
+
     if owner_id and event.sender_id != owner_id and not (is_admin or is_sudo):
         return await event.answer("❌ Access Denied: Only the requester or admins can cancel this task.", alert=True)
 

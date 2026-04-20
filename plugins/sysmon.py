@@ -26,7 +26,7 @@ import platform
 import time
 from datetime import datetime, timedelta
 
-from . import udB, ultroid_cmd, LOGS, asst_cmd
+from . import asst_cmd, ultroid_cmd
 
 help_sysmon = __doc__
 

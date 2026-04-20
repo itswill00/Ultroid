@@ -24,7 +24,7 @@ class KeyManager:
         content = self.get()
         if content is None:
             content = type(item)()
-            
+
         if isinstance(content, dict) and isinstance(item, dict):
             content.update(item)
         elif isinstance(content, list) and item not in content:
@@ -37,7 +37,7 @@ class KeyManager:
         content = self.get()
         if not content:
              return
-             
+
         if isinstance(content, list) and item in content:
             content.remove(item)
         elif isinstance(content, dict) and item in content:

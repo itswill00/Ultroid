@@ -30,7 +30,7 @@ Do not store sensitive credentials unless you trust your DB backend security.
 import json
 from datetime import datetime
 
-from . import udB, ultroid_cmd, LOGS
+from . import LOGS, udB, ultroid_cmd
 
 help_message_vault = __doc__
 

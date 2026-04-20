@@ -27,11 +27,12 @@ Set custom models using:
     • DEEPSEEK_MODEL: deepseek-chat
 """
 
-import json
-from . import LOGS, eor, get_string, udB, ultroid_cmd, async_searcher
-import aiohttp
 import asyncio
+import json
 
+import aiohttp
+
+from . import LOGS, async_searcher, udB, ultroid_cmd
 
 ENDPOINTS = {
     "gpt": "https://api.openai.com/v1/chat/completions",
@@ -66,7 +67,7 @@ async def stream_response(msg, text):
     words = text.split()
     chunks = []
     current_chunk = []
-    
+
     for word in words:
         current_chunk.append(word)
         if len(" ".join(current_chunk)) > 100:
@@ -74,7 +75,7 @@ async def stream_response(msg, text):
             current_chunk = [word]
     if current_chunk:
         chunks.append(" ".join(current_chunk))
-    
+
     for chunk in chunks:
         current += chunk + " "
         try:
@@ -90,7 +91,7 @@ async def get_ai_response(provider, prompt, api_key, stream=False):
     try:
         headers = {"Content-Type": "application/json"}
         model = get_model(provider)
-        
+
         if provider == "gpt":
             headers["Authorization"] = f"Bearer {api_key}"
             data = {
@@ -108,7 +109,7 @@ async def get_ai_response(provider, prompt, api_key, stream=False):
                 )
                 yield response["choices"][0]["message"]["content"]
                 return
-                
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     ENDPOINTS[provider],
@@ -144,7 +145,7 @@ async def get_ai_response(provider, prompt, api_key, stream=False):
                 )
                 yield response["content"][0]["text"]
                 return
-                
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     ENDPOINTS[provider],
@@ -172,7 +173,7 @@ async def get_ai_response(provider, prompt, api_key, stream=False):
                 ],
                 "stream": stream
             }
-            
+
             if not stream:
                 try:
                     response = await async_searcher(
@@ -259,7 +260,7 @@ async def get_ai_response(provider, prompt, api_key, stream=False):
                 )
                 yield response["choices"][0]["message"]["content"]
                 return
-                
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     ENDPOINTS[provider],
@@ -295,7 +296,7 @@ async def gemini_ai(event):
 
     msg = await event.eor("🤔 Thinking...")
     model = get_model("gemini")
-    
+
     header = (
         "🤖 **Google Gemini**\n"
         f"**Model:** `{model}`\n"
@@ -303,7 +304,7 @@ async def gemini_ai(event):
         f"**🔍 Prompt:**\n{prompt}\n\n"
         "**💡 Response:**\n"
     )
-    
+
     if event.client.me.bot:
         await msg.edit(header)
         response = ""
@@ -335,7 +336,7 @@ async def anthropic_ai(event):
 
     msg = await event.eor("🤔 Thinking...")
     model = get_model("antr")
-    
+
     formatted_response = (
         "🧠 **Anthropic Claude**\n"
         f"**Model:** `{model}`\n"
@@ -343,7 +344,7 @@ async def anthropic_ai(event):
         f"**🔍 Prompt:**\n{prompt}\n\n"
         f"**💡 Response:**\n"
     )
-    
+
     if event.client.me.bot:
         await msg.edit(formatted_response)
         response = ""
@@ -375,7 +376,7 @@ async def openai_ai(event):
 
     msg = await event.eor("🤔 Thinking...")
     model = get_model("gpt")
-    
+
     header = (
         "🌟 **OpenAI GPT**\n"
         f"**Model:** `{model}`\n"
@@ -383,7 +384,7 @@ async def openai_ai(event):
         f"**🔍 Prompt:**\n{prompt}\n\n"
         "**💡 Response:**\n"
     )
-    
+
     if event.client.me.bot:
         await msg.edit(header)
         response = ""
@@ -415,7 +416,7 @@ async def deepseek_ai(event):
 
     msg = await event.eor("🤔 Thinking...")
     model = get_model("deepseek")
-    
+
     formatted_response = (
         "🤖 **DeepSeek AI**\n"
         f"**Model:** `{model}`\n"
@@ -423,7 +424,7 @@ async def deepseek_ai(event):
         f"**🔍 Prompt:**\n{prompt}\n\n"
         f"**💡 Response:**\n"
     )
-    
+
     if event.client.me.bot:
         await msg.edit(formatted_response)
         response = ""

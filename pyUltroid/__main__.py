@@ -50,20 +50,20 @@ def main():
         udB.set_key("OWNER_ID", ultroid_bot.uid)
 
     LOGS.info("Initialising...")
-    
+
     # Initialising asst/pmbot/addons config
 
     ultroid_bot.loop.create_task(keep_redis_alive())
 
     pmbot = udB.get_key("PMBOT")
     manager = udB.get_key("MANAGER")
-    
+
     addons = udB.get_key("ADDONS")
     if addons is None:
         addons = Var.ADDONS or os.path.exists("addons")
     elif isinstance(addons, str):
         addons = addons.lower() == "true"
-        
+
     vcbot = udB.get_key("VCBOT") or Var.VCBOT
     if HOSTED_ON == "okteto":
         vcbot = False
