@@ -5,7 +5,6 @@
 # PLease read the GNU Affero General Public License in
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
-import contextlib
 import glob
 import os
 from importlib import import_module
@@ -49,7 +48,11 @@ class Loader:
             else:
                 with os.scandir(self.path) as it:
                     for entry in it:
-                        if entry.is_file() and entry.name.endswith(".py") and not entry.name.startswith("__"):
+                        if (
+                            entry.is_file()
+                            and entry.name.endswith(".py")
+                            and not entry.name.startswith("__")
+                        ):
                             files.append(entry.path)
             
             if exclude:

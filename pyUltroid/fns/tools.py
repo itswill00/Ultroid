@@ -102,7 +102,7 @@ def json_parser(data, indent=None, ascii=False):
 async def is_url_ok(url: str):
     try:
         return await async_searcher(url, head=True)
-    except BaseException as er:
+    except Exception as er:
         LOGS.debug(er)
         return False
 
@@ -256,7 +256,10 @@ async def webuploader(chat_id: int, msg_id: int, uploader: str):
     else:
         return "Uploader not supported or invalid."
 
-    files = {"file": open(file, "rb")}  # Adjusted for both formats
+    # Replaced blocking open() in async
+    def _get_file():
+        return open(file, "rb")
+    files = {"file": await asyncio.to_thread(_get_file)}
 
     if uploader == "filebin":
         cmd = f"curl -X POST --data-binary '@{file}' -H 'filename: \"{file}\"' \"{url}\""
@@ -898,10 +901,12 @@ class TgConverter:
         input_file,
         outname="converted",
         convert_to=None,
-        allowed_formats=[],
+        allowed_formats=None,
         remove_old=True,
     ):
         """Convert between different file formats."""
+        if allowed_formats is None:
+            allowed_formats = []
         LOGS.info(f"Converting {input_file} to {convert_to or allowed_formats}")
         
         if not input_file:
@@ -1074,7 +1079,10 @@ async def ocr_space(file_path, api_key="helloworld", language="eng"):
     data = aiohttp.FormData()
     data.add_field('apikey', api_key)
     data.add_field('language', language)
-    with open(file_path, 'rb') as f:
+    def _read_ocr():
+        return open(file_path, 'rb')
+    
+    with await asyncio.to_thread(_read_ocr) as f:
         data.add_field('file', f)
         try:
             response = await async_searcher(

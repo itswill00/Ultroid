@@ -129,10 +129,10 @@ def update_envs():
 async def startup_stuff():
     from .. import udB
 
-    x = ["resources/auth", "resources/downloads"]
-    for x in x:
-        if not os.path.isdir(x):
-            os.mkdir(x)
+    _paths = ["resources/auth", "resources/downloads"]
+    for path in _paths:
+        if not os.path.isdir(path):
+            os.mkdir(path)
 
     CT = udB.get_key("CUSTOM_THUMBNAIL")
     if CT:
@@ -146,8 +146,10 @@ async def startup_stuff():
         ULTConfig.thumb = None
     GT = udB.get_key("GDRIVE_AUTH_TOKEN")
     if GT:
-        with open("resources/auth/gdrive_creds.json", "w") as t_file:
-            t_file.write(GT)
+        def _write_gdrive():
+            with open("resources/auth/gdrive_creds.json", "w") as t_file:
+                t_file.write(GT)
+        await asyncio.to_thread(_write_gdrive)
 
     if udB.get_key("AUTH_TOKEN"):
         udB.del_key("AUTH_TOKEN")
@@ -155,8 +157,10 @@ async def startup_stuff():
     MM = udB.get_key("MEGA_MAIL")
     MP = udB.get_key("MEGA_PASS")
     if MM and MP:
-        with open(".megarc", "w") as mega:
-            mega.write(f"[Login]\nUsername = {MM}\nPassword = {MP}")
+        def _write_mega():
+            with open(".megarc", "w") as mega:
+                mega.write(f"[Login]\nUsername = {MM}\nPassword = {MP}")
+        await asyncio.to_thread(_write_mega)
 
     TZ = udB.get_key("TIMEZONE")
     if TZ and timezone:
@@ -448,8 +452,10 @@ async def plug(plugin_channels):
     if not os.path.exists("addons"):
         os.mkdir("addons")
     if not os.path.exists("addons/__init__.py"):
-        with open("addons/__init__.py", "w") as f:
-            f.write("from plugins import *\n\nbot = ultroid_bot")
+        def _init_addons():
+            with open("addons/__init__.py", "w") as f:
+                f.write("from plugins import *\n\nbot = ultroid_bot")
+        await asyncio.to_thread(_init_addons)
     LOGS.info("• Loading Plugins from Plugin Channel(s) •")
     for chat in plugin_channels:
         LOGS.info(f"{'•'*4} {chat}")

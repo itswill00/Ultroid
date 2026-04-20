@@ -363,22 +363,24 @@ def page_num(index, key):
 
 # --------------------------------------------------------------------------------- #
 
-
-STUFF = {}
-
-
 @in_pattern("stf(.*)", owner=True)
 async def ibuild(e):
     n = e.pattern_match.group(1).strip()
     builder = e.builder
     if not (n and n.isdigit()):
         return
-    ok = STUFF.get(int(n))
+    
+    # Retrieve from DB instead of memory
+    ok = udB.get_key(f"STUFF_{n}")
+    if not ok:
+        return
+
     txt = ok.get("msg")
     pic = ok.get("media")
     btn = ok.get("button")
     if not (pic or txt):
         txt = "Hey!"
+    
     if pic:
         try:
             include_media = True
@@ -386,21 +388,19 @@ async def ibuild(e):
             cont, results = None, None
             try:
                 ext = str(pic).split(".")[-1].lower()
-            except BaseException:
+            except Exception: # Reduced scope
                 ext = None
             if ext in ["img", "jpg", "png"]:
-                _type = "photo"
                 mime_type = "image/jpg"
             elif ext in ["mp4", "mkv", "gif"]:
                 mime_type = "video/mp4"
-                _type = "gif"
             else:
                 try:
                     if "telethon.tl.types" in str(type(pic)):
                         _pic = pic
                     else:
                         _pic = resolve_bot_file_id(pic)
-                except BaseException:
+                except Exception:
                     pass
                 if _pic:
                     results = [
@@ -414,7 +414,6 @@ async def ibuild(e):
                         )
                     ]
                 else:
-                    _type = "article"
                     include_media = False
             if not results:
                 if include_media:
@@ -433,6 +432,7 @@ async def ibuild(e):
             return await e.answer(results)
         except Exception as er:
             LOGS.exception(er)
+    
     result = [
         await builder.article("Ultroid Op", text=txt, link_preview=False, buttons=btn)
     ]
@@ -442,8 +442,14 @@ async def ibuild(e):
 async def something(e, msg, media, button, reply=True, chat=None):
     if e.client._bot:
         return await e.reply(msg, file=media, buttons=button)
-    num = len(STUFF) + 1
-    STUFF.update({num: {"msg": msg, "media": media, "button": button}})
+    
+    # Increment counter in DB
+    num = (udB.get_key("STUFF_COUNT") or 0) + 1
+    udB.set_key("STUFF_COUNT", num)
+    
+    # Save to DB instead of memory
+    udB.set_key(f"STUFF_{num}", {"msg": msg, "media": media, "button": button})
+    
     try:
         res = await e.client.inline_query(asst.me.username, f"stf{num}")
         return await res[0].click(
@@ -455,3 +461,4 @@ async def something(e, msg, media, button, reply=True, chat=None):
 
     except Exception as er:
         LOGS.exception(er)
+
