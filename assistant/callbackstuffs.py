@@ -447,9 +447,11 @@ async def _(e):
     if not e.is_private:
         return
     url = GDrive._create_token_file()
-    await e.edit("Go to the below link and send the code!")
+    if not url.startswith("http"):
+        return await e.answer(url, alert=True)
+    await e.edit("Go to the below link, authorize, and then send the **authorization code** here.\n\n`If you are redirected to 'localhost' or an error page, copy the code from the URL's '?code=' parameter.`")
     async with asst.conversation(e.sender_id) as conv:
-        await conv.send_message(url)
+        await conv.send_message(f"[Click Here to Authorize]({url})", link_preview=False)
         code = await conv.get_response()
         if GDrive._create_token_file(code=code.text):
             await conv.send_message(
@@ -457,7 +459,7 @@ async def _(e):
                 buttons=Button.inline("Main Menu", data="setter"),
             )
         else:
-            await conv.send_message("Wrong code! Click authorise again.")
+            await conv.send_message("Wrong code! Click 'Authorise' again and make sure you copy the correct code.")
 
 
 @callback("folderid", owner=True, func=lambda x: x.is_private)

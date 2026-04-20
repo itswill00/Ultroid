@@ -3,7 +3,7 @@
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+# <https://github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
 __doc__ = get_help("gdrive")
@@ -49,14 +49,24 @@ async def gdown(event):
     match = event.pattern_match.group(1).strip()
     if not match:
         return await eod(event, "`Give file id or Gdrive link to download from!`")
-    filename = match.split(" | ")[1].strip() if " | " in match else None
+    
+    filename = None
+    if " | " in match:
+        parts = match.split(" | ")
+        match = parts[0].strip()
+        filename = parts[1].strip()
+        
     eve = await event.eor(get_string("com_1"))
     _start = time.time()
+    
     status, response = await GDrive._download_file(eve, match, filename)
     if not status:
-        return await eve.edit(response)
+        return await eve.edit(f"**Error:** `{response}`")
+        
     await eve.edit(
-        f"`Downloaded ``{response}`` in {time_formatter((time.time() - _start)*1000)}`"
+        f"**✦ Downloaded Successfully**\n"
+        f"**File:** `{response}`\n"
+        f"**Time taken:** `{time_formatter((time.time() - _start)*1000)}`"
     )
 
 
@@ -68,34 +78,33 @@ async def files(event):
     GDrive = GDriveManager()
     if not os.path.exists(GDrive.token_file):
         return await event.eor(get_string("gdrive_6").format(asst.me.username))
+    
     eve = await event.eor(get_string("com_1"))
-    msg = ""
-    if files := GDrive._list_files:
-        msg += f"{len(files.keys())} files found in gdrive.\n\n"
-        for _ in files:
-            msg += f"> [{files[_]}]({_})\n"
-    else:
-        msg += "Nothing in Gdrive"
+    files_dict = await GDrive._list_files()
+    
+    if not files_dict:
+        return await eve.edit("`No files found in G-Drive.`")
+
+    msg = f"**Total {len(files_dict)} files found in G-Drive:**\n\n"
+    for link, name in files_dict.items():
+        msg += f"• [{name}]({link})\n"
+    
     if len(msg) < 4096:
         await eve.edit(msg, link_preview=False)
     else:
-        with open("drive-files.txt", "w") as f:
-            f.write(
-                msg.replace("[", "File Name: ")
-                .replace("](", "\n» Link: ")
-                .replace(")\n", "\n\n")
-            )
-        try:
-            await eve.delete()
-        except BaseException:
-            pass
+        file_path = "drive-files.txt"
+        with open(file_path, "w", encoding='utf-8') as f:
+            f.write(msg.replace("• [", "File: ").replace("](", "\nLink: ").replace(")\n", "\n\n"))
+        
         await event.client.send_file(
             event.chat_id,
-            "drive-files.txt",
+            file_path,
+            caption="`GDrive File List`",
             thumb=ULTConfig.thumb,
             reply_to=event,
         )
-        os.remove("drive-files.txt")
+        os.remove(file_path)
+        await eve.delete()
 
 
 @ultroid_cmd(
@@ -106,73 +115,73 @@ async def _(event):
     GDrive = GDriveManager()
     if not os.path.exists(GDrive.token_file):
         return await eod(event, get_string("gdrive_6").format(asst.me.username))
-    input_file = event.pattern_match.group(1).strip() or await event.get_reply_message()
-    if not input_file:
-        return await eod(event, "`Reply to file or give its location.`")
+    
+    input_file = event.pattern_match.group(1).strip()
+    reply = await event.get_reply_message()
+    
+    if not input_file and not reply:
+        return await eod(event, "`Reply to a file or provide a local path.`")
+    
     mone = await event.eor(get_string("com_1"))
-    if isinstance(input_file, Message):
+    
+    if reply and reply.media:
         location = "resources/downloads"
-        if input_file.photo:
-            filename = await input_file.download_media(location)
+        if not os.path.isdir(location):
+            os.makedirs(location)
+            
+        if reply.photo:
+            filename = await reply.download_media(location)
         else:
-            filename = input_file.file.name
-            if not filename:
-                filename = str(round(time.time()))
-            filename = f"{location}/{filename}"
+            filename = reply.file.name or str(round(time.time()))
+            filename = os.path.join(location, filename)
             try:
-                filename, downloaded_in = await event.client.fast_downloader(
-                    file=input_file.media.document,
+                # Using fast_downloader for efficiency
+                file_obj, _ = await event.client.fast_downloader(
+                    file=reply.media.document if hasattr(reply.media, 'document') else reply.media,
                     filename=filename,
                     show_progress=True,
                     event=mone,
-                    message=get_string("com_5"),
+                    message="`✦ Downloading to server...`",
                 )
-                filename = filename.name
+                filename = filename # fast_downloader might update it if it's different
             except Exception as e:
-                return await eor(mone, str(e), time=10)
-        await mone.edit(
-            f"`Downloaded to ``{filename}`.`",
-        )
+                return await eor(mone, f"**Download Error:** `{e}`", time=10)
+        await mone.edit(f"`✦ Downloaded to server: ``{os.path.basename(filename)}``\nUploading to GDrive...`")
     else:
-        filename = input_file.strip()
+        filename = input_file
         if not os.path.exists(filename):
-            return await eod(
-                mone,
-                "File Not found in local server. Give me a file path :((",
-                time=5,
-            )
-    folder_id = None
-    if os.path.isdir(filename):
-        files = os.listdir(filename)
-        if not files:
-            return await eod(
-                mone, "`Requested directory is empty. Can't create empty directory.`"
-            )
-        folder_id = GDrive.create_directory(filename)
-        c = 0
-        for files in sorted(files):
-            file = f"{filename}/{files}"
-            if not os.path.isdir(file):
-                try:
-                    await GDrive._upload_file(mone, path=file, folder_id=folder_id)
-                    c += 1
-                except Exception as e:
-                    return await mone.edit(
-                        f"Exception occurred while uploading to gDrive {e}"
-                    )
-        return await mone.edit(
-            f"`Uploaded `[{filename}](https://drive.google.com/folderview?id={folder_id})` with {c} files.`"
-        )
+            return await eod(mone, "`File/Folder not found on server.`", time=5)
+
     try:
-        g_drive_link = await GDrive._upload_file(
-            mone,
-            filename,
-        )
-        await mone.edit(
-            get_string("gdrive_7").format(filename.split("/")[-1], g_drive_link)
-        )
+        if os.path.isdir(filename):
+            files_list = os.listdir(filename)
+            if not files_list:
+                return await eod(mone, "`Directory is empty.`")
+                
+            folder_id = await GDrive.create_directory(os.path.basename(filename))
+            count = 0
+            for f in sorted(files_list):
+                file_path = os.path.join(filename, f)
+                if os.path.isfile(file_path):
+                    try:
+                        await GDrive._upload_file(mone, path=file_path, folder_id=folder_id)
+                        count += 1
+                    except Exception as e:
+                        return await mone.edit(f"**Upload Error on {f}:** `{e}`")
+            
+            await mone.edit(
+                f"**✦ Folder Uploaded Successfully**\n"
+                f"**Folder:** [{os.path.basename(filename)}](https://drive.google.com/folderview?id={folder_id})\n"
+                f"**Total Files:** `{count}`"
+            )
+        else:
+            g_drive_link = await GDrive._upload_file(mone, filename)
+            await mone.edit(
+                get_string("gdrive_7").format(os.path.basename(filename), g_drive_link),
+                link_preview=False
+            )
     except Exception as e:
-        await mone.edit(f"Exception occurred while uploading to gDrive {e}")
+        await mone.edit(f"**Error during GDrive operation:** `{e}`")
 
 
 @ultroid_cmd(
@@ -183,40 +192,37 @@ async def _(event):
     GDrive = GDriveManager()
     if not os.path.exists(GDrive.token_file):
         return await event.eor(get_string("gdrive_6").format(asst.me.username))
+    
     input_str = event.pattern_match.group(1).strip()
     if not input_str:
-        return await event.eor("`Give filename to search on GDrive...`")
-    eve = await event.eor(f"`Searching for {input_str} in G-Drive...`")
-    files = GDrive.search(input_str)
-    msg = ""
-    if files:
-        msg += (
-            f"{len(files.keys())} files with {input_str} in title found in GDrive.\n\n"
-        )
-        for _ in files:
-            msg += f"> [{files[_]}]({_})\n"
-    else:
-        msg += f"`No files with title {input_str}`"
+        return await event.eor("`Give a filename to search...`")
+        
+    eve = await event.eor(f"`✦ Searching for '{input_str}' in G-Drive...`")
+    files_dict = await GDrive.search(input_str)
+    
+    if not files_dict:
+        return await eve.edit(f"`No files found matching '{input_str}'`")
+
+    msg = f"**Found {len(files_dict)} results for '{input_str}':**\n\n"
+    for link, name in files_dict.items():
+        msg += f"• [{name}]({link})\n"
+        
     if len(msg) < 4096:
-        await eve.eor(msg, link_preview=False)
+        await eve.edit(msg, link_preview=False)
     else:
-        with open("drive-files.txt", "w") as f:
-            f.write(
-                msg.replace("[", "File Name: ")
-                .replace("](", "\n» Link: ")
-                .replace(")\n", "\n\n")
-            )
-        try:
-            await eve.delete()
-        except BaseException:
-            pass
+        file_path = f"{input_str}_search.txt"
+        with open(file_path, "w", encoding='utf-8') as f:
+            f.write(msg.replace("• [", "File: ").replace("](", "\nLink: ").replace(")\n", "\n\n"))
+            
         await event.client.send_file(
             event.chat_id,
-            f"{input_str}.txt",
+            file_path,
+            caption=f"`Search results for {input_str}`",
             thumb=ULTConfig.thumb,
             reply_to=event,
         )
-        os.remove(f"{input_str}.txt")
+        os.remove(file_path)
+        await eve.delete()
 
 
 @ultroid_cmd(
@@ -227,10 +233,11 @@ async def _(event):
     GDrive = GDriveManager()
     if not os.path.exists(GDrive.token_file):
         return await event.eor(get_string("gdrive_6").format(asst.me.username))
+        
     if GDrive.folder_id:
         await event.eor(
-            "`Your G-Drive Folder link : `\n"
-            + GDrive._create_folder_link(GDrive.folder_id)
+            f"**Your G-Drive Folder Link:**\n"
+            f"{GDrive._create_folder_link(GDrive.folder_id)}"
         )
     else:
-        await eod(event, "Set FOLDERID from your Assistant bot's Settings ")
+        await eod(event, "`GDRIVE_FOLDER_ID not set. Please set it in Assistant Bot settings.`")
