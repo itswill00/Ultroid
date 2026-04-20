@@ -627,20 +627,21 @@ async def catbox_upload(path: str):
     except Exception as e:
         if "Failed to upload" in str(e):
             from .. import LOGS
-            # Fallback to graph.org (Telegra.ph) - more reliable for images
             LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to graph.org...")
-            # Quote the entire argument to handle special characters correctly
-            file_arg = shlex.quote(f"file=@{path}")
-            # Telegra.ph/graph.org upload API
-            out, err = await bash(f"curl -s -F {file_arg} https://graph.org/upload")
+            # Use aiohttp for direct upload - no shell syntax errors!
             try:
-                import json
-                res = json.loads(out)
-                if isinstance(res, list) and res[0].get("src"):
-                    return "https://graph.org" + res[0]["src"]
-                error_info = res.get("error", out)
-            except Exception:
-                error_info = out or err
+                import aiohttp
+                async with aiohttp.ClientSession() as session:
+                    with open(path, "rb") as f:
+                        data = aiohttp.FormData()
+                        data.add_field("file", f, filename=os.path.basename(path))
+                        async with session.post("https://graph.org/upload", data=data) as resp:
+                            res = await resp.json()
+                            if isinstance(res, list) and res[0].get("src"):
+                                return "https://graph.org" + res[0]["src"]
+                            error_info = res.get("error", await resp.text())
+            except Exception as fe:
+                error_info = str(fe)
             raise Exception(f"Upload completely failed. Catbox: {e}, Fallback error: {error_info}") from e
         raise e
 
