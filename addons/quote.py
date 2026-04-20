@@ -1,8 +1,3 @@
-"""
-✘ Help for Quote
-
-• {i}help quote - To see available commands.
-"""
 #
 # Ultroid - UserBot
 #

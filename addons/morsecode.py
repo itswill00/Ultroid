@@ -1,8 +1,3 @@
-"""
-✘ Help for Morsecode
-
-• {i}help morsecode - To see available commands.
-"""
 # Ultroid - UserBot
 #
 # This file is a part of < https://github.com/TeamUltroid/UltroidAddons/ >

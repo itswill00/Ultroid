@@ -1,8 +1,3 @@
-"""
-✘ Help for Searchmsgs
-
-• {i}help searchmsgs - To see available commands.
-"""
 # " Made by @e3ris for Ultroid. "
 # < https://github.com/TeamUltroid/Ultroid >
 # idea: https://t.me/TelethonChat/256160

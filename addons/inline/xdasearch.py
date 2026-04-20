@@ -1,8 +1,3 @@
-"""
-✘ Help for Xdasearch
-
-• {i}help xdasearch - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #
@@ -10,10 +5,6 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>
 
-from bs4 import BeautifulSoup as bs
-from telethon.tl.types import InputWebDocument as wb
-
-from . import InlinePlugin, asst, async_searcher, get_string, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
@@ -21,6 +12,12 @@ __doc__ = f"""
 • `@{asst.username} xda <query>`
     Searches for the query on XDA Developers and returns the results.
 """
+
+from bs4 import BeautifulSoup as bs
+from telethon.tl.types import InputWebDocument as wb
+
+from . import InlinePlugin, asst, async_searcher, get_string, in_pattern
+
 
 # Inspired by @FindXDaBot
 

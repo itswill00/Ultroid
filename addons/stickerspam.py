@@ -1,8 +1,3 @@
-"""
-✘ Help for Stickerspam
-
-• {i}help stickerspam - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

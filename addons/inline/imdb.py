@@ -1,14 +1,18 @@
-"""
-✘ Help for Imdb
-
-• {i}help imdb - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2024 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+
+__doc__ = f"""
+✘ Commands Available -
+• `@{asst.username} imdb <movie_name>`
+    Searches for the movie on IMDb and returns the results.
+• `@{asst.username} imdb <movie_name> y=<year>`
+    Searches for the movie on IMDb by year and returns the results.
+"""
+
 import hashlib
 import json
 import re
@@ -26,13 +30,6 @@ from telethon.tl.types import InputWebDocument as wb
 
 from . import LOGS, asst, async_searcher, callback, in_pattern, udB
 
-__doc__ = f"""
-✘ Commands Available -
-• `@{asst.username} imdb <movie_name>`
-    Searches for the movie on IMDb and returns the results.
-• `@{asst.username} imdb <movie_name> y=<year>`
-    Searches for the movie on IMDb by year and returns the results.
-"""
 
 # Define your OMDB API key
 OMDB_API_KEY = udB.get_key("OMDb_API")  #OpenMovies Database get free key from http://www.omdbapi.com/ with 1000 dailiy uses

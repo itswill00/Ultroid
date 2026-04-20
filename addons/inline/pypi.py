@@ -1,14 +1,16 @@
-"""
-✘ Help for Pypi
-
-• {i}help pypi - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2024 TeamUltroid
 #
 # This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
+
+__doc__ = f"""
+✘ Commands Available -
+• `@{asst.username} pypi <package_name>`
+    Searches for the package on PyPI and returns the results.
+"""
+
 import hashlib
 import os
 import re
@@ -25,11 +27,6 @@ from telethon import Button
 from telethon.tl.types import InputWebDocument as wb
 from telethon.tl.types import MessageEntityTextUrl
 
-__doc__ = f"""
-✘ Commands Available -
-• `@{asst.username} pypi <package_name>`
-    Searches for the package on PyPI and returns the results.
-"""
 
 hash_to_url = {}
 

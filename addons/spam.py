@@ -1,8 +1,3 @@
-"""
-✘ Help for Spam
-
-• {i}help spam - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

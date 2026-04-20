@@ -1,8 +1,3 @@
-"""
-✘ Help for Hack
-
-• {i}help hack - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

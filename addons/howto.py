@@ -1,8 +1,3 @@
-"""
-✘ Help for Howto
-
-• {i}help howto - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

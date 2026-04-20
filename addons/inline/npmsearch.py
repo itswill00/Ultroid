@@ -1,8 +1,3 @@
-"""
-✘ Help for Npmsearch
-
-• {i}help npmsearch - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #
@@ -10,15 +5,17 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from telethon.tl.custom import Button
-
-from . import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
 • `@{asst.username} npm <package_name>`
     Searches for the package on NPM and returns the results.
 """
+
+from telethon.tl.custom import Button
+
+from . import InlinePlugin, asst, async_searcher, in_pattern
+
 
 
 @in_pattern("npm")

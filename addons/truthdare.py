@@ -1,8 +1,3 @@
-"""
-✘ Help for Truthdare
-
-• {i}help truthdare - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

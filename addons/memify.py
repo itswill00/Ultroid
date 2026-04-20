@@ -1,8 +1,3 @@
-"""
-✘ Help for Memify
-
-• {i}help memify - To see available commands.
-"""
 # Ported Nd Modified For Ultroid
 # Ported From DarkCobra (Modified by @ProgrammingError)
 #

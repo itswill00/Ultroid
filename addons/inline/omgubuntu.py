@@ -1,8 +1,3 @@
-"""
-✘ Help for Omgubuntu
-
-• {i}help omgubuntu - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #
@@ -11,17 +6,19 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 
-from bs4 import BeautifulSoup as bs
-from telethon.tl.custom import Button
-from telethon.tl.types import InputWebDocument as wb
-
-from .. import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
 • `@{asst.username} omgu <query>`
     Searches for the query on OMG Ubuntu and returns the results.
 """
+
+from bs4 import BeautifulSoup as bs
+from telethon.tl.custom import Button
+from telethon.tl.types import InputWebDocument as wb
+
+from .. import InlinePlugin, asst, async_searcher, in_pattern
+
 
 _OMG = {}
 

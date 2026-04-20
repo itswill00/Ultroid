@@ -1,9 +1,3 @@
-"""
-✘ Help for Koo
-
-• {i}help koo - To see available commands.
-"""
-
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #
@@ -11,16 +5,18 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from telethon.tl.custom import Button
-from telethon.tl.types import InputWebDocument as wb
-
-from . import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
 • `@{asst.username} koo <query>`
     Searches for the query on Koo and returns the results.
 """
+
+from telethon.tl.custom import Button
+from telethon.tl.types import InputWebDocument as wb
+
+from . import InlinePlugin, asst, async_searcher, in_pattern
+
 
 _koo_ = {}
 

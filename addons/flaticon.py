@@ -1,8 +1,3 @@
-"""
-✘ Help for Flaticon
-
-• {i}help flaticon - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2020 TeamUltroid
 #

@@ -1,8 +1,3 @@
-"""
-✘ Help for Beautify
-
-• {i}help beautify - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #
@@ -10,9 +5,10 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
-from . import get_help
 
+from . import get_help
 __doc__ = get_help("help_beautify")
+
 
 
 import os

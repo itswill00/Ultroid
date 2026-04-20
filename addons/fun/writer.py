@@ -1,8 +1,3 @@
-"""
-✘ Help for Writer
-
-• {i}help writer - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
 #

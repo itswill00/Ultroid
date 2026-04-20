@@ -1,8 +1,3 @@
-"""
-✘ Help for Ghfeeds
-
-• {i}help ghfeeds - To see available commands.
-"""
 # Ultroid - UserBot
 # Copyright (C) 2021-2022 TeamUltroid
 #
@@ -11,10 +6,6 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 
-from telethon.tl.custom import Button
-from telethon.tl.types import InputWebDocument
-
-from . import InlinePlugin, asst, async_searcher, in_pattern
 
 __doc__ = f"""
 ✘ Commands Available -
@@ -22,6 +13,12 @@ __doc__ = f"""
     Searches for the Github username and returns the latest feeds.
     End your query with a dot (.) to search.
 """
+
+from telethon.tl.custom import Button
+from telethon.tl.types import InputWebDocument
+
+from . import InlinePlugin, asst, async_searcher, in_pattern
+
 
 @in_pattern("gh", owner=True)
 async def gh_feeds(ult):

@@ -1,7 +1,19 @@
 """
-✘ Help for Special_fun
+✘ **Special_fun**
 
-• {i}help special_fun - To see available commands.
+✘ Commands Available -
+
+• `{i}dob <date>`
+    Calculate your age and see your horoscope.
+
+• `{i}sticker <query>`
+    Search for Telegram stickers.
+
+• `{i}wall <query>`
+    Search for HD wallpapers.
+
+• `{i}q <reply>`
+    Create a quote from a message.
 """
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid

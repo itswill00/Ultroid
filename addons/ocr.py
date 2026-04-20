@@ -1,8 +1,3 @@
-"""
-✘ Help for Ocr
-
-• {i}help ocr - To see available commands.
-"""
 #
 # Ultroid - UserBot
 #
