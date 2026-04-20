@@ -627,18 +627,20 @@ async def catbox_upload(path: str):
     except Exception as e:
         if "Failed to upload" in str(e):
             from .. import LOGS
-            LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to transfer.sh...")
-            # Fallback to transfer.sh
-            filename = os.path.basename(path)
-            # Ensure filename doesn't break curl or transfer.sh
-            # Keep only alphanumeric characters, underscores, and dots for the URL
-            clean_name = re.sub(r'[^a-zA-Z0-9._]', '_', filename)
-            # Quote path to handle special characters for shell execution
+            # Fallback to graph.org (Telegra.ph) - more reliable for images
+            LOGS.warning(f"Catbox rejected upload for {path}. Trying fallback to graph.org...")
             safe_path = shlex.quote(path)
-            out, err = await bash(f"curl -s --upload-file {safe_path} https://transfer.sh/{clean_name}")
-            if not err and out.startswith("https://"):
-                return out.strip()
-            raise Exception(f"Upload completely failed. Catbox rejected it, and fallback error: {err or out}") from e
+            # Telegra.ph/graph.org upload API
+            out, err = await bash(f"curl -s -F 'file=@{safe_path}' https://graph.org/upload")
+            try:
+                import json
+                res = json.loads(out)
+                if isinstance(res, list) and res[0].get("src"):
+                    return "https://graph.org" + res[0]["src"]
+                error_info = res.get("error", out)
+            except Exception:
+                error_info = out or err
+            raise Exception(f"Upload completely failed. Catbox: {e}, Fallback error: {error_info}") from e
         raise e
 
 def time_cache(ttl=60):
