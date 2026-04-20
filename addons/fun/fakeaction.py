@@ -1,7 +1,10 @@
 """
-✘ Help for Fakeaction
+✘ Commands Available -
 
-• {i}help fakeaction - To see available commands.
+• `{i}f<action> <time>`
+    Fake various chat actions for a specific duration.
+    Actions: typing, audio, contact, document, game, location, sticker, photo, round, video.
+    Example: `{i}ftyping 10`
 """
 # Ultroid - UserBot
 # Copyright (C) 2021-2026 TeamUltroid
