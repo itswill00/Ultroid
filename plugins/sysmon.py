@@ -182,7 +182,10 @@ def _build_snapshot() -> str:
 @asst_cmd(pattern="sysmon")
 @ultroid_cmd(pattern="sysmon( (.*)|$)")
 async def sys_monitor(e):
-    match = e.pattern_match.group(1).strip()
+    try:
+        match = e.pattern_match.group(1).strip()
+    except (IndexError, AttributeError):
+        match = ""
 
     if match == "live":
         msg = await e.eor("`Sysmon | Starting live mode (30 seconds)...`")
