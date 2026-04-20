@@ -457,7 +457,12 @@ async def _(e):
     async with asst.conversation(e.sender_id) as conv:
         await conv.send_message(f"[Click Here to Authorize]({url})", link_preview=False)
         code = await conv.get_response()
-        if GDrive._create_token_file(code=code.text):
+        # Smart cleaning: handles raw code, code with spaces, or the full localhost URL
+        auth_code = code.text.strip().strip('"').strip("'")
+        if "code=" in auth_code:
+            auth_code = auth_code.split("code=")[1].split("&")[0]
+            
+        if GDrive._create_token_file(code=auth_code):
             await conv.send_message(
                 "`Success!\nYou are all set to use Google Drive with Ultroid Userbot.`",
                 buttons=Button.inline("Main Menu", data="setter"),
