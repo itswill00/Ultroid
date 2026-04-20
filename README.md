@@ -16,15 +16,6 @@
 [![License](https://img.shields.io/badge/License-AGPL-blue)](https://github.com/itswill00/Ultroid/blob/main/LICENSE)
 ----
 
-## 🚀 Key Features (Fork Enhancements)
-This fork of Ultroid includes several stability and performance improvements:
-
-- **Enhanced Multi-Layer Upload System**: A robust image/media upload system with 4 layers of redundancy (Uguu.se, Catbox, Telegra.ph, and Graph.org).
-- **Anti-Blocking Strategy**: Uses browser-like headers and automated filename cleaning to bypass IP blocks and API rejections commonly found on VPS servers.
-- **Improved Fallback Logic**: Automatically switches to the next available service if the primary one fails, ensuring your inline commands and media uploads always work.
-
----
-
 # Deploy
 - [Local Machine](#deploy-locally)
 - [Termux](#deploy-on-termux)
