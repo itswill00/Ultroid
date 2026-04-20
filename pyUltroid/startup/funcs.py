@@ -623,7 +623,9 @@ async def ready():
 
 async def WasItRestart(udb):
     key = udb.get_key("_RESTART")
-    if not key:
+    if not key or not str(key).strip():
+        if key:
+            udb.del_key("_RESTART")
         return
     from .. import asst, ultroid_bot
     import json as _json
@@ -643,7 +645,7 @@ async def WasItRestart(udb):
             except Exception:
                 pass
     except Exception as e:
-        LOGS.error(f"Error during WasItRestart cleanup: {e}")
+        LOGS.debug(f"Error during WasItRestart cleanup: {e}")
 
     udb.del_key("_RESTART")
 
