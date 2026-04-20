@@ -664,7 +664,7 @@ help_db_backup: " -\n\n• `{i}backup` / `{i}restore` \n    Backup or restore th
 
 help_forcesubscribe: " -\n\n• `{i}fsub <channel>` \n    Force users to subscribe to a channel before using the bot.\n"
 
-help_gdrive: " -\n\n• `{i}gdrive` \n    Upload/Download files from Google Drive.\n"
+help_gdrive: " -\n\n• `{i}gdul <reply/path>`\n    Upload files/folders to Google Drive.\n\n• `{i}gdown <link/id>`\n    Download files from GDrive to VPS.\n\n• `{i}gdsearch <nama>`\n    Search for files on Google Drive.\n\n• `{i}gdlist`\n    List all files in your Google Drive.\n\n• `{i}gdfolder`\n    View or set the default upload folder.\n"
 
 help_group_intel: " -\n\n• `{i}intel` \n    Gather intelligence on a group.\n"
 
@@ -723,7 +723,7 @@ help_core: " -\n\n• `{i}core` / `{i}list` / `{i}plug` \n    Manage Core Plugin
 help_db_backup: " -\n\n• `{i}dbbackup` / `{i}dbrestore` \n    Backup or restore your bot's database.\n"
 help_fileshare: " -\n\n• `{i}share` / `{i}fileshare` \n    Manage and share files easily.\n"
 help_forcesubscribe: " -\n\n• `{i}fsub <channel>` \n    Require users to join a channel to stay in the group.\n"
-help_gdrive: " -\n\n• `{i}gdl <link>` \n    Download files to your Google Drive.\n\n• `{i}upload <path>` \n    Upload local files to Drive.\n"
+help_gdrive: " -\n\n• `{i}gdul <reply/path>`\n    Upload files/folders to Google Drive.\n\n• `{i}gdown <link/id>`\n    Download files from GDrive to VPS.\n\n• `{i}gdsearch <nama>`\n    Search for files on Google Drive.\n\n• `{i}gdlist`\n    List all files in your Google Drive.\n\n• `{i}gdfolder`\n    View or set the default upload folder.\n"
 help_nightmode: " -\n\n• `{i}nightmode` \n    Manage automated group locking at night.\n"
 help_nsfwfilter: " -\n\n• `{i}nsfw` / `{i}nsfwfilter` \n    Automated NSFW detection and filtering.\n"
 help_ocr: " -\n\n• `{i}ocr` / `{i}read` \n    Extract text from images.\n"
