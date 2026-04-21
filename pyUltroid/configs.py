@@ -51,6 +51,10 @@ class Var:
         except (ImportError, Exception):
             LITE_MODE = False
     
+    # YouTube Auth (PO_TOKEN)
+    PO_TOKEN = _env("PO_TOKEN", default=None)
+    VISITOR_DATA = _env("VISITOR_DATA", default=None)
+    
     # Advanced I/O Throttling for low-spec hosts
     ASYNC_POOL_SIZE = 4 if LITE_MODE else 10
     FFMPEG_PRESET = "ultrafast" if LITE_MODE else "veryfast"
