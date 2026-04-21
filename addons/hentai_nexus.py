@@ -130,15 +130,27 @@ async def ha_search_logic(event, query):
     try:
         async with httpx.AsyncClient() as client:
             res = await client.post(api_url, json=data)
-            results = res.json().get('hits', [])
-            if not results: return await xx.edit("`Tidak ditemukan hasil di Hanime.`")
+            res_data = res.json()
+            results = res_data.get('hits', [])
+            if isinstance(results, str):
+                try:
+                    results = json.loads(results)
+                except:
+                    return await xx.edit("`Gagal memproses data dari Hanime.`")
+            
+            if not results or not isinstance(results, list):
+                return await xx.edit("`Tidak ditemukan hasil di Hanime.`")
             
             buttons = []
             for hit in results[:5]:
-                slug = hit['slug']
-                title = hit['name']
+                slug = hit.get('slug')
+                title = hit.get('name', 'Unknown')
+                if not slug: continue
                 rating = hit.get('rating', 'N/A')
                 buttons.append([Button.inline(f"🎬 {title[:30]} ({rating}⭐)", data=f"hnex:hard:{slug}")])
+            
+            if not buttons:
+                return await xx.edit("`Tidak ditemukan hasil yang valid di Hanime.`")
             await xx.edit(f"**Hanime Results for:** `{query}`", buttons=buttons)
     except Exception as e:
         await xx.edit(f"**Error:** `{e}`")
