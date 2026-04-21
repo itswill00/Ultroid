@@ -349,13 +349,15 @@ async def _(e):
     if not update_avail:
         return await xx.edit(f"✅ **Ultroid kamu sudah versi terbaru.**", link_preview=False)
 
-    # Minimalist Changelog UI
+    # Minimalist Changelog UI via Assistant
     msg = f"{changelog}\n\n**Apakah kamu ingin memperbarui sekarang?**"
     buttons = [
         [Button.inline("✅ Update Sekarang", data="do_update"), 
          Button.inline("❌ Batal", data="cancel_update")]
     ]
-    await xx.edit(msg, parse_mode="html", buttons=buttons, link_preview=False)
+    
+    await asst.send_message(e.chat_id, msg, parse_mode="html", buttons=buttons, link_preview=False)
+    await xx.delete()
 
 @callback("do_update", owner=True)
 async def exec_update(event):
