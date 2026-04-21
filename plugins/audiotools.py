@@ -109,7 +109,7 @@ async def trim_aud(e):
         cmd = f'ffmpeg -i "{file.name}" -preset ultrafast -ss {ss} -to {dd} -vn -acodec copy "{out}" -y'
         await bash(cmd)
         os.remove(file.name)
-        f_time = time.time()
+        time.time()
         n_file, _ = await e.client.fast_uploader(
             out, show_progress=True, event=e, message="Uploading...", to_delete=True
         )
@@ -153,7 +153,7 @@ async def ex_aud(e):
     os.remove(file.name)
     attributes = await set_attributes(out_file)
 
-    f_time = time.time()
+    time.time()
     try:
         n_file, _ = await e.client.fast_uploader(
             out_file, show_progress=True, event=e, message="Uploading...", to_delete=True

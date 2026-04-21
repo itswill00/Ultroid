@@ -1,14 +1,12 @@
 # Ultroid AI Core Engine
 # Simplified: Groq (Primary) + Gemini (Fallback)
 
-import asyncio
 import html
 import os
 import re
 import time
-import json
+
 import aiohttp
-from io import BytesIO
 
 from pyUltroid.dB.base import KeyManager
 
@@ -88,7 +86,7 @@ async def _call_groq(messages, model=None):
     for api_key in keys:
         headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
         payload = {"model": model, "messages": messages, "temperature": 0.2}
-        
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, headers=headers, json=payload, timeout=60) as resp:
@@ -98,7 +96,7 @@ async def _call_groq(messages, model=None):
                     if resp.status != 200:
                         LOGS.error(f"[Groq] Error {resp.status}: {await resp.text()}")
                         continue
-                    
+
                     data = await resp.json()
                     return data['choices'][0]['message']['content'], data.get('usage', {}).get('total_tokens', 0)
         except Exception as e:
@@ -112,9 +110,9 @@ async def _call_groq(messages, model=None):
 async def _call_gemini(messages, model=None):
     keys = _get_api_keys("GEMINI_API_KEY")
     if not keys: return None, "Gemini API Key Missing."
-    
+
     model = model or udB.get_key("GEMINI_MODEL") or "gemini-1.5-flash"
-    
+
     gemini_contents = []
     system_instruction = ""
     for m in messages:
@@ -146,11 +144,12 @@ async def _call_gemini(messages, model=None):
 
 async def run_ai_task(event, query, image_b64=None, system_override=None, use_search=False, provider=None):
     from pyUltroid._misc import owner_and_sudos
+
     from .._misc._wrappers import eor
 
     uid = event.sender_id
     is_admin = uid in owner_and_sudos()
-    
+
     try:
         if not is_admin:
             if not Verified.contains(uid):
@@ -185,11 +184,11 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         content = [{"type": "text", "text": query or "Describe this image technically in Indonesian."}]
         if image_b64:
             content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
-        
+
         messages.append({"role": "user", "content": content})
 
         start_time = time.time()
-        
+
         # Simple Dispatch
         if provider == "gemini":
             res = await _call_gemini(messages)
@@ -205,7 +204,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
         clean_user_text = query if query else "Visual Request"
         if "CONTEXT:" in clean_user_text:
             clean_user_text = clean_user_text.split("USER QUESTION:")[-1].strip()
-        
+
         CHAT_HISTORY[chat_id].append({"role": "user", "content": clean_user_text})
         CHAT_HISTORY[chat_id].append({"role": "assistant", "content": ans.strip()})
         if len(CHAT_HISTORY[chat_id]) > MAX_HISTORY * 2:
@@ -222,7 +221,7 @@ async def run_ai_task(event, query, image_b64=None, system_override=None, use_se
             output += "\n\n**Sources**:\n" + "\n".join([f"• {s}" for s in sources[:3]])
 
         footer = f"\n\n**time**: `{duration}s` | **tokens**: `{total_tokens}`"
-        
+
         if len(output) > 2000:
             tg_url = await fast_telegraph(f"Ultroid AI: {clean_user_text[:30]}...", output)
             if tg_url:

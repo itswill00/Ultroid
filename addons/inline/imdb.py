@@ -28,8 +28,7 @@ except ImportError:
 
 from telethon.tl.types import InputWebDocument as wb
 
-from . import LOGS, asst, async_searcher, callback, in_pattern, udB
-
+from . import LOGS, async_searcher, callback, in_pattern, udB
 
 # Define your OMDB API key
 OMDB_API_KEY = udB.get_key("OMDb_API")  #OpenMovies Database get free key from http://www.omdbapi.com/ with 1000 dailiy uses

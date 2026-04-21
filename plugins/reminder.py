@@ -152,7 +152,7 @@ async def clear_reminders(e):
         return await e.eor("`Remind | No active reminders.`")
 
     count = len(_reminders)
-    for rid, (task, _, _) in list(_reminders.items()):
+    for _rid, (task, _, _) in list(_reminders.items()):
         task.cancel()
     _reminders.clear()
     await e.eor(f"`Remind | {count} reminder(s) cleared.`")

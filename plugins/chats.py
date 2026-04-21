@@ -268,7 +268,7 @@ async def _(event):
 async def _(event):
     xx = await event.eor(get_string("com_1"))
     input_str = event.pattern_match.group(1).strip()
-    p, a, b, c, d, m, n, y, w, o, q, r = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    p, _a, b, c, d, m, n, y, w, o, q, r = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     async for i in event.client.iter_participants(event.chat_id):
         p += 1  # Total Count
         if isinstance(i.status, UserStatusEmpty):

@@ -87,7 +87,7 @@ async def make_change(event):
             await event.reply(msg)
         ST_SPAM.append(replied.sender_id)
     for ent, text in event.get_entities_text():
-        dont_send, entity = None, None
+        _dont_send, entity = None, None
         if isinstance(ent, MessageEntityMentionName):
             c_id = ent.user_id
         elif isinstance(ent, MessageEntityMention):

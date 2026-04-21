@@ -28,7 +28,7 @@ def main():
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler
     except ImportError:
-        AsyncIOScheduler = None
+        pass
 
     # Option to Auto Update On Restarts..
     if (

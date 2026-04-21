@@ -66,7 +66,7 @@ async def zipp(event):
         )
     else:
         await bash(f"zip -r {inp} {file}")
-    k = time.time()
+    time.time()
     n_file, _ = await event.client.fast_uploader(
         inp, show_progress=True, event=event, message="Uploading...", to_delete=True
     )
@@ -109,7 +109,7 @@ async def unzipp(event):
     await asyncio.sleep(4)
     ok = get_all_files("unzip")
     for x in ok:
-        k = time.time()
+        time.time()
         n_file, _ = await event.client.fast_uploader(
             x, show_progress=True, event=event, message="Uploading...", to_delete=True
         )

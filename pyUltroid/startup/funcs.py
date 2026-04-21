@@ -389,17 +389,17 @@ async def customize():
             return
         if asst.me.photo:
             return
-            
+
         LOGS.info("Customizing Your Assistant Bot in @BotFather...")
         UL = f"@{asst.me.username}"
         sir = f"@{ultroid_bot.me.username}" if ultroid_bot.me.username else ultroid_bot.me.first_name
-        
+
         file = random.choice([
             "https://graph.org/file/92cd6dbd34b0d1d73a0da.jpg",
             "https://graph.org/file/a97973ee0425b523cdc28.jpg",
             "resources/extras/ultroid_assistant.jpg",
         ])
-        
+
         if not os.path.exists(file):
             file, _ = await download_file(file, "profile.jpg")
             rem = True
@@ -538,8 +538,8 @@ async def ready():
     hosted         = str(_raw_hosted).split("#")[0].strip() or "local"
 
     plugin_count   = sum(len(v) for v in LIST.values())
-    official_count = len(HELP.get("Official", []))
-    addon_count    = len(HELP.get("Addons", []))
+    len(HELP.get("Official", []))
+    len(HELP.get("Addons", []))
 
     me          = ultroid_bot.me
     asst_me     = asst.me

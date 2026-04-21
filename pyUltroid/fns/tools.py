@@ -299,7 +299,7 @@ async def webuploader(chat_id: int, msg_id: int, uploader: str):
 
 def get_all_files(path, extension=None):
     filelist = []
-    for root, dirs, files in os.walk(path):
+    for root, _dirs, files in os.walk(path):
         for file in files:
             if not (extension and not file.endswith(extension)):
                 filelist.append(os.path.join(root, file))
@@ -415,10 +415,10 @@ async def get_paste(data: str, extension: str = "txt"):
 
 async def get_google_images(query):
     """Get image results from Google Custom Search API.
-    
+
     Args:
         query (str): Search query string
-        
+
     Returns:
         list: List of dicts containing image info (title, link, source, thumbnail, original)
     """

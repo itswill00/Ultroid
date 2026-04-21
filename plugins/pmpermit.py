@@ -6,6 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
+
 __doc__ = get_help("pmpermit")
 
 """
@@ -73,7 +74,7 @@ keym = KeyManager("PMPERMIT", cast=list)
 
 # ========================= PERSISTENCE =============================
 
-# KeyManager handles the main approved list, but we need another for 
+# KeyManager handles the main approved list, but we need another for
 # transient state like warnings and message IDs to delete.
 PM_DATA = udB.get_key("PMP_DATA") or {}
 
@@ -88,7 +89,7 @@ def update_pm(userid, message=None, warns_given=None, last_msg=None, to_del_id=N
         user_data["last"] = last_msg
     if to_del_id:
         user_data["del"] = to_del_id
-    
+
     data[str(userid)] = user_data
     udB.set_key("PMP_DATA", data)
 
@@ -364,7 +365,7 @@ if udB.get_key("PMSETTING"):
                     )
                     update_pm(user.id, to_del_id=msg.id)
             update_pm(user.id, last_msg=event.text)
-            
+
             # Use updated warns count for block logic
             final_warns = get_pm_data(user.id).get("warns", 0)
             if final_warns >= WARNS:

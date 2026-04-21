@@ -8,7 +8,7 @@
 """
 Fasly Bot Cheat.
 
-• `{i}fastly` - On/Off command. 
+• `{i}fastly` - On/Off command.
 
 • Also Required : `OCR_API`. Add it using the command `.setdb OCR_API api_key`
 • To get the API visit 'https://ocr.space/ocrapi'

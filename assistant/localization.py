@@ -28,7 +28,7 @@ async def setlang(event):
         )
         for ult in languages
     ]
-    buttons = list(zip(tultd[::2], tultd[1::2]))
+    buttons = list(zip(tultd[::2], tultd[1::2], strict=False))
     if len(tultd) % 2 == 1:
         buttons.append((tultd[-1],))
     buttons.append([Button.inline("« Back", data="mainmenu")])

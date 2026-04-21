@@ -6,6 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
+
 __doc__ = get_help("pdftools")
 
 """
@@ -77,7 +78,7 @@ async def pdfseimg(event):
     file = ok.media.document
     k = time.time()
     filename = "hehe.pdf"
-    result = await downloader(
+    await downloader(
         f"pdf/{filename}", file, xx, k, f"Downloading {filename}..."
     )
 

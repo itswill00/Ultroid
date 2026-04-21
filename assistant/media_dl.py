@@ -2,7 +2,7 @@
 ★ Universal Media Downloader ★
 
 Provides an interactive GUI format selection for TikTok, Instagram, Twitter, and YouTube links.
-Includes automatic chat listener functionality for completely seamless background downloads, 
+Includes automatic chat listener functionality for completely seamless background downloads,
 as well as manual `/dl`, `/yta`, and `/ytv` command triggers.
 """
 
@@ -97,12 +97,12 @@ async def show_dl_prompt(event, url, info=None):
     }
 
     source = (
-        "TikTok" if TIKTOK_RE.search(url) else 
-        "Instagram" if INSTAGRAM_RE.search(url) else 
-        "Twitter/X" if TWITTER_RE.search(url) else 
+        "TikTok" if TIKTOK_RE.search(url) else
+        "Instagram" if INSTAGRAM_RE.search(url) else
+        "Twitter/X" if TWITTER_RE.search(url) else
         "Facebook" if FB_VIDEO_RE.search(url) else
         "YouTube" if YOUTUBE_RE.search(url) else
-        "🔞 NSFW Media" if ADULT_RE.search(url) else 
+        "🔞 NSFW Media" if ADULT_RE.search(url) else
         "🌐 Universal Media"
     )
 
@@ -284,7 +284,7 @@ async def dler_process(event, url, fmt):
         # send_file() WITHOUT a progress callback (it's instant at that point).
         sender_client = asst
         already_uploaded = False
-        
+
         # Album Handling
         if isinstance(file_to_send, list):
             await status_msg.edit(f"`[📤] Sending {len(file_to_send)} items as album...`")
@@ -397,12 +397,12 @@ async def manual_downloader(event):
                 # If extraction fails, fall back to showing the generic prompt
                 await status.delete()
                 return await show_dl_prompt(event, url)
-            
+
             # If it's a photo/album, just download it
             if info.get("ext") == "jpg" or info.get("type") == "album" or "photo" in (info.get("title") or "").lower():
                 await status.delete()
                 return await dler_process(event, url, "video") # "video" handles both as a fallback in dler_process
-            
+
             # If it's a video, show prompt (passing info to cache for efficiency)
             await status.delete()
             await show_dl_prompt(event, url, info=info)

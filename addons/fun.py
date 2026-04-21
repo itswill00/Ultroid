@@ -33,6 +33,7 @@
 import os
 import random
 
+import aiohttp
 import requests
 from phlogo import generate
 from pyjokes import get_joke
@@ -53,7 +54,9 @@ async def _(event):
         await event.eor("`Give some url`")
         return
     sample_url = "https://da.gd/s?url={}".format(input_str)
-    response_api = requests.get(sample_url).text
+    async with aiohttp.ClientSession() as ses:
+        async with ses.get(sample_url) as resp:
+            response_api = await resp.text()
     if response_api:
         await event.eor(
             "**Shortened url**==> {}\n**Given url**==> {}.".format(

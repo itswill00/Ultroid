@@ -15,9 +15,6 @@ from os import execl, remove
 from random import choice
 
 from bs4 import BeautifulSoup as bs
-
-from . import *
-
 from telethon import Button, events
 from telethon.tl.types import MessageMediaWebPage
 from telethon.utils import get_peer_id
@@ -26,6 +23,8 @@ from pyUltroid.dB.verify_db import add_captcha_verified, add_verified
 from pyUltroid.fns.helper import catbox_upload, fast_download, progress
 from pyUltroid.fns.tools import Carbon, async_searcher, get_paste, telegraph_client
 from pyUltroid.startup.loader import Loader
+
+from . import *
 
 try:
     from pyUltroid.fns.gDrive import GDriveManager
@@ -461,7 +460,7 @@ async def _(e):
         auth_code = code.text.strip().strip('"').strip("'")
         if "code=" in auth_code:
             auth_code = auth_code.split("code=")[1].split("&")[0]
-            
+
         if GDrive._create_token_file(code=auth_code):
             await conv.send_message(
                 "`Success!\nYou are all set to use Google Drive with Ultroid Userbot.`",
@@ -923,7 +922,7 @@ async def name(event):
 async def name(event):
     m = range(1, 10)
     tultd = [Button.inline(f"{x}", data=f"wrns_{x}") for x in m]
-    lst = list(zip(tultd[::3], tultd[1::3], tultd[2::3]))
+    lst = list(zip(tultd[::3], tultd[1::3], tultd[2::3], strict=False))
     lst.append([Button.inline("« Back", data="cbs_pmcstm")])
     await event.edit(
         "Select the number of warnings for a user before getting blocked in PMs.",
@@ -1162,10 +1161,8 @@ async def heheh(event):
         except AsyncTimeOut:
             return await conv.send_message("**• TimeUp!**\nStart from /start back.")
         if not msg.text or msg.text.startswith("/"):
-            timyork = "Cancelled!"
             if msg.text == "/clear":
                 udB.del_key("PMBOT_FSUB")
-                timyork = "Done! Force Subscribe Stopped\nRestart your Bot!"
             return await conv.send_message(
                 "Cancelled!", buttons=get_back_button("cbs_chatbot")
             )
@@ -1231,7 +1228,7 @@ async def chon(event):
     var = "PMBOT"
     await setit(event, var, "False")
     if AST_PLUGINS.get("pmbot"):
-        for i, e in AST_PLUGINS["pmbot"]:
+        for i, _e in AST_PLUGINS["pmbot"]:
             event.client.remove_event_handler(i)
     await event.edit(
         "Done! Chat People Via This Bot Stopped.",

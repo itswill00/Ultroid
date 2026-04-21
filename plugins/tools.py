@@ -300,7 +300,7 @@ async def _(e):
             nam = name.split("/")[-1]
             if os.path.isdir(name):
                 size = 0
-                for path, dirs, files in os.walk(name):
+                for path, _dirs, files in os.walk(name):
                     for f in files:
                         fp = os.path.join(path, f)
                         size += os.path.getsize(fp)

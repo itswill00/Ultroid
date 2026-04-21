@@ -5,7 +5,6 @@
 # PLease read the GNU Affero General Public License in
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
-import glob
 import os
 import re
 import time
@@ -17,7 +16,7 @@ try:
         kwargs.pop("proxies", None)
         return _old_post(*args, **kwargs)
     httpx.post = _new_post
-    
+
     _old_Client_post = httpx.Client.post
     def _new_Client_post(self, *args, **kwargs):
         kwargs.pop("proxies", None)
@@ -33,11 +32,10 @@ try:
 except ImportError:
     Playlist, VideosSearch = None, None
 
-from yt_dlp import YoutubeDL
 
-from .. import LOGS, udB
+from .. import LOGS
 from .extractor import extractor
-from .helper import download_file, humanbytes, run_async, time_formatter
+from .helper import humanbytes, run_async, time_formatter
 from .tools import set_attributes
 
 
@@ -72,34 +70,34 @@ async def download_yt(event, link, ytd):
     info = await dler(event, link, ytd, download=True)
     if not info:
         return
-    
+
     local_files = info.get("local_files") or []
     if not local_files:
         return await event.edit("`[Error] No files downloaded.`")
 
     total = len(local_files)
     title = info.get("title") or "Downloaded Media"
-    
+
     # Send files
     for num, file_path in enumerate(local_files, start=1):
         if not os.path.exists(file_path):
             continue
-        
+
         # Prepare attributes (for video/audio meta)
         attributes = await set_attributes(file_path)
-        
+
         # Upload
         res, _ = await event.client.fast_uploader(
             file_path, show_progress=True, event=event, to_delete=True
         )
-        
+
         # Caption
         from_ = info.get("extractor", "Universal")
         caption = f"**{title}**"
         if total > 1:
             caption = f"`[{num}/{total}]` " + caption
         caption += f"\n\n`from {from_}`"
-        
+
         # Send
         await event.client.send_file(
             event.chat_id,
@@ -174,15 +172,17 @@ def get_buttons(listt):
         )
         for x in listt
     ]
-    buttons = list(zip(butts[::2], butts[1::2]))
+    buttons = list(zip(butts[::2], butts[1::2], strict=False))
     if len(butts) % 2 == 1:
         buttons.append((butts[-1],))
     buttons.append([Button.inline("« Back", f"ytdl_back:{id}")])
     return buttons
 
 
-async def dler(event, url, opts: dict = {}, download=False):
+async def dler(event, url, opts: dict = None, download=False):
     """Unified downloader bridge for Userbot plugins."""
+    if opts is None:
+        opts = {}
     await event.edit("`[DL] Processing Request...`")
     fmt = "video"
     if opts.get("format") == "bestaudio":

@@ -6,6 +6,7 @@
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
 from . import get_help
+
 __doc__ = get_help("speedtest")
 
 """
@@ -69,7 +70,7 @@ async def turbo_speedtest(ult):
 
     try:
         # Step 1: Initialize
-        loop = asyncio.get_running_loop()
+        asyncio.get_running_loop()
         s = speedtest.Speedtest()
 
         await x.edit("`Selecting optimal service node...`")

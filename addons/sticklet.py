@@ -51,7 +51,7 @@ async def sticklet(event):
     font_file_ = glob("resources/fonts/*ttf")
     FONT_FILE = random.choice(font_file_)
     font = ImageFont.truetype(FONT_FILE, size=fontsize)
-    for i in range(10):
+    for _i in range(10):
         try:
             bbox = draw.multiline_textbbox((0, 0), sticktext, font=font)
             width, height = bbox[2] - bbox[0], bbox[3] - bbox[1]

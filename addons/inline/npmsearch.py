@@ -14,8 +14,7 @@ __doc__ = f"""
 
 from telethon.tl.custom import Button
 
-from . import InlinePlugin, asst, async_searcher, in_pattern
-
+from . import InlinePlugin, async_searcher, in_pattern
 
 
 @in_pattern("npm")

@@ -16,13 +16,10 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
 from .. import udB
 from .helper import (
-    _NO_FLOOD_PRUNE_THRESHOLD,
-    No_Flood,
     humanbytes,
     run_async,
     time_formatter,
@@ -85,7 +82,7 @@ class GDriveManager:
         # to generate a code if the user is technical enough to copy from address bar,
         # OR we can use a special redirect URI if available.
         # For compatibility with Ultroid's current flow, we'll try to get it working.
-        
+
         if code:
             if not self._flow:
                 self._flow = Flow.from_client_config(
@@ -116,7 +113,7 @@ class GDriveManager:
     def _load_creds(self):
         if self._creds:
             return self._creds
-        
+
         token_data = udB.get_key("GDRIVE_AUTH_TOKEN")
         if token_data:
             try:
@@ -127,7 +124,7 @@ class GDriveManager:
             except Exception:
                 if os.path.exists(self.token_file):
                     self._creds = Credentials.from_authorized_user_file(self.token_file, self.scopes)
-        
+
         if self._creds and self._creds.expired and self._creds.refresh_token:
             try:
                 self._creds.refresh(Request())
@@ -137,7 +134,7 @@ class GDriveManager:
             except Exception as e:
                 LOGS.error(f"Failed to refresh GDrive token: {e}")
                 self._creds = None
-        
+
         return self._creds
 
     @property
@@ -209,10 +206,10 @@ class GDriveManager:
 
     async def _upload_file(self, event, path: str, filename: str = None, folder_id: str = None):
         if not self.service: return "Please Authorise GDrive first."
-        
+
         if not filename:
             filename = os.path.basename(path)
-        
+
         from mimetypes import guess_type
         mime_type = guess_type(path)[0] or "application/octet-stream"
 
@@ -223,7 +220,7 @@ class GDriveManager:
             "description": "Uploaded using Ultroid Userbot",
             "mimeType": mime_type,
         }
-        
+
         target_folder = folder_id or self.folder_id
         if target_folder:
             body["parents"] = [target_folder]
@@ -235,7 +232,7 @@ class GDriveManager:
         start = time.time()
         _status = None
         last_edit_time = 0
-        
+
         while not _status:
             _progress, _status = await run_async(insert_op.next_chunk)(num_retries=5)
             if _progress:
@@ -253,7 +250,7 @@ class GDriveManager:
 
                 filled = math.floor(percentage / 5)
                 progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
-                
+
                 tmp = (
                     f"**✦ Uploading to GDrive...**\n"
                     f"**File:** `{filename}`\n\n"
@@ -270,12 +267,12 @@ class GDriveManager:
         try:
             await self._set_permissions(fileId=fileId)
         except Exception: pass
-        
+
         return self._create_download_link(fileId)
 
     async def _download_file(self, event, fileId: str, filename: str = None):
         if not self.service: return False, "Please Authorise GDrive first."
-        
+
         if fileId.startswith("http"):
             if "id=" in fileId:
                 fileId = fileId.split("id=")[1].split("&")[0]
@@ -298,7 +295,7 @@ class GDriveManager:
             downloader = MediaIoBaseDownload(file, request, chunksize=10*1024*1024)
             _status = None
             last_edit_time = 0
-            
+
             while not _status:
                 _progress, _status = await run_async(downloader.next_chunk)(num_retries=5)
                 if _progress:
@@ -340,7 +337,7 @@ class GDriveManager:
                 fields="nextPageToken, files(id, name, mimeType)",
                 pageSize=100,
             ).execute)()
-            
+
             _files = {}
             for file in _items.get("files", []):
                 if file["mimeType"] == self.dir_mimetype:
@@ -382,7 +379,7 @@ class GDriveManager:
                 spaces="drive",
                 fields="nextPageToken, files(id, name, mimeType)",
             ).execute)()
-            
+
             _files = {}
             for file in _items.get("files", []):
                 _files[self._create_download_link(file["id"])] = file["name"]

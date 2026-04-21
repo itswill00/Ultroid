@@ -90,7 +90,7 @@ async def delayspammer(e):
         return await e.edit(f"**Usage :** {HNDLR}delayspam <delay time> <count> <msg>")
     await e.delete()
     try:
-        for i in range(count):
+        for _i in range(count):
             await e.respond(msg)
             await asyncio.sleep(delay)
     except Exception as u:

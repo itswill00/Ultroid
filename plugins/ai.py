@@ -2,12 +2,15 @@
 # Simplified: Groq (Primary) + Gemini (Fallback)
 
 import os
+
 from . import get_help
+
 __doc__ = get_help("ai")
 
-from pyUltroid.fns.ai_engine import google_search, run_ai_task
+from pyUltroid.fns.ai_engine import run_ai_task
 from pyUltroid.fns.tools import encode_image_base64
-from . import LOGS, udB, ultroid_cmd
+
+from . import ultroid_cmd
 
 # --------------------------------------------------------------------------
 # MAIN AI COMMANDS (.ai, .ask, .chat)
@@ -19,11 +22,11 @@ async def unified_ai(e):
     query = e.pattern_match.group(2).strip()
     image_b64 = None
     use_search = False
-    
+
     if query.startswith("--search ") or query.startswith("-s "):
         use_search = True
         query = query.replace("--search ", "", 1).replace("-s ", "", 1).strip()
-    
+
     reply = await e.get_reply_message()
     if reply and (reply.photo or (reply.document and reply.document.mime_type.startswith("image"))):
         dl = await reply.download_media()
@@ -51,13 +54,13 @@ async def provider_override(e):
     provider = e.pattern_match.group(1).lower()
     query = e.pattern_match.group(2).strip()
     reply = await e.get_reply_message()
-    
+
     if not query and reply and reply.text:
         query = reply.text
-        
+
     if not query:
         return await e.eor(f"`[AI] Usage: .{provider} <question>`")
-        
+
     await run_ai_task(e, query, provider=provider)
 
 # --------------------------------------------------------------------------

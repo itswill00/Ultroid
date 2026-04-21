@@ -21,7 +21,8 @@ if run_as_module:
 
 
 try:
-    from aiohttp import ClientSession as aiohttp_client, ContentTypeError
+    from aiohttp import ClientSession as aiohttp_client
+    from aiohttp import ContentTypeError
 except ImportError:
     aiohttp_client = None
     ContentTypeError = Exception

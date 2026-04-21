@@ -1,7 +1,10 @@
 from . import get_help
+
 __doc__ = get_help("animation")
 import asyncio
+
 from pyUltroid.base import ultroid_cmd
+
 
 @ultroid_cmd(pattern="headshot$")
 async def headshot(e):

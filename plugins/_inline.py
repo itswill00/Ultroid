@@ -197,7 +197,6 @@ async def uptd_plugin(event):
     if "|" in file:
         file, index = file.split("|")
     key_ = HELP.get(key, [])
-    hel_p = f"Plugin — `{file}`\n"
     help_ = ""
     try:
         doc = key_[file]

@@ -419,12 +419,14 @@ class Quotly:
         self,
         event,
         url="https://bot.lyo.su/quote/generate",
-        reply={},
+        reply=None,
         bg=None,
         sender=None,
         file_name="quote.webp",
     ):
         """Create quotely's quote."""
+        if reply is None:
+            reply = {}
         if not isinstance(event, list):
             event = [event]
         from .. import udB

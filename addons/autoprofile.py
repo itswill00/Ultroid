@@ -51,7 +51,7 @@ async def autoname_(event):
 
 
 @ultroid_cmd(pattern="(auto|stop)bio$")
-async def autoname_(event):
+async def autobio_(event):
     match = event.pattern_match.group(1)
     if match == "stop":
         udB.del_key("AUTOBIO")

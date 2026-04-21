@@ -117,7 +117,7 @@ async def process(msg, user, client, reply, replied=None):
     # Profile Photo Check and Fetch
     yes = False
     color = random.choice(COLORS)
-    async for photo in client.iter_profile_photos(user, limit=1):
+    async for _photo in client.iter_profile_photos(user, limit=1):
         yes = True
     if yes:
         pfp = await client.download_profile_photo(user)

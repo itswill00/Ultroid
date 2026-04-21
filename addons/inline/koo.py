@@ -15,8 +15,7 @@ __doc__ = f"""
 from telethon.tl.custom import Button
 from telethon.tl.types import InputWebDocument as wb
 
-from . import InlinePlugin, asst, async_searcher, in_pattern
-
+from . import InlinePlugin, async_searcher, in_pattern
 
 _koo_ = {}
 

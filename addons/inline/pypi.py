@@ -27,7 +27,6 @@ from telethon import Button
 from telethon.tl.types import InputWebDocument as wb
 from telethon.tl.types import MessageEntityTextUrl
 
-
 hash_to_url = {}
 
 
@@ -104,7 +103,7 @@ async def inline_pypi_handler(event):
 
         offset = txt.find(name)
         length = len(name)
-        url_entity = MessageEntityTextUrl(offset=offset, length=length, url=url)
+        MessageEntityTextUrl(offset=offset, length=length, url=url)
 
         # Extract document links from description
         document_links = re.findall(r"(https?://\S+)", info["description"])

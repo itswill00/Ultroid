@@ -206,7 +206,7 @@ async def choose_cata(event):
                 if ":" in name:
                     name = name.split(":")[1]
                 btt.append(Button.inline(name, f"trziad_{i['id']}"))
-            buttons = list(zip(btt[::2], btt[1::2]))
+            buttons = list(zip(btt[::2], btt[1::2], strict=False))
             if len(btt) % 2 == 1:
                 buttons.append((btt[-1],))
             buttons.append([Button.inline("Cancel ❌", "delit")])

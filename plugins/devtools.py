@@ -251,7 +251,7 @@ async def _(event):
     old_stdout = sys.stdout
     redirected_output = sys.stdout = StringIO()
     redirected_error = sys.stderr = StringIO()
-    stdout, stderr, exc, timeg = None, None, None, None
+    stdout, stderr, exc, _timeg = None, None, None, None
     tima = time.time()
     try:
         value = await aexec(cmd, event)

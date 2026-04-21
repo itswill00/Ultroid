@@ -165,8 +165,8 @@ class MediaExtractor:
                 res = self._tiktok_scrape(url)
                 if not res or "error" in res:
                     res = self._tikwm_dl(url)
-                
-                if res and not "error" in res:
+
+                if res and "error" not in res:
                     self._extract_cache[url] = res
                     return res
             except Exception as e:
@@ -176,10 +176,10 @@ class MediaExtractor:
             try:
                 # Prioritize local scraping (GraphQL & Embed)
                 res = self._instagram_scrape(url)
-                if res and not "error" in res:
+                if res and "error" not in res:
                     self._extract_cache[url] = res
                     return res
-                
+
                 # Fallback to Sonzaix API for Instagram
                 res = self._sonzaix_dl(url)
                 if res and res.get("status"):
@@ -220,7 +220,7 @@ class MediaExtractor:
         if FB_VIDEO_RE.search(url):
             try:
                 res = self._facebook_scrape(url)
-                if res and not "error" in res:
+                if res and "error" not in res:
                     self._extract_cache[url] = res
                     return res
                 # If our Genius Scraper and Cobalt API failed, yt-dlp will 100% fail.
@@ -235,7 +235,7 @@ class MediaExtractor:
             try:
                 # Try Sonzai API if yt-dlp is known to be failing or as proactive fallback
                 res = self._youtube_sonzai(url)
-                if res and not "error" in res:
+                if res and "error" not in res:
                     self._extract_cache[url] = res
                     return res
             except Exception as e:
@@ -310,11 +310,11 @@ class MediaExtractor:
 
         # Step 1: Check Cache for Scraped Info
         info = self._extract_cache.get(url)
-        
+
         # Step 2: If Scraped, Use Direct Downloader (Bypass yt-dlp)
         if info and info.get("extractor") in ["tiktok_scraper", "instagram_scraper", "facebook_scraper", "tikwm"]:
             LOGS.info(f"Extractor | Using Direct Downloader for {info['extractor']}")
-            
+
             # Prepare Headers
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -356,7 +356,7 @@ class MediaExtractor:
                 if not info: return None
                 if "entries" not in info:
                     return [self._resolve_filename(ydl, info)]
-                
+
                 files = []
                 for entry in info.get("entries") or []:
                     if entry: files.append(self._resolve_filename(ydl, entry))
@@ -418,23 +418,24 @@ class MediaExtractor:
 
         # Try GraphQL first
         res = self._instagram_gql(shortcode)
-        if res and not "error" in res:
+        if res and "error" not in res:
             return res
-        
+
         # Fallback to Embed
         return self._instagram_embed(shortcode)
 
     def _instagram_gql(self, shortcode):
         """Fetch metadata via Instagram GraphQL API."""
         try:
-            import cloudscraper
+            import base64
             import json
             import random
             import string
-            import base64
+
+            import cloudscraper
 
             scraper = cloudscraper.create_scraper()
-            
+
             def rand_alpha(n): return "".join(random.choice(string.ascii_letters) for _ in range(n))
             def rand_b64(n): return base64.urlsafe_b64encode(os.urandom(n)).decode().rstrip("=")
 
@@ -456,7 +457,7 @@ class MediaExtractor:
             resp = scraper.post(IG_GRAPHQL_ENDPOINT, data=body, headers=headers, timeout=15)
             if resp.status_code != 200:
                 return {"error": f"GraphQL HTTP {resp.status_code}"}
-            
+
             data = resp.json()
             media = (data.get("data") or {}).get("xdt_shortcode_media") or (data.get("data") or {}).get("shortcode_media")
             if not media:
@@ -469,8 +470,9 @@ class MediaExtractor:
     def _instagram_embed(self, shortcode):
         """Fetch metadata via Instagram Embed page."""
         try:
-            import cloudscraper
             import json
+
+            import cloudscraper
             scraper = cloudscraper.create_scraper()
             url = f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
             resp = scraper.get(url, timeout=15)
@@ -489,7 +491,7 @@ class MediaExtractor:
                     media = (ctx_data.get("gql_data") or {}).get("shortcode_media")
                     if media:
                         return self._parse_ig_media(media)
-            
+
             return {"error": "Could not find metadata in Embed"}
         except Exception as e:
             return {"error": str(e)}
@@ -498,7 +500,7 @@ class MediaExtractor:
         """Unified parser for Instagram media objects."""
         typename = media.get("__typename")
         owner = media.get("owner") or {}
-        
+
         info = {
             "title": (media.get("edge_media_to_caption", {}).get("edges") or [{}])[0].get("node", {}).get("text") or "Instagram Media",
             "uploader": owner.get("full_name") or owner.get("username") or "Instagram User",
@@ -522,22 +524,23 @@ class MediaExtractor:
         else:
             info["url"] = media.get("video_url") or media.get("display_url")
             info["ext"] = "mp4" if media.get("is_video") else "jpg"
-        
+
         return info
 
     def _facebook_scrape(self, url):
         """God Mode Zero-Cookie Facebook scraper with Nuclear Hijacking strategies."""
         LOGS.info(f"Extractor | Facebook NUCLEAR Mode: {url}")
         try:
+            from urllib.parse import quote, unquote
+
             import requests
-            from urllib.parse import quote, unquote, urlparse, parse_qs
             # Use requests.Session for more control over TLS and headers
             scraper = requests.Session()
-            
+
             # Match debug script UA
             DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
             scraper.headers.update({"User-Agent": DESKTOP_UA})
-            
+
             # --- PHASE -1: Cookie Integration ---
             if hasattr(self, "_cookie_file") and self._cookie_file:
                 try:
@@ -548,7 +551,7 @@ class MediaExtractor:
                     # Session warmup
                     scraper.get("https://www.facebook.com/", timeout=7)
                     LOGS.info(f"Extractor | Facebook Cookies Integrated ({len(scraper.cookies)} items).")
-                except Exception as e: 
+                except Exception as e:
                     LOGS.error(f"Extractor | Cookie Integration Error: {e}")
 
             def unescape_fb(text):
@@ -622,7 +625,6 @@ class MediaExtractor:
 
             # --- PHASE 1: Direct ID Extraction ---
             content_id = None
-            user_id = None
             patterns = [
                 r"share/[pv]/([A-Za-z0-9]+)",
                 r"posts/([0-9]+)",
@@ -635,7 +637,7 @@ class MediaExtractor:
             ]
             for p in patterns:
                 m = re.search(p, url)
-                if m: 
+                if m:
                     content_id = m.group(1)
                     break
 
@@ -644,10 +646,10 @@ class MediaExtractor:
                 LOGS.info(f"Extractor | Cunning Strategy 5: Deep Crawl ({content_id})")
                 targets = [
                     f"https://mbasic.facebook.com/{content_id}",
-                    f"https://www.facebook.com/plugins/post.php?href={quote(url)}", 
+                    f"https://www.facebook.com/plugins/post.php?href={quote(url)}",
                     f"https://www.facebook.com/plugins/video.php?v={content_id}"
                 ]
-                
+
                 # Standard Desktop UA that matches debug script
                 DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 
@@ -657,14 +659,14 @@ class MediaExtractor:
                         html = resp.text
                         res = nuclear_vacuum(html)
                         if res: return res
-                        
+
                         m_vid = re.search(r'href="(/video_redirect/[^"]+)"', html)
                         if m_vid:
                             vid_url = unquote(unescape_fb(m_vid.group(1).replace("&amp;", "&")))
                             if "/video_redirect/?src=" in vid_url:
                                 vid_url = vid_url.split("src=")[1].split("&")[0]
                                 return {"url": unquote(vid_url), "ext": "mp4", "extractor": "fb_mbasic_vid"}
-                        
+
                         if "mbasic" in target:
                             imgs = re.findall(r'src="(https://scontent\.[^"]+)"', html)
                             if imgs:
@@ -695,7 +697,7 @@ class MediaExtractor:
         try:
             import cloudscraper
             scraper = cloudscraper.create_scraper()
-            
+
             # --- Weapon 1: Cobalt API (The Ultimate Bypass) ---
             headers = {
                 "Accept": "application/json",
@@ -712,16 +714,16 @@ class MediaExtractor:
                 "https://api.cobalt.black/api/json",
                 "https://cobalt.night-street.com/api/json"
             ]
-            
+
             for instance in cobalt_instances:
                 try:
                     resp = scraper.post(instance, json={"url": url}, headers=headers, timeout=15)
                     if resp.status_code == 200:
                         res = resp.json()
                         status = res.get("status")
-                        
+
                         if status in ["stream", "redirect"]:
-                            LOGS.info(f"Extractor | Cobalt API Success: Single Media")
+                            LOGS.info("Extractor | Cobalt API Success: Single Media")
                             return {
                                 "url": res.get("url"),
                                 "title": "Facebook Media (Cobalt Bypass)",
@@ -731,7 +733,7 @@ class MediaExtractor:
                             }
                         elif status == "picker":
                             # Carousel / Album handler
-                            LOGS.info(f"Extractor | Cobalt API Success: Album/Carousel")
+                            LOGS.info("Extractor | Cobalt API Success: Album/Carousel")
                             entries = []
                             for item in res.get("picker", []):
                                 entries.append({
@@ -766,7 +768,7 @@ class MediaExtractor:
                     }
         except Exception as e:
             LOGS.error(f"Extractor | Wild Card Aggregator failed: {e}")
-        
+
         # If we reach here, it's 99% a private group post.
         return {"error": "Access Denied. This post is likely private or restricted. A cookies.txt file is mandatory for this URL."}
 
@@ -783,11 +785,11 @@ class MediaExtractor:
                 links = data.get("download_link", {})
                 if not links:
                     return {"error": "No download links found in Sonzai API"}
-                
+
                 # Pick best available resolution (e.g. 720p)
                 best_label = sorted(links.keys(), key=lambda x: int(re.search(r"\d+", x).group(0) if re.search(r"\d+", x) else 0), reverse=True)[0]
                 video_url = links[best_label]
-                
+
                 return {
                     "url": video_url,
                     "title": data.get("filename", "YouTube Video").split(".mp4")[0],
@@ -803,8 +805,9 @@ class MediaExtractor:
         """Robust TikTok scraping with detailed logging."""
         LOGS.info(f"Extractor | TikTok Scraping started for: {url}")
         try:
-            import cloudscraper
             import json
+
+            import cloudscraper
             scraper = cloudscraper.create_scraper()
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -812,7 +815,7 @@ class MediaExtractor:
                 "Referer": "https://www.tiktok.com/",
                 "Accept-Language": "en-US,en;q=0.9",
             }
-            
+
             # Step 1: Resolve URL
             try:
                 resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
@@ -828,10 +831,10 @@ class MediaExtractor:
 
             if resp.status_code == 403:
                 LOGS.warning("Extractor | TikTok returned 403 Forbidden on initial request.")
-            
+
             aweme_match = re.search(r"/(?:video|photo|v|reels)/(\d+)", resolved_url)
             aweme_id = aweme_match.group(1) if aweme_match else None
-            
+
             if not aweme_id:
                 aweme_match = re.search(r'video(?:Id|ID|id)"\s*:\s*"(\d+)"', html_text)
                 aweme_id = aweme_match.group(1) if aweme_match else None
@@ -845,7 +848,7 @@ class MediaExtractor:
 
             data = None
             item = None
-            
+
             for target in targets:
                 LOGS.info(f"Extractor | Trying target: {target}")
                 if target != resolved_url:
@@ -857,7 +860,7 @@ class MediaExtractor:
                     except Exception as e:
                         LOGS.warning(f"Extractor | Target {target} failed: {e}")
                         continue
-                
+
                 if "/login" in resp.url or "verify-center" in html_text:
                     LOGS.warning(f"Extractor | Target {target} blocked by Captcha/Login.")
                     continue
@@ -879,12 +882,12 @@ class MediaExtractor:
                                         res = find_item(i)
                                         if res: return res
                                 return None
-                            
+
                             item = find_item(data)
                             if item:
                                 LOGS.info(f"Extractor | Successfully parsed itemStruct from {target}")
                                 break
-                        except Exception as e:
+                        except Exception:
                             continue
                 if item: break
 
@@ -914,7 +917,7 @@ class MediaExtractor:
                 video_url = video.get("playAddr") or video.get("downloadAddr") or video.get("play_addr", {}).get("url_list", [None])[0]
                 if not video_url:
                     video_url = item.get("video_url")
-                
+
                 info["url"] = video_url
                 info["ext"] = "mp4"
                 LOGS.info(f"Extractor | Detected Video: {info['url'][:50]}...")
@@ -941,11 +944,11 @@ class MediaExtractor:
                 "Referer": "https://www.tikwm.com/",
             }
             res = scraper.post("https://www.tikwm.com/api/", data={"url": url}, headers=headers, timeout=15)
-            
+
             if res.status_code != 200:
                 LOGS.warning(f"Extractor | TikWM API returned HTTP {res.status_code}")
                 return {"error": f"TikWM HTTP {res.status_code}"}
-            
+
             data = res.json()
             if data.get("code") == 0:
                 item = data.get("data")
@@ -955,7 +958,7 @@ class MediaExtractor:
                     "id": item.get("id"),
                     "extractor": "tikwm"
                 }
-                
+
                 images = item.get("images")
                 if images and isinstance(images, list):
                     info["entries"] = [{"url": u, "ext": "jpg"} for u in images]
@@ -964,7 +967,7 @@ class MediaExtractor:
                 else:
                     info["url"] = item.get("play") or item.get("wmplay") or item.get("hdplay")
                     info["ext"] = "mp4"
-                    LOGS.info(f"Extractor | TikWM: Detected Video URL")
+                    LOGS.info("Extractor | TikWM: Detected Video URL")
                 return info
             else:
                 msg = data.get("msg") or "Unknown TikWM error"

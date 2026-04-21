@@ -47,7 +47,7 @@ def ban_time(time_str):
 async def _callback_check(event):
     id_ = str(uuid.uuid1()).split("-")[0]
     time.time()
-    msg = await event.reply(
+    await event.reply(
         "Click Below Button to prove self as Admin!",
         buttons=Button.inline("Click Me", f"cc_{id_}"),
     )

@@ -169,7 +169,7 @@ async def kck(ult):
         return
     if ult.is_private:
         return await ult.eor("`Use this in Group/Channel.`", time=5)
-    ml = ult.text.split(" ", maxsplit=1)[0]
+    ult.text.split(" ", maxsplit=1)[0]
     xx = await ult.eor(get_string("com_1"))
     something = await get_uinfo(ult)
     if not something:

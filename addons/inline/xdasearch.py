@@ -16,8 +16,7 @@ __doc__ = f"""
 from bs4 import BeautifulSoup as bs
 from telethon.tl.types import InputWebDocument as wb
 
-from . import InlinePlugin, asst, async_searcher, get_string, in_pattern
-
+from . import InlinePlugin, async_searcher, get_string, in_pattern
 
 # Inspired by @FindXDaBot
 

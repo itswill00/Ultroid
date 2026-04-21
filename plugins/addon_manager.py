@@ -1,12 +1,13 @@
 
 from . import get_help
+
 __doc__ = get_help("addon_manager")
 
 """
 » Commands Available -
 
 • `{i}addons <on/off>`
-    Enable or disable the loading of external addons. 
+    Enable or disable the loading of external addons.
     Enabling addons allows the bot to load plugins from the `addons/` directory upon restart.
 """
 from . import udB, ultroid_cmd
