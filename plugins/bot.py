@@ -98,7 +98,7 @@ async def alive(event):
 @ultroid_cmd(pattern="alive( (.*)|$)")
 async def lol(ult):
     """Ultra-Premium Alive Command"""
-    xx = await ult.eor("`Checking system status...`建立")
+    xx = await ult.eor("`Checking the system...`建立")
     uptime = time_formatter((time.time() - start_time) * 1000)
     pic = udB.get_key("ALIVE_PIC") or ULTPIC()
     if isinstance(pic, list):
@@ -111,13 +111,13 @@ async def lol(ult):
     
     # Premium HTML Template
     als = f"{header}\n\n"
-    als += f"👤 <b>Owner:</b> <a href='tg://user?id={ult.sender_id}'>{OWNER_NAME}</a>\n"
+    als += f"👤 <b>Master:</b> <a href='tg://user?id={ult.sender_id}'>{OWNER_NAME}</a>\n"
     als += f"⚙️ <b>Engine:</b> <code>v{ultroid_version}</code>\n"
     als += f"🛠 <b>Core:</b> <code>{UltVer}</code>\n"
     als += f"🐍 <b>Python:</b> <code>{pyver()}</code>\n"
     als += f"⏳ <b>Uptime:</b> <code>{uptime}</code>\n"
     als += f"🎋 <b>Branch:</b> <a href='{rev_url}'>[{branch}]</a>\n\n"
-    als += f"<i>System is running smoothly on {HOSTED_ON}.</i>"
+    als += f"<i>All good here! Currently on my {HOSTED_ON}.</i>"
 
     buttons = [
         [
@@ -146,14 +146,13 @@ async def lol(ult):
         await xx.edit(f"<b>Error:</b> <code>{e}</code>", parse_mode="html")
 
 
-
-@ultroid_cmd(pattern="ping$", chats=[], type=["official", "assistant"])
+@ultroid_cmd(pattern="ping$")
 async def _(event):
     start = time.time()
-    x = await event.eor("`Cek ping...`")
+    x = await event.eor("`Testing speed...`")
     end = round((time.time() - start) * 1000)
     uptime = time_formatter((time.time() - start_time) * 1000)
-    res = f"**Latency:** `{end}ms` · **Uptime:** `{uptime}`"
+    res = f"📡 **Latency:** `{end}ms` · **Uptime:** `{uptime}`"
     await x.edit(res)
 
 

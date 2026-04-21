@@ -548,12 +548,12 @@ async def ready():
 
     # ── Build Human-Friendly Card ─────────────────────────────
     header_emoji = "🚀" if not rs_info else "🔄"
-    status_text = "System Online" if not rs_info else "Restart Complete"
+    status_text = "I'm back online!" if not rs_info else "Reboot finalized."
 
     CARD = (
         f"{header_emoji} **{status_text}**\n"
         f"---"
-        f"\n👤 **Owner:** {username}"
+        f"\n👤 **Master:** {username}"
         f"\n🤖 **Assistant:** {asst_handle}"
         f"\n\n🖥️ **System:** {hosted} (`{arch}`)"
         f"\n⚙️ **Engine:** `{py_short}` / `v{ult_ver}`"
