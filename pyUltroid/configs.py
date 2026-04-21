@@ -36,6 +36,11 @@ def _env(key, default=None, cast=None):
 
 
 class Var:
+    # mandatory
+    API_ID = (
+        int(sys.argv[1]) if len(sys.argv) > 1 else _env("API_ID", default=6, cast=int)
+    )
+
     # Resource Management
     LITE_MODE = _env("LITE_MODE", default=None, cast=bool)
     if LITE_MODE is None:
