@@ -535,13 +535,22 @@ class MediaExtractor:
             from urllib.parse import quote, unquote, urlparse, parse_qs
             scraper = cloudscraper.create_scraper()
             
-            # --- PHASE 0: User-Agent Rotation (Googlebot -> Opera Mini) ---
-            # Use Opera Mini for the most "naked" HTML possible
+            # --- PHASE -1: Cookie Integration ---
+            if hasattr(self, "_cookie_file") and self._cookie_file:
+                LOGS.info("Extractor | FB Phase -1: Injecting cookies.txt into scraper...")
+                try:
+                    from http.cookiejar import MozillaCookieJar
+                    cj = MozillaCookieJar(self._cookie_file)
+                    cj.load(ignore_discard=True, ignore_expires=True)
+                    scraper.cookies.update(cj)
+                except Exception as ce:
+                    LOGS.warning(f"Extractor | FB Cookie injection failed: {ce}")
+
+            # --- PHASE 0: User-Agent Rotation (Opera Mini) ---
             OPERA_MINI = "Opera/9.80 (J2ME/MIDP; Opera Mini/9.80 (S60; SymbOS; Opera Mobi/23.348; U; en) Presto/2.5.25 Version/10.54"
             headers = {
                 "User-Agent": OPERA_MINI,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9",
             }
             
             try:
@@ -557,17 +566,12 @@ class MediaExtractor:
                 return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
 
             # --- CUNNING STRATEGY 1: Brute-Force Regex Vacuum ---
-            LOGS.info("Extractor | Cunning Strategy 1: Brute-Force Regex Vacuum...")
             def vacuum(text):
-                # Search for any high-res media link
                 for p in [
                     r'<meta\s+property="og:video[:url]*"\s+content="(.*?)"',
-                    r'"progressive_url"\s*:\s*"(.*?)"',
-                    r'"hd_src"\s*:\s*"(.*?)"',
-                    r'"sd_src"\s*:\s*"(.*?)"',
-                    r'"video_url"\s*:\s*"(.*?)"',
-                    r'"scaled_image_url"\s*:\s*"(.*?)"',
-                    r'"large_image_url"\s*:\s*"(.*?)"',
+                    r'"progressive_url"\s*:\s*"(.*?)"', r'"hd_src"\s*:\s*"(.*?)"',
+                    r'"sd_src"\s*:\s*"(.*?)"', r'"video_url"\s*:\s*"(.*?)"',
+                    r'"scaled_image_url"\s*:\s*"(.*?)"', r'"large_image_url"\s*:\s*"(.*?)"',
                     r'<meta\s+property="og:image"\s+content="(.*?)"'
                 ]:
                     m = re.search(p, text)
@@ -583,13 +587,12 @@ class MediaExtractor:
 
             # --- PHASE 1: Parameter Hijacking ---
             search_url = unquote(resolved_url)
-            LOGS.info(f"Extractor | FB Phase 1: Probing URL -> {search_url}")
-            
             content_id = None
             user_id = None
-            # Extract both post ID and user ID if available
+            
+            # Precise regex to avoid 'story_fb[id]' collision
             m_story = re.search(r"story_fbid=([0-9]+)", search_url)
-            m_user = re.search(r"id=([0-9]+)", search_url)
+            m_user = re.search(r"[?&]id=([0-9]+)", search_url)
             
             if m_story: content_id = m_story.group(1)
             if m_user: user_id = m_user.group(1)
@@ -606,34 +609,45 @@ class MediaExtractor:
                         content_id = m.group(1)
                         break
 
-            # --- CUNNING STRATEGY 2: Embed Backdoor Bypass ---
+            # --- CUNNING STRATEGY 2: SnapSave Hijack (The "Liar" Strategy) ---
+            LOGS.info("Extractor | Cunning Strategy 2: SnapSave Hijack...")
+            try:
+                # SnapSave/Publer/FDown often have simple API endpoints we can mimic
+                ss_api = "https://snapsave.app/action.php?lang=en"
+                ss_resp = scraper.post(ss_api, data={"url": url}, headers={"Referer": "https://snapsave.app/"}, timeout=10)
+                if ss_resp.status_code == 200:
+                    # SnapSave usually returns encoded HTML; vacuum it
+                    res = vacuum(ss_resp.text)
+                    if res:
+                        LOGS.info("Extractor | Cunning Strategy 2: SUCCESS!")
+                        return res
+            except: pass
+
+            # --- CUNNING STRATEGY 3: Embed Backdoor Bypass ---
             if content_id:
-                LOGS.info(f"Extractor | Cunning Strategy 2: Embed Backdoor ({content_id})")
+                LOGS.info(f"Extractor | Cunning Strategy 3: Embed Backdoor ({content_id})")
                 targets = [
                     f"https://www.facebook.com/plugins/post.php?href={quote(url)}",
-                    f"https://www.facebook.com/plugins/video.php?href={quote(url)}",
                     f"https://www.facebook.com/plugins/video.php?v={content_id}"
                 ]
                 if user_id:
-                    targets.append(f"https://www.facebook.com/plugins/post.php?href=https://www.facebook.com/story.php?story_fbid={content_id}&id={user_id}")
+                    targets.append(f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}")
 
                 for target in targets:
                     resp = scraper.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, timeout=10)
                     res = vacuum(resp.text)
                     if res:
-                        LOGS.info("Extractor | Cunning Strategy 2: SUCCESS!")
+                        LOGS.info("Extractor | Cunning Strategy 3: SUCCESS!")
                         return res
 
             # Strategy B: Mobile Header Flip (mbasic)
             LOGS.info("Extractor | FB Strategy B: Mobile Header Flip...")
-            # Use original story.php structure for mbasic if we hijacked IDs
             if content_id and user_id:
                 m_target = f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}"
             elif content_id and content_id.isdigit():
                 m_target = f"https://mbasic.facebook.com/{content_id}"
             else:
-                parsed = urlparse(resolved_url)
-                m_target = f"https://mbasic.facebook.com{parsed.path}?{parsed.query}"
+                m_target = resolved_url.replace("www.facebook.com", "mbasic.facebook.com").replace("m.facebook.com", "mbasic.facebook.com")
             
             LOGS.info(f"Extractor | FB Strategy B: Targeting -> {m_target}")
             resp = scraper.get(m_target, headers={"User-Agent": OPERA_MINI}, timeout=10)
@@ -643,27 +657,18 @@ class MediaExtractor:
                 LOGS.info("Extractor | FB Strategy B: SUCCESS! (Video)")
                 return {"url": unquote(unescape_fb(m_vid.group(1))), "title": "Facebook Video", "ext": "mp4", "uploader": "Facebook", "extractor": "fb_god_mode"}
             
-            # High-res image search in mbasic
             m_img = re.search(r'href\s*=\s*"/photo\.php\?fbid=([0-9]+).*?src=(.*?)[&"]', resp.text)
             if m_img:
                 img_url = unquote(unescape_fb(m_img.group(2)))
                 LOGS.info("Extractor | FB Strategy B: SUCCESS! (Photo)")
                 return {"url": img_url, "title": "Facebook Photo", "ext": "jpg", "uploader": "Facebook", "extractor": "fb_god_mode"}
 
-            # Strategy C: OEmbed Discovery
-            LOGS.info("Extractor | FB Strategy C: OEmbed Discovery...")
-            oembed_url = f"https://www.facebook.com/plugins/post/oembed.json/?url={quote(url)}"
-            resp = scraper.get(oembed_url, timeout=10)
-            if resp.status_code == 200:
-                try:
-                    o_data = resp.json()
-                    if "html" in o_data:
-                        res = vacuum(o_data["html"])
-                        if res: return res
-                except: pass
-
             # --- PHASE 3: Wild Card Fallback ---
             return self._facebook_public_api(resolved_url)
+
+        except Exception as e:
+            LOGS.error(f"Extractor | FB God Mode Crash: {e}")
+            return self._facebook_public_api(url)
 
         except Exception as e:
             LOGS.error(f"Extractor | FB God Mode Crash: {e}")
