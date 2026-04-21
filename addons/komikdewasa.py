@@ -3,22 +3,29 @@
 # Author: itswill00
 
 import re
+import base64
 from bs4 import BeautifulSoup
+from telethon import Button
 from pyUltroid.fns.helper import run_async
 from . import ultroid_cmd, udB, LOGS, asst, ultroid_bot, eor
 
 # Google Focus Proxy to bypass direct image blocks
 IMG_PROXY = "https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url="
 
+def encode_url(url):
+    return base64.urlsafe_b64encode(url.encode()).decode().rstrip("=")
+
+def decode_url(data):
+    padding = '=' * (4 - len(data) % 4)
+    return base64.urlsafe_b64decode(data + padding).decode()
+
 async def fetch_page(url):
     import cloudscraper
     scraper = cloudscraper.create_scraper()
     try:
-        # Nuclear headers
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             "Referer": "https://komikdewasa.art/",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
         }
         res = scraper.get(url, headers=headers, timeout=15)
         if res.status_code == 200:
@@ -35,7 +42,6 @@ async def komik_dewasa_search(event):
 
     xx = await event.eor("`Mencari komik di arsip...`")
     
-    # Search logic via DuckDuckGo to bypass direct Cloudflare block
     import httpx
     search_url = f"https://duckduckgo.com/html/?q=site:komikdewasa.art+{query}"
     try:
@@ -46,61 +52,96 @@ async def komik_dewasa_search(event):
         if not results:
             return await xx.edit("`Komik tidak ditemukan atau akses diblokir.`")
 
-        output = "**Hasil Pencarian Komik:**\n\n"
-        for i, res in enumerate(results[:5], 1):
-            title = res.get_text()
+        buttons = []
+        for res in results[:8]: # Limit 8 results
+            title = res.get_text()[:30] # Limit text length
             link = res['href']
-            # Clean DuckDuckGo redirect link
             if "uddg=" in link:
                 link = link.split("uddg=")[1].split("&")[0]
                 from urllib.parse import unquote
                 link = unquote(link)
-            output += f"{i}. [{title}]({link})\n"
+            
+            # Use callback to fetch chapters
+            buttons.append([Button.inline(f"📖 {title}", data=f"kd_ch:{encode_url(link)}")])
         
-        output += "\n`Gunakan .kbread <link> untuk membaca.`"
-        await xx.edit(output, link_preview=False)
+        await xx.edit(f"**Hasil Pencarian: `{query}`**\nSilakan pilih komik untuk melihat chapter.", buttons=buttons)
     except Exception as e:
         await xx.edit(f"**Kesalahan:** `{e}`")
 
-@ultroid_cmd(pattern="kbread( (.*)|$)", owner_only=True)
-async def komik_dewasa_read(event):
-    link = event.pattern_match.group(1).strip()
-    if not link:
-        return await event.eor("`Gunakan: .kbread <link komik>`")
-
-    xx = await event.eor("`Menganalisis chapter...`")
-    html = await fetch_page(link)
-    if not html:
-        return await xx.edit("`Gagal mengambil data. Cloudflare masih memblokir IP server.`")
-
-    soup = BeautifulSoup(html, 'html.parser')
-    
-    # Madara/WP-Manga Theme chapter selector
-    chapters = soup.find_all('li', class_='wp-manga-chapter')
-    if not chapters:
-        # Try finding images directly if it's already a chapter link
-        images = soup.find_all('img', class_='wp-manga-chapter-img')
-        if images:
-            await xx.edit(f"`Menemukan {len(images)} halaman. Mengirim...`")
-            media = []
-            for img in images[:10]: # Limit 10 to avoid flood
-                img_url = img.get('src') or img.get('data-src')
-                if img_url:
-                    img_url = img_url.strip()
-                    # Use Google Proxy for images
-                    proxied_url = IMG_PROXY + img_url
-                    media.append(proxied_url)
+# --- Assistant Callbacks ---
+if asst:
+    @asst.on(asst_cmd(pattern="kd_ch:(.*)"))
+    async def kd_callback_chapters(event):
+        # Access control: only owner can click
+        if event.sender_id != ultroid_bot.uid:
+            return await event.answer("Akses ditolak.", alert=True)
             
-            if media:
-                await event.client.send_file(event.chat_id, media, caption=f"**Komik:** {link}")
-                return await xx.delete()
+        raw_data = event.pattern_match.group(1).decode()
+        url = decode_url(raw_data)
         
-        return await xx.edit("`Chapter tidak ditemukan.`")
+        await event.answer("Mengambil daftar chapter...", alert=False)
+        html = await fetch_page(url)
+        if not html:
+            return await event.respond("Gagal mengambil data. Cloudflare memblokir akses.")
 
-    output = "**Daftar Chapter:**\n"
-    for i, ch in enumerate(chapters[:10], 1):
-        ch_link = ch.find('a')['href']
-        ch_name = ch.find('a').get_text().strip()
-        output += f"{i}. [{ch_name}]({ch_link})\n"
+        soup = BeautifulSoup(html, 'html.parser')
+        chapters = soup.find_all('li', class_='wp-manga-chapter')
+        
+        if not chapters:
+            return await event.edit("Chapter tidak ditemukan di link ini.")
 
-    await xx.edit(output, link_preview=False)
+        buttons = []
+        for ch in chapters[:10]: # Show latest 10 chapters
+            a_tag = ch.find('a')
+            ch_link = a_tag['href']
+            ch_name = a_tag.get_text().strip()
+            buttons.append([Button.inline(f"⏬ {ch_name}", data=f"kd_rd:{encode_url(ch_link)}")])
+        
+        buttons.append([Button.inline("« Kembali ke Pencarian", data="kd_back")])
+        await event.edit(f"**Daftar Chapter:**\n{url}", buttons=buttons, link_preview=False)
+
+    @asst.on(asst_cmd(pattern="kd_rd:(.*)"))
+    async def kd_callback_read(event):
+        if event.sender_id != ultroid_bot.uid:
+            return await event.answer("Akses ditolak.", alert=True)
+            
+        raw_data = event.pattern_match.group(1).decode()
+        url = decode_url(raw_data)
+        
+        await event.edit("`Mengunduh halaman komik...`", buttons=None)
+        html = await fetch_page(url)
+        if not html:
+            return await event.respond("Gagal mengambil gambar.")
+
+        soup = BeautifulSoup(html, 'html.parser')
+        images = soup.find_all('img', class_='wp-manga-chapter-img')
+        
+        if not images:
+            return await event.edit("Gambar tidak ditemukan.")
+
+        await event.delete() # Clean up the message
+        
+        media = []
+        count = 0
+        for img in images:
+            img_url = (img.get('src') or img.get('data-src') or "").strip()
+            if img_url:
+                # Bypass 403 using Google Proxy
+                proxied_url = IMG_PROXY + img_url
+                media.append(proxied_url)
+                count += 1
+            
+            # Send in batches of 10 (Telegram Media Group limit)
+            if len(media) == 10:
+                await ultroid_bot.send_file(event.chat_id, media)
+                media = []
+        
+        # Send remaining
+        if media:
+            await ultroid_bot.send_file(event.chat_id, media)
+        
+        await ultroid_bot.send_message(event.chat_id, f"✅ **Selesai!** Berhasil mengirim {count} halaman.")
+
+    @asst.on(asst_cmd(pattern="kd_back"))
+    async def kd_back(event):
+        await event.edit("Gunakan kembali perintah `.kd <judul>` untuk mencari.")
