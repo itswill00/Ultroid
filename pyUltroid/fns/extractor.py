@@ -307,6 +307,8 @@ class MediaExtractor:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Referer": "https://www.tiktok.com/" if "tiktok" in url else "https://www.instagram.com/" if "instagram" in url else "https://www.facebook.com/"
             }
+            if info.get("cookies"):
+                headers["Cookie"] = info["cookies"]
 
             # Handle Album (Multiple Files)
             if info.get("type") == "album" or "entries" in info:
@@ -572,6 +574,8 @@ class MediaExtractor:
             # Step 1: Resolve URL
             try:
                 resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+                # Capture cookies for download phase
+                session_cookies = "; ".join([f"{c.name}={c.value}" for c in scraper.cookies])
             except Exception as e:
                 LOGS.error(f"Extractor | TikTok resolve failed: {e}")
                 return {"error": f"Resolve failed: {e}"}
@@ -606,6 +610,8 @@ class MediaExtractor:
                     try:
                         resp = scraper.get(target, headers=headers, timeout=15)
                         html_text = resp.text
+                        # Update cookies if target changed
+                        session_cookies = "; ".join([f"{c.name}={c.value}" for c in scraper.cookies])
                     except Exception as e:
                         LOGS.warning(f"Extractor | Target {target} failed: {e}")
                         continue
@@ -648,7 +654,8 @@ class MediaExtractor:
                 "title": item.get("desc") or item.get("description") or "TikTok Media",
                 "uploader": item.get("author", {}).get("nickname") or item.get("author", {}).get("uniqueId") or "TikTok User",
                 "id": aweme_id or item.get("id"),
-                "extractor": "tiktok_scraper"
+                "extractor": "tiktok_scraper",
+                "cookies": session_cookies # Store cookies for download
             }
 
             image_post = item.get("imagePost") or item.get("image_post")
