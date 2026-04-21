@@ -225,6 +225,10 @@ class MediaExtractor:
                 if res and not "error" in res:
                     self._extract_cache[url] = res
                     return res
+                # If our Genius Scraper and Cobalt API failed, yt-dlp will 100% fail.
+                # Return the error cleanly to avoid terminal spam.
+                if res and "error" in res:
+                    return res
             except Exception as e:
                 LOGS.warning(f"Extractor | Facebook scraping failed: {e}. Falling back to yt-dlp.")
 
@@ -600,14 +604,61 @@ class MediaExtractor:
             return self._facebook_public_api(url)
 
     def _facebook_public_api(self, url):
-        """Fallback to third-party Facebook downloader APIs."""
-        LOGS.info("Extractor | Trying Facebook Public API Fallback...")
+        """The 'Wild Card' Multi-API Aggregator (featuring Cobalt)."""
+        LOGS.info("Extractor | Activating Wild Card: Cobalt API...")
         try:
             import cloudscraper
             scraper = cloudscraper.create_scraper()
-            # Using a reliable public scraping endpoint
+            
+            # --- Weapon 1: Cobalt API (The Ultimate Bypass) ---
+            headers = {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+            # Public Cobalt instances (can be rotated if one fails)
+            cobalt_instances = ["https://api.cobalt.tools/api/json", "https://co.wuk.sh/api/json"]
+            
+            for instance in cobalt_instances:
+                try:
+                    resp = scraper.post(instance, json={"url": url}, headers=headers, timeout=15)
+                    if resp.status_code == 200:
+                        res = resp.json()
+                        status = res.get("status")
+                        
+                        if status in ["stream", "redirect"]:
+                            LOGS.info(f"Extractor | Cobalt API Success: Single Media")
+                            return {
+                                "url": res.get("url"),
+                                "title": "Facebook Media (Cobalt Bypass)",
+                                "ext": "mp4",
+                                "uploader": "Facebook",
+                                "extractor": "cobalt_api"
+                            }
+                        elif status == "picker":
+                            # Carousel / Album handler
+                            LOGS.info(f"Extractor | Cobalt API Success: Album/Carousel")
+                            entries = []
+                            for item in res.get("picker", []):
+                                entries.append({
+                                    "url": item.get("url"),
+                                    "ext": "jpg" if item.get("type") == "photo" else "mp4",
+                                    "title": "Facebook Album"
+                                })
+                            if entries:
+                                return {
+                                    "entries": entries,
+                                    "type": "album",
+                                    "title": "Facebook Album (Cobalt Bypass)",
+                                    "extractor": "cobalt_api"
+                                }
+                except Exception as e:
+                    LOGS.debug(f"Extractor | Cobalt Instance {instance} failed: {e}")
+
+            # --- Weapon 2: Sonzaix (Legacy Fallback) ---
+            LOGS.info("Extractor | Cobalt failed. Falling back to Sonzaix...")
             api_url = f"https://api.sonzaix.indevs.in/facebook/video?url={url}"
-            resp = scraper.get(api_url, timeout=15)
+            resp = scraper.get(api_url, timeout=10)
             if resp.status_code == 200:
                 data = resp.json()
                 video_url = data.get("url") or data.get("hd") or data.get("sd")
@@ -620,8 +671,10 @@ class MediaExtractor:
                         "extractor": "facebook_api"
                     }
         except Exception as e:
-            LOGS.debug(f"Extractor | Facebook API Fallback failed: {e}")
-        return {"error": "All Facebook extraction methods failed."}
+            LOGS.error(f"Extractor | Wild Card Aggregator failed: {e}")
+        
+        # If we reach here, it's 99% a private group post.
+        return {"error": "Access Denied. This post is likely private or restricted. A cookies.txt file is mandatory for this URL."}
 
     def _youtube_sonzai(self, url):
         """YouTube API fallback using Sonzai/Indevs API."""
