@@ -33,63 +33,57 @@ def _after_load(loader, module, plugin_name=""):
 
 
 def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
-
-    # for official
+    # Load Essential Plugins synchronously (Official ones)
     _exclude = udB.get_key("EXCLUDE_OFFICIAL") or config("EXCLUDE_OFFICIAL", None)
     _exclude = _exclude.split() if _exclude else []
-
-    # "INCLUDE_ONLY" was added to reduce Big List in "EXCLUDE_OFFICIAL" Plugin
     _in_only = udB.get_key("INCLUDE_ONLY") or config("INCLUDE_ONLY", None)
     _in_only = _in_only.split() if _in_only else []
+    
+    # Official plugins are essential, load them but exclude non-core if requested
     Loader().load(include=_in_only, exclude=_exclude, after_load=_after_load)
 
-    # for assistant
-    if not USER_MODE and not udB.get_key("DISABLE_AST_PLUGINS"):
-        _ast_exc = ["pmbot", "games", "ytdl"] # Skip known slow assistant plugins
-        Loader(path="assistant").load(
-            log=False, exclude=_ast_exc, after_load=_after_load
-        )
-
-    # for addons
-    if addons:
-        if not os.path.exists("addons"):
-            LOGS.warning("Addons folder not found. Skipping addons loading.")
-        else:
-            _exclude = udB.get_key("EXCLUDE_ADDONS")
-            _exclude = _exclude.split() if _exclude else []
-            _in_only = udB.get_key("INCLUDE_ADDONS")
-            _in_only = _in_only.split() if _in_only else []
-
-            Loader(path="addons", key="Addons").load(
-                func=load_addons,
-                include=_in_only,
-                exclude=_exclude,
-                after_load=_after_load,
-                load_all=True,
+    # Move non-essential plugins to background loading
+    async def _bg_plugin_loader():
+        # for assistant
+        if not USER_MODE and not udB.get_key("DISABLE_AST_PLUGINS"):
+            _ast_exc = ["pmbot", "games", "ytdl"]
+            Loader(path="assistant").load(
+                log=False, exclude=_ast_exc, after_load=_after_load
             )
 
-    if not USER_MODE:
-        # group manager
-        if manager:
-            Loader(path="assistant/manager", key="Group Manager").load()
+        # for addons
+        if addons:
+            if os.path.exists("addons"):
+                _exclude_a = (udB.get_key("EXCLUDE_ADDONS") or "").split()
+                _in_only_a = (udB.get_key("INCLUDE_ADDONS") or "").split()
+                Loader(path="addons", key="Addons").load(
+                    func=load_addons,
+                    include=_in_only_a,
+                    exclude=_exclude_a,
+                    after_load=_after_load,
+                    load_all=True,
+                )
 
-        # chat via assistant
-        if pmbot:
-            Loader(path="assistant/pmbot.py").load(log=False)
+        if not USER_MODE:
+            if manager:
+                Loader(path="assistant/manager", key="Group Manager").load()
+            if pmbot:
+                Loader(path="assistant/pmbot.py").load(log=False)
 
-    # vc bot
-    if vcbot and (vcClient and not vcClient.me.bot):
-        try:
-            import pytgcalls  # ignore: pylint
-
-            if os.path.exists("vcbot"):
-                try:
-                    if not os.path.exists("vcbot/downloads"):
-                        os.mkdir("vcbot/downloads")
+        # vc bot
+        if vcbot and (vcClient and not vcClient.me.bot):
+            try:
+                import pytgcalls
+                if os.path.exists("vcbot"):
                     Loader(path="vcbot", key="VCBot").load(after_load=_after_load)
-                except FileNotFoundError as e:
-                    LOGS.error(f"{e} Skipping VCBot Installation.")
-            else:
-                LOGS.warning("VCBot folder not found. Skipping VCBot loading.")
-        except ModuleNotFoundError:
-            LOGS.error("'pytgcalls' not installed!\nSkipping loading of VCBOT.")
+            except Exception:
+                pass
+        
+        LOGS.info("Efficiency | All Background Plugins Loaded.")
+
+    # Execute background loader
+    try:
+        from .. import ultroid_bot
+        ultroid_bot.loop.create_task(_bg_plugin_loader())
+    except Exception as e:
+        LOGS.error(f"Lazy Loader | Failed to start background task: {e}")
