@@ -41,7 +41,7 @@ def get_buttons():
     # Bottom buttons
     url = f"https://t.me/{asst.me.username}?startgroup=true"
     BTTS.append([Button.url("➕ Add to Group", url)])
-    BTTS.append([Button.url("📢 Channel", "https://t.me/TeamUltroid"), Button.url("💬 Support", "https://t.me/UltroidSupportChat")])
+    BTTS.append([Button.url("📢 Channel", "https://t.me/TeamUltroid"), Button.url("💬 Support", "https://t.me/ultroid_next")])
     return BTTS
 
 DUAL_INFO = """

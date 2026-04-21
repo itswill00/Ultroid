@@ -163,7 +163,7 @@ def ultroid_cmd(
 
                 date = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 naam = get_display_name(chat)
-                ftext = f"**Ultroid Client Error:** @UltroidSupportChat\n{_SYS_INFO}\n"
+                ftext = f"**Ultroid Client Error:** @ultroid_next\n{_SYS_INFO}\n"
                 ftext += f"--------START CRASH LOG--------\n**Date:** `{date}`\n**Group:** `{ult.chat_id}` {naam}\n"
                 ftext += f"**Sender:** `{ult.sender_id}`\n**Event:** `{ult.text}`\n"
                 ftext += f"**Traceback:**\n`{format_exc()}`\n--------END CRASH LOG--------"

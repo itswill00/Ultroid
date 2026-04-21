@@ -19,9 +19,9 @@ autopic_2: "`{} 'İçin Sonuç bulunamadı"
 autopic_3: "Aramanızla ilgili bir Koleksiyon '{}' var!\n Autopic'i başlatıyorum!"
 
 #inline
-inline_1: "[Uʟᴛʀᴏɪᴅ Dᴇsᴛᴇᴋ](t.me/UltroidSupportChat)\n\n **Yᴀʀᴅɪᴍ Mᴇɴᴜ̈sᴜ̈{}.\n\n Pʟᴜɢɪɴs ~ {}**\n\n"
-inline_2: "[Uʟᴛʀᴏɪᴅ Dᴇsᴛᴇᴋ](t.me/UltroidSupportChat)\n\n **Yᴀʀᴅɪᴍ Mᴇɴᴜ̈sᴜ̈{}.\n\n Eᴋʟᴇɴᴛɪʟᴇʀ ~ {}**\n\n"
-inline_3: "[Uʟᴛʀᴏɪᴅ Sᴜᴘᴘᴏʀᴛ](t.me/UltroidSupportChat)\n\n **Yᴀʀᴅɪm Mᴇɴüsü {}.\n\n Ekʟᴇɴᴛɪʟᴇʀ ~ {}\n\n Gɪᴅɪɴ Vᴇ `ADDONS` Vᴀʀɪ Tʀᴜᴇ Dᴇğᴇʀɪ İʟᴇ Ekʟᴇyɪɴ**"
+inline_1: "[Uʟᴛʀᴏɪᴅ Dᴇsᴛᴇᴋ](t.me/ultroid_next)\n\n **Yᴀʀᴅɪᴍ Mᴇɴᴜ̈sᴜ̈{}.\n\n Pʟᴜɢɪɴs ~ {}**\n\n"
+inline_2: "[Uʟᴛʀᴏɪᴅ Dᴇsᴛᴇᴋ](t.me/ultroid_next)\n\n **Yᴀʀᴅɪᴍ Mᴇɴᴜ̈sᴜ̈{}.\n\n Eᴋʟᴇɴᴛɪʟᴇʀ ~ {}**\n\n"
+inline_3: "[Uʟᴛʀᴏɪᴅ Sᴜᴘᴘᴏʀᴛ](t.me/ultroid_next)\n\n **Yᴀʀᴅɪm Mᴇɴüsü {}.\n\n Ekʟᴇɴᴛɪʟᴇʀ ~ {}\n\n Gɪᴅɪɴ Vᴇ `ADDONS` Vᴀʀɪ Tʀᴜᴇ Dᴇğᴇʀɪ İʟᴇ Ekʟᴇyɪɴ**"
 inline_4: "** Bᴏᴛ Oғ {}\n\nMᴀɪɴ Mᴇɴᴜ\n\nPʟᴜɢɪɴs ~ {}\nAᴅᴅᴏɴs ~ {}\nTᴏᴛᴀʟ Cᴏᴍᴍᴀɴᴅs ~ {}**"
 inline_5: "**Mᴇɴü Kᴀᴘᴀᴛɪʟᴅɪ**"
 
@@ -231,7 +231,7 @@ help_autoban: "• `{i} autokick <AG/OFT>`\n    ON - etkinleştirmek için.\n   
 can_2: "∆ #usernameupdate\n\n@{} Kullanıcı adını @{} olarak değiştirdi"
 aki_1: "Oyun sonlandırıldı ...."
 youtube_8: "`` Video şarkısı indirmek ..."
-help_button: "-\n\n• `{i} düğmesi <düğme biçimine sahip metin '\n   Düğme Oluşturun, resme de cevap verebilirsin\n\nBiçim:- `{i} düğmesi Hey orada!@Useultroid 😎.\n[Ultroid |T.Me/Theultroid Cialis [Support |T.Me/ultroidsupportchat |aynı]\n[Teamultroid |t.me/teamultroid] `"
+help_button: "-\n\n• `{i} düğmesi <düğme biçimine sahip metin '\n   Düğme Oluşturun, resme de cevap verebilirsin\n\nBiçim:- `{i} düğmesi Hey orada!@Useultroid 😎.\n[Ultroid |T.Me/Theultroid Cialis [Support |T.Me/ultroid_next |aynı]\n[Teamultroid |t.me/teamultroid] `"
 bot_1: "Hey, yaşıyorum."
 youtube_7: "Bana video indirmek için bana bir (YouTube) arama sorgusu verin!"
 com_5: "İndirme ..."

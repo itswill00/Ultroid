@@ -37,7 +37,7 @@ IN_BTTS = [
             "Repository",
             url="https://github.com/TeamUltroid/Ultroid",
         ),
-        Button.url("Support", url="https://t.me/UltroidSupportChat"),
+        Button.url("Support", url="https://t.me/ultroid_next"),
     ]
 ]
 
@@ -214,7 +214,7 @@ def in_pattern(pattern=None, owner=False, **kwargs):
                                 title="Unhandled Exception has Occured!",
                                 text=error_text(),
                                 buttons=Button.url(
-                                    "Report", "https://t.me/UltroidSupportChat"
+                                    "Report", "https://t.me/ultroid_next"
                                 ),
                             )
                         ]
