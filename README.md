@@ -31,6 +31,7 @@ Ultroid is a productivity powerhouse designed for those who demand excellence. W
 ### 🔥 Key Features
 
 *   🛡️ **Admin Surveillance Suite**: Keep your communities safe with advanced **Group Intel**. Real-time monitoring with a sophisticated **Risk Scoring** system to identify bad actors instantly.
+*   🧠 **Unified AI Intelligence**: Powered by **Groq LPU™** and **Google Gemini** fallback. Seamlessly handle text generation, computer vision, and real-time web research with `.ai` and `.ask`.
 *   🎨 **Multipurpose Media Engine**: A complete tools suite for your chat. Create dynamic logos, manipulate images, and stream high-quality audio in Voice Calls.
 *   🔐 **Global Protection**: Integrated **GBan** checks and spam detection database to protect your account and your groups from known malicious entities.
 *   ⌨️ **Developer Toolkit**: Professional-grade dev tools including a built-in code evaluator, terminal shell, and deep database management.
