@@ -1106,3 +1106,48 @@ def encode_image_base64(file_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # --------- END --------- #
+
+# ~~~~~~~~~~~~~~~AUTO CLEANUP WORKER~~~~~~~~~~~~~~~
+# Designed by Gemini for Efficiency Optimization (April 2026)
+
+import shutil
+import time
+import asyncio
+
+async def async_cleanup_worker():
+    """Background task to maintain VPS health by purging stale files and cache."""
+    LOGS.info("Efficiency | Auto-Cleanup Worker Started (30m Interval).")
+    while True:
+        try:
+            # 1. Clean /downloads directory
+            download_path = "downloads/"
+            if os.path.exists(download_path):
+                now = time.time()
+                purged_count = 0
+                for f in os.listdir(download_path):
+                    f_path = os.path.join(download_path, f)
+                    # Skip hidden files or system files
+                    if f.startswith("."): continue
+                    
+                    # Delete files/folders older than 1 hour
+                    if os.path.getmtime(f_path) < now - 3600:
+                        try:
+                            if os.path.isfile(f_path) or os.path.islink(f_path):
+                                os.unlink(f_path)
+                            elif os.path.isdir(f_path):
+                                shutil.rmtree(f_path)
+                            purged_count += 1
+                        except Exception as e:
+                            LOGS.debug(f"Cleanup | Failed to delete {f}: {e}")
+                
+                if purged_count > 0:
+                    LOGS.info(f"Cleanup | Purged {purged_count} stale items from /downloads.")
+
+            # 2. Sync Database Cache (If applicable)
+            # Future expansion point for database TTL pruning
+
+        except Exception as e:
+            LOGS.error(f"Cleanup Worker | Fatal Exception: {e}")
+        
+        # Interval: 30 minutes
+        await asyncio.sleep(1800)

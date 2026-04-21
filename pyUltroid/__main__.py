@@ -80,6 +80,12 @@ def main():
     async def background_tasks():
         # Heavy tasks moved to background
         await autopilot()
+        # Efficiency: Start the Auto-Cleanup Worker (30m interval)
+        try:
+            from .fns.tools import async_cleanup_worker
+            ultroid_bot.loop.create_task(async_cleanup_worker())
+        except Exception as e:
+            LOGS.error(f"Cleanup Integration Error: {e}")
         # Customize Ultroid Assistant...
         await customize()
         # Warm up bot ID cache for media_dl auto-listener (avoids get_me() per message)
