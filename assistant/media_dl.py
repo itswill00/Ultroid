@@ -216,6 +216,7 @@ async def dler_process(event, url, fmt):
             f"\n📄 **Title:** `{title}`"
             f"\n⏱️ **Duration:** `{duration}s`"
             f"\n📦 **Size:** `{humanbytes(total_size)}`"
+            f"\n🪄 **Powered by Ultroid**"
         )
 
         # --- Upload Progress Hooks ---
@@ -273,34 +274,47 @@ async def dler_process(event, url, fmt):
         # send_file() WITHOUT a progress callback (it's instant at that point).
         sender_client = asst
         already_uploaded = False
-        if total_size > 10 * 1024 * 1024 and isinstance(file_to_send, str):
-            await status_msg.edit(
-                f"`[🚀 Upload] {humanbytes(total_size)} — Uploading...`"
+        
+        # Album Handling
+        if isinstance(file_to_send, list):
+            await status_msg.edit(f"`[📤] Sending {len(file_to_send)} items as album...`")
+            # For albums, we use simple send_file (Telethon handles it)
+            await sender_client.send_file(
+                event.chat_id,
+                file=file_to_send,
+                caption=caption,
+                reply_to=event.message_id if is_callback else event.id,
+                buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
             )
-            with open(file_to_send, 'rb') as f:
-                file_to_send = await uploadable(
-                    asst, f, os.path.basename(file_to_send),
-                    progress_callback=_upload_status_hook  # lightweight, non-blocking
+        else:
+            if total_size > 10 * 1024 * 1024 and isinstance(file_to_send, str):
+                await status_msg.edit(
+                    f"`[🚀 Upload] {humanbytes(total_size)} — Uploading...`"
                 )
-            already_uploaded = True
-            await status_msg.edit("`[📤] Upload complete. Committing to chat...`")
-        elif total_size > 50 * 1024 * 1024:
-            return await status_msg.edit(
-                "`[Error] Cannot send large media directly. Use Upload path (>10MB trigger failed).`"
-            )
+                with open(file_to_send, 'rb') as f:
+                    file_to_send = await uploadable(
+                        asst, f, os.path.basename(file_to_send),
+                        progress_callback=_upload_status_hook  # lightweight, non-blocking
+                    )
+                already_uploaded = True
+                await status_msg.edit("`[📤] Upload complete. Committing to chat...`")
+            elif total_size > 50 * 1024 * 1024:
+                return await status_msg.edit(
+                    "`[Error] Cannot send large media directly. Use Upload path (>10MB trigger failed).`"
+                )
 
-        await sender_client.send_file(
-            event.chat_id,
-            file=file_to_send,
-            caption=caption,
-            reply_to=event.message_id if is_callback else event.id,
-            # Do NOT pass progress_callback if file was already uploaded via
-            # uploadable() — send_file() on InputFileBig is a server-side commit
-            # with no data transfer, so a callback here would never fire meaningfully
-            # and only adds API overhead.
-            progress_callback=None if already_uploaded else up_progress_hook,
-            buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
-        )
+            await sender_client.send_file(
+                event.chat_id,
+                file=file_to_send,
+                caption=caption,
+                reply_to=event.message_id if is_callback else event.id,
+                # Do NOT pass progress_callback if file was already uploaded via
+                # uploadable() — send_file() on InputFileBig is a server-side commit
+                # with no data transfer, so a callback here would never fire meaningfully
+                # and only adds API overhead.
+                progress_callback=None if already_uploaded else up_progress_hook,
+                buttons=[[Button.inline("🗑️ Close", data="close_dl")]]
+            )
         await status_msg.delete()
     except DownloadCancelled:
         await status_msg.edit("`[DL] Task aborted by user. Cleanup complete.`")

@@ -17,10 +17,26 @@ TWITTER_RE = re.compile(r"https?://(?:www\.|mobile\.)?(?:twitter|x)\.com/\S+")
 ADULT_RE = re.compile(r"https?://(?:www\.)?(?:pornhub\.com|xvideos\.com|xhamster\.com|xnxx\.com|spankbang\.com|eporner\.com)/\S+")
 YOUTUBE_RE = re.compile(r"https?://(?:www\.)?(?:youtube\.com/(?:watch|shorts|live)\S*|youtu\.be/\S+)")
 
+# TikTok Scraping Regex
+UNIVERSAL_RE = re.compile(r'<script[^>]+\bid="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>(.*?)</script>', re.S | re.I)
+SIGI_RE = re.compile(r'<script[^>]+\bid="SIGI_STATE"[^>]*>(.*?)</script>', re.S | re.I)
+NEXT_RE = re.compile(r'<script[^>]+\bid="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S | re.I)
+
+# Instagram Scraping Constants
+IG_GRAPHQL_DOC_ID = "8845758582119845"
+IG_GRAPHQL_ENDPOINT = "https://www.instagram.com/graphql/query/"
+IG_SHORTCODE_RE = re.compile(r"/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)", re.I)
+
+# Facebook Scraping Regex
+FB_VIDEO_RE = re.compile(r"facebook\.com/(?:watch|reel|videos|posts|reels)|fb\.watch")
+FB_HD_RE = re.compile(r'"progressive_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*,\s*"failure_reason"\s*:\s*[^,]+\s*,\s*"metadata"\s*:\s*\{\s*"quality"\s*:\s*"HD"\s*\}', re.S)
+FB_SD_RE = re.compile(r'"progressive_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*,\s*"failure_reason"\s*:\s*[^,]+\s*,\s*"metadata"\s*:\s*\{\s*"quality"\s*:\s*"SD"\s*\}', re.S)
+
 class MediaExtractor:
     def __init__(self, download_path="downloads/"):
         self.download_path = download_path
         self._extract_cache = {}  # Cache last extraction result to avoid double API calls
+        self._http_session = None
         if not os.path.exists(download_path):
             os.makedirs(download_path)
 
@@ -47,6 +63,11 @@ class MediaExtractor:
 
         # Cookie validation: done ONCE at init.
         self._cookie_file = None
+        # aria2c detection
+        self._aria2c = _shutil.which("aria2c")
+        if self._aria2c:
+            LOGS.info(f"Extractor | External Downloader: {self._aria2c}")
+
         if os.path.exists("cookies.txt"):
             try:
                 with open("cookies.txt", "r") as _f:
@@ -94,6 +115,14 @@ class MediaExtractor:
             },
         }
 
+        if self._aria2c:
+            opts["external_downloader"] = "aria2c"
+            opts["external_downloader_args"] = [
+                "--min-split-size=1M",
+                "--max-connection-per-server=16",
+                "--split=16",
+            ]
+
         # Apply cached one-time results
         if self._js_runtime:
             opts["js_runtime"] = self._js_runtime
@@ -132,9 +161,28 @@ class MediaExtractor:
         if url in self._extract_cache:
             return self._extract_cache[url]
 
+        # TikTok Specific Scraping
+        if TIKTOK_RE.search(url):
+            try:
+                res = self._tiktok_scrape(url)
+                if not res or "error" in res:
+                    res = self._tikwm_dl(url)
+                
+                if res and not "error" in res:
+                    self._extract_cache[url] = res
+                    return res
+            except Exception as e:
+                LOGS.warning(f"Extractor | TikTok scraping failed: {e}. Falling back to yt-dlp.")
+
         if "instagram.com" in url:
             try:
-                # Prioritize Sonzaix API for Instagram
+                # Prioritize local scraping (GraphQL & Embed)
+                res = self._instagram_scrape(url)
+                if res and not "error" in res:
+                    self._extract_cache[url] = res
+                    return res
+                
+                # Fallback to Sonzaix API for Instagram
                 res = self._sonzaix_dl(url)
                 if res and res.get("status"):
                     # Mock yt-dlp info structure for compatibility
@@ -169,6 +217,16 @@ class MediaExtractor:
                         return info
             except Exception as e:
                 LOGS.warning(f"Extractor | Sonzaix API failed: {e}. Falling back to yt-dlp.")
+
+        # Facebook Specific Scraping
+        if FB_VIDEO_RE.search(url):
+            try:
+                res = self._facebook_scrape(url)
+                if res and not "error" in res:
+                    self._extract_cache[url] = res
+                    return res
+            except Exception as e:
+                LOGS.warning(f"Extractor | Facebook scraping failed: {e}. Falling back to yt-dlp.")
 
         opts = self.get_opts(format_type="extract")
         # Keep quiet=True to avoid yt-dlp spam in production logs.
@@ -297,6 +355,272 @@ class MediaExtractor:
         except Exception as e:
             LOGS.debug(f"Extractor | Sonzaix API error: {e}")
         return None
+
+    def _instagram_scrape(self, url):
+        """Scrape Instagram using GraphQL or Embed."""
+        shortcode = IG_SHORTCODE_RE.search(url)
+        if not shortcode:
+            return {"error": "Invalid Instagram URL"}
+        shortcode = shortcode.group(1)
+
+        # Try GraphQL first
+        res = self._instagram_gql(shortcode)
+        if res and not "error" in res:
+            return res
+        
+        # Fallback to Embed
+        return self._instagram_embed(shortcode)
+
+    def _instagram_gql(self, shortcode):
+        """Fetch metadata via Instagram GraphQL API."""
+        try:
+            import cloudscraper
+            import json
+            import random
+            import string
+            import base64
+
+            scraper = cloudscraper.create_scraper()
+            
+            def rand_alpha(n): return "".join(random.choice(string.ascii_letters) for _ in range(n))
+            def rand_b64(n): return base64.urlsafe_b64encode(os.urandom(n)).decode().rstrip("=")
+
+            csrf = rand_b64(24)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "x-ig-app-id": "936619743392459",
+                "x-csrftoken": csrf,
+                "content-type": "application/x-www-form-urlencoded",
+                "cookie": f"csrftoken={csrf};",
+                "Referer": f"https://www.instagram.com/p/{shortcode}/"
+            }
+
+            body = {
+                "doc_id": IG_GRAPHQL_DOC_ID,
+                "variables": json.dumps({"shortcode": shortcode, "fetch_tagged_user_count": None, "hoisted_comment_id": None, "hoisted_reply_id": None})
+            }
+
+            resp = scraper.post(IG_GRAPHQL_ENDPOINT, data=body, headers=headers, timeout=15)
+            if resp.status_code != 200:
+                return {"error": f"GraphQL HTTP {resp.status_code}"}
+            
+            data = resp.json()
+            media = (data.get("data") or {}).get("xdt_shortcode_media") or (data.get("data") or {}).get("shortcode_media")
+            if not media:
+                return {"error": "Media not found in GraphQL response"}
+
+            return self._parse_ig_media(media)
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _instagram_embed(self, shortcode):
+        """Fetch metadata via Instagram Embed page."""
+        try:
+            import cloudscraper
+            import json
+            scraper = cloudscraper.create_scraper()
+            url = f"https://www.instagram.com/p/{shortcode}/embed/captioned/"
+            resp = scraper.get(url, timeout=15)
+            if resp.status_code != 200:
+                return {"error": f"Embed HTTP {resp.status_code}"}
+
+            html = resp.text
+            # Extract JSON from ServerJS
+            m = re.search(r'new ServerJS\(\)\);s\.handle\((\{.*?\})\);requireLazy', html, re.S)
+            if m:
+                # This is complex, but we try to find the shortcode_media inside contextJSON
+                match = re.search(r'"contextJSON"\s*:\s*"((?:\\.|[^"\\])*)"', m.group(1), re.S)
+                if match:
+                    ctx_raw = json.loads('"' + match.group(1) + '"')
+                    ctx_data = json.loads(ctx_raw)
+                    media = (ctx_data.get("gql_data") or {}).get("shortcode_media")
+                    if media:
+                        return self._parse_ig_media(media)
+            
+            return {"error": "Could not find metadata in Embed"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _parse_ig_media(self, media):
+        """Unified parser for Instagram media objects."""
+        typename = media.get("__typename")
+        owner = media.get("owner") or {}
+        
+        info = {
+            "title": (media.get("edge_media_to_caption", {}).get("edges") or [{}])[0].get("node", {}).get("text") or "Instagram Media",
+            "uploader": owner.get("full_name") or owner.get("username") or "Instagram User",
+            "uploader_url": f"https://instagram.com/{owner.get('username')}" if owner.get("username") else None,
+            "id": media.get("shortcode"),
+            "extractor": "instagram_scraper"
+        }
+
+        if typename in ("GraphSidecar", "XDTGraphSidecar"):
+            info["entries"] = []
+            info["type"] = "album"
+            for edge in media.get("edge_sidecar_to_children", {}).get("edges") or []:
+                node = edge.get("node")
+                if node:
+                    item = {
+                        "url": node.get("video_url") or node.get("display_url"),
+                        "ext": "mp4" if node.get("is_video") else "jpg",
+                        "title": info["title"]
+                    }
+                    info["entries"].append(item)
+        else:
+            info["url"] = media.get("video_url") or media.get("display_url")
+            info["ext"] = "mp4" if media.get("is_video") else "jpg"
+        
+        return info
+
+    def _facebook_scrape(self, url):
+        """Scrape Facebook HTML for HD/SD video URLs."""
+        try:
+            import cloudscraper
+            scraper = cloudscraper.create_scraper()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Accept-Language": "en-US,en;q=0.5",
+            }
+            
+            # Follow redirects (especially for fb.watch)
+            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+            html = resp.text
+            
+            def unescape_fb(text):
+                return text.replace(r"\/", "/").encode().decode('unicode-escape')
+
+            hd_match = FB_HD_RE.search(html)
+            sd_match = FB_SD_RE.search(html)
+            
+            video_url = None
+            if hd_match:
+                video_url = unescape_fb(hd_match.group(1))
+            elif sd_match:
+                video_url = unescape_fb(sd_match.group(1))
+                
+            if not video_url:
+                return {"error": "Facebook video URL not found in HTML"}
+            
+            # Extract title if possible
+            title = "Facebook Video"
+            title_match = re.search(r'<title id="pageTitle">(.*?)</title>', html)
+            if title_match:
+                title = title_match.group(1)
+
+            return {
+                "url": video_url,
+                "title": title,
+                "ext": "mp4",
+                "uploader": "Facebook",
+                "extractor": "facebook_scraper"
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _tiktok_scrape(self, url):
+        """Scrape TikTok HTML for metadata."""
+        try:
+            import cloudscraper
+            import json
+            scraper = cloudscraper.create_scraper()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            }
+            
+            # Resolve short URL if needed
+            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+            final_url = resp.url
+            html_text = resp.text
+
+            # Parse JSON from HTML
+            data = None
+            for regex in [UNIVERSAL_RE, SIGI_RE, NEXT_RE]:
+                match = regex.search(html_text)
+                if match:
+                    try:
+                        data = json.loads(match.group(1))
+                        break
+                    except:
+                        continue
+            
+            if not data:
+                return {"error": "Could not find metadata in HTML"}
+
+            # Walk through JSON to find itemStruct (logic simplified from groupbot)
+            def find_key(obj, key):
+                if isinstance(obj, dict):
+                    if key in obj: return obj[key]
+                    for v in obj.values():
+                        res = find_key(v, key)
+                        if res: return res
+                elif isinstance(obj, list):
+                    for i in obj:
+                        res = find_key(i, key)
+                        if res: return res
+                return None
+
+            item = find_key(data, "itemStruct") or find_key(data, "itemInfo")
+            if not item:
+                return {"error": "itemStruct not found"}
+            
+            if "itemStruct" in item: item = item["itemStruct"]
+
+            # Format as yt-dlp compatible dict
+            info = {
+                "title": item.get("desc") or "TikTok Video",
+                "uploader": item.get("author", {}).get("nickname") or "TikTok User",
+                "id": item.get("id"),
+                "extractor": "tiktok_scraper"
+            }
+
+            # Check for slideshow (images)
+            images = item.get("imagePost", {}).get("images")
+            if images:
+                info["entries"] = []
+                for img in images:
+                    u = img.get("displayImage", {}).get("urlList", [None])[0]
+                    if u:
+                        info["entries"].append({"url": u, "ext": "jpg", "title": info["title"]})
+                info["type"] = "album"
+            else:
+                video_url = item.get("video", {}).get("playAddr")
+                if not video_url:
+                    # Fallback to other possible keys
+                    video_url = item.get("video", {}).get("downloadAddr")
+                info["url"] = video_url
+                info["ext"] = "mp4"
+
+            return info
+        except Exception as e:
+            return {"error": str(e)}
+
+    def _tikwm_dl(self, url):
+        """Fallback TikTok API using tikwm.com."""
+        try:
+            import cloudscraper
+            scraper = cloudscraper.create_scraper()
+            res = scraper.post("https://www.tikwm.com/api/", data={"url": url}, timeout=15)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get("code") == 0:
+                    item = data.get("data")
+                    info = {
+                        "title": item.get("title") or "TikTok Video",
+                        "uploader": item.get("author", {}).get("nickname") or "TikTok User",
+                        "extractor": "tikwm"
+                    }
+                    
+                    if item.get("images"):
+                        info["entries"] = [{"url": u, "ext": "jpg"} for u in item["images"]]
+                        info["type"] = "album"
+                    else:
+                        info["url"] = item.get("play") or item.get("wmplay")
+                        info["ext"] = "mp4"
+                    return info
+        except Exception as e:
+            LOGS.debug(f"Extractor | TikWM API error: {e}")
+        return {"error": "TikWM API failed"}
 
 # Global Instance
 extractor = MediaExtractor()

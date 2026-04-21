@@ -110,11 +110,11 @@ async def ultroid(event):
             await get_stored_file(event, args)
         if not udB.get_key("STARTMSG"):
             if udB.get_key("PMBOT"):
-                ok = "You can use this bot to contact the owner directly.\nJust send your message here, and I'll forward it."
+                ok = f"\n\nI am also a **PM Bot**. Send any message here, and I'll forward it to {me}."
             await event.reply(
-                f"Hello {mention}! I'm the assistant bot for {me}.\n\n{ok}",
+                f"Hello {mention}! I'm the assistant bot for {me}.\n\nYou can send me media links from **TikTok, Instagram, or Facebook**, and I will download them for you.{ok}",
                 file=udB.get_key("STARTMEDIA"),
-                buttons=[Button.inline("Info", data="ownerinfo")]
+                buttons=[Button.inline("Owner Info 👤", data="ownerinfo")]
                 if Owner_info_msg
                 else None,
             )
@@ -149,37 +149,35 @@ async def asst_help(event):
     is_owner_or_sudo = sender_id in owner_and_sudos()
 
     if is_owner_or_sudo:
-        header = "**Sudo Commands**"
+        header = f"**{OWNER_NAME}'s Assistant Menu**"
         content = (
-            "System access granted."
-            "\n\n**Diagnostics**"
-            "\n• `/speedtest` - Network stats"
-            "\n• `/sysinfo` - System info"
-            "\n• `/sysmon` - Hardware monitor"
-            "\n\n**Admin**"
+            "Verified System Access."
+            "\n\n**Admin Controls**"
             "\n• `/dlservice` - Auto-DL toggle"
-            "\n• `/stat` - Metrics"
-            "\n• `/bcast` - Broadcast"
+            "\n• `/stat` - View bot metrics"
+            "\n• `/bcast` - User broadcast"
+            "\n\n**Diagnostics**"
+            "\n• `/speedtest` - Network speed"
+            "\n• `/sysinfo` - System specifications"
         )
         buttons = [
-            [Button.inline("Settings", data="setter")],
-            [Button.inline("Stats", data="stat")]
+            [Button.inline("Bot Settings ⚙️", data="setter")],
+            [Button.inline("System Stats ✨", data="stat")]
         ]
     else:
-        header = "**Public Commands**"
+        header = "**Universal Assistant**"
         content = (
-            "Verified access active."
-            "\n\n**Media**"
-            "\n• `/dl <url>` - Downloader"
-            "\n• `/ytv /yta` - Video/Audio"
-            "\n\n**Utilities**"
-            "\n• `/ask <query>` - AI"
-            "\n• `/tr <lang> <text>` - Translation"
-            "\n\n**System**"
-            "\n• `/id` - My ID"
-            "\n• `/info` - Bot info"
+            "Public access active."
+            "\n\n**Media Downloader**"
+            "\n• `/dl <link>` - TikTok, IG, FB, YT"
+            "\n• `/yta` - Download Audio"
+            "\n• `/ytv` - Download Video"
+            "\n\n**Features**"
+            "\n• Supports TikTok Slideshows"
+            "\n• Instagram Carousel & Reels"
+            "\n• Automatic Link Detection"
         )
-        buttons = [[Button.inline("Info", data="ownerinfo")]]
+        buttons = [[Button.inline("About Owner 👤", data="ownerinfo")]]
 
     text = f"{header}\n---\n{content}"
     await event.reply(text, buttons=buttons)
