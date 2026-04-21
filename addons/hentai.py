@@ -115,13 +115,16 @@ async def nh_search_logic(event, query):
         
         if not results: return await xx.edit("`Tidak ditemukan hasil di NHentai.`")
         
+        msg = f"**NHentai Results for:** `{query}`\n\n"
         buttons = []
-        for res in results[:5]:
+        for i, res in enumerate(results[:5], 1):
             m = re.search(r'/g/(\d+)/', res['href'])
             if m:
                 id = m.group(1)
-                buttons.append([Button.inline(f"📖 {res.text[:40]}", data=f"hnex:nhrd:{id}")])
-        await xx.edit(f"**NHentai Results for:** `{query}`", buttons=buttons)
+                title = res.text.strip()
+                msg += f"{i}. [{title}](https://nhentai.net/g/{id}/)\n"
+                buttons.append([Button.inline(f"📖 Read #{i}", data=f"hnex:nhrd:{id}")])
+        await xx.edit(msg, buttons=buttons, link_preview=False)
 
 async def ha_search_logic(event, query):
     xx = await event.eor("`Mencari di Hanime...`")
@@ -141,17 +144,19 @@ async def ha_search_logic(event, query):
             if not results or not isinstance(results, list):
                 return await xx.edit("`Tidak ditemukan hasil di Hanime.`")
             
+            msg = f"**Hanime Results for:** `{query}`\n\n"
             buttons = []
-            for hit in results[:5]:
+            for i, hit in enumerate(results[:5], 1):
                 slug = hit.get('slug')
                 title = hit.get('name', 'Unknown')
                 if not slug: continue
                 rating = hit.get('rating', 'N/A')
-                buttons.append([Button.inline(f"🎬 {title[:30]} ({rating}⭐)", data=f"hnex:hard:{slug}")])
+                msg += f"{i}. [{title}](https://hanime.tv/videos/hentai/{slug}) - {rating}⭐\n"
+                buttons.append([Button.inline(f"🎬 Watch #{i}", data=f"hnex:hard:{slug}")])
             
             if not buttons:
                 return await xx.edit("`Tidak ditemukan hasil yang valid di Hanime.`")
-            await xx.edit(f"**Hanime Results for:** `{query}`", buttons=buttons)
+            await xx.edit(msg, buttons=buttons, link_preview=False)
     except Exception as e:
         await xx.edit(f"**Error:** `{e}`")
 
