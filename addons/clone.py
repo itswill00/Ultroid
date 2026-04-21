@@ -68,7 +68,8 @@ async def _(event):
 
 @ultroid_cmd(pattern="revert$")
 async def _(event):
-    name = OWNER_NAME
+    from plugins import OWNER_NAME
+    name = OWNER_NAME or "Owner"
     mybio = f"{str(ultroid_bot.me.id)}01"
     bio = chc if (chc := udB.get_key(mybio)) else "Error : Bio Lost"
     fname = udB.get_key(f"{ultroid_bot.uid}02")
