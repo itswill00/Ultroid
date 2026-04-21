@@ -36,10 +36,19 @@ def _env(key, default=None, cast=None):
 
 
 class Var:
-    # mandatory
-    API_ID = (
-        int(sys.argv[1]) if len(sys.argv) > 1 else _env("API_ID", default=6, cast=int)
-    )
+    # Resource Management
+    LITE_MODE = _env("LITE_MODE", default=None, cast=bool)
+    if LITE_MODE is None:
+        try:
+            import psutil
+            # Auto-enable Lite Mode if RAM < 1.2GB
+            LITE_MODE = psutil.virtual_memory().total < (1.2 * 1024**3)
+        except (ImportError, Exception):
+            LITE_MODE = False
+    
+    # Advanced I/O Throttling for low-spec hosts
+    ASYNC_POOL_SIZE = 4 if LITE_MODE else 10
+    FFMPEG_PRESET = "ultrafast" if LITE_MODE else "veryfast"
     API_HASH = (
         sys.argv[2]
         if len(sys.argv) > 2

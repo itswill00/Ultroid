@@ -65,6 +65,11 @@ sync_system_deps() {
     case $PKG_MGR in
         pkg)
             pkg update -y > /dev/null 2>&1
+            # Termux-specific stability (WakeLock)
+            if command -v termux-wake-lock &>/dev/null; then
+                termux-wake-lock
+                status "Wake-Lock: Activated (Persistence)"
+            fi
             for dep in python git ffmpeg nodejs aria2 libjpeg-turbo zlib libxml2 libxslt; do
                 pkg install "$dep" -y > /dev/null 2>&1 || warning "Dependency $dep sync failed."
             done
@@ -88,6 +93,18 @@ sync_system_deps() {
 init_python_runtime() {
     status "Initializing isolated Python runtime..."
     
+    # Resource Detection for optimized installation
+    TOTAL_RAM=4000000 # Default fallback (4GB)
+    if [ -f "/proc/meminfo" ]; then
+        TOTAL_RAM=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    fi
+    
+    PIP_FLAGS="--quiet"
+    if [ "$TOTAL_RAM" -lt 1200000 ]; then
+        warning "Low RAM host detected ($((TOTAL_RAM / 1024))MB). Optimizing asset deployment..."
+        PIP_FLAGS="--quiet --no-cache-dir"
+    fi
+
     PYTHON_CMD=""
     for cmd in python3.11 python3.10 python3 python; do
         if command -v "$cmd" &>/dev/null; then
@@ -108,7 +125,7 @@ init_python_runtime() {
         success "Runtime: Native (Termux Optimization)"
     fi
     
-    python3 -m pip install --upgrade pip > /dev/null 2>&1
+    python3 -m pip install --upgrade pip $PIP_FLAGS > /dev/null 2>&1
 }
 
 # 5. Asset Deployment (Requirements)
@@ -123,7 +140,8 @@ deploy_assets() {
         done
     fi
 
-    pip install -r "$REQ_FILE" --quiet > /dev/null 2>&1 || {
+    # Using PIP_FLAGS set during runtime isolation init
+    pip install -r "$REQ_FILE" ${PIP_FLAGS:-"--quiet"} > /dev/null 2>&1 || {
         warning "Package asset deployment had minor conflicts. Retrying with --no-cache-dir..."
         pip install -r "$REQ_FILE" --no-cache-dir --quiet > /dev/null 2>&1 || warning "Asset deployment finalized with warnings."
     }

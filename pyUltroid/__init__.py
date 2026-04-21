@@ -79,7 +79,9 @@ if run_as_module:
     USER_MODE = (RUNTIME_MODE == "user")
     BOT_MODE  = (RUNTIME_MODE == "bot")
     DUAL_MODE = (RUNTIME_MODE == "dual")
-    LOGS.info(f"Mode | Runtime: {RUNTIME_MODE.upper()}")
+    
+    _res_mode = "LITE" if Var.LITE_MODE else "STANDARD"
+    LOGS.info(f"Mode | Runtime: {RUNTIME_MODE.upper()} | Resource: {_res_mode}")
 
     # Client Initialization
     if RUNTIME_MODE in ("user", "dual"):

@@ -566,6 +566,11 @@ async def progress(current, total, event, start, type_of_ps, file_name=None, but
     filled = math.floor(percentage / 10)
     bar = "▰" * filled + "▱" * (10 - filled)
     
+    # Smart Memory Cleanup for Low-Spec hosts
+    if Var.LITE_MODE and current % (5 * 1024 * 1024) == 0:
+        import gc
+        gc.collect()
+
     ui_header = f"**{type_of_ps.title()}**\n"
     if file_name:
         ui_header += f"📄 `{file_name}`\n"
