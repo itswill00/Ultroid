@@ -115,16 +115,17 @@ async def remove_afk(event):
 
 
 async def on_afk(event):
-    if event.is_private and Redis("PMSETTING") and not is_approved(event.chat_id):
+    LOGS.info(f"AFK: Received message from {event.chat_id}")
+    if not is_afk():
         return
-    elif "afk" in event.text.lower():
+    # if event.is_private and Redis("PMSETTING") and not is_approved(event.chat_id):
+    #     return
+    if "afk" in event.text.lower():
         return
-    elif not is_afk():
-        return
-    if event.chat_id in NOSPAM_CHAT:
-        return
+    # if event.chat_id in NOSPAM_CHAT:
+    #     return
     sender = await event.get_sender()
-    if sender.bot or sender.verified:
+    if sender and (sender.bot or getattr(sender, "verified", False)):
         return
     
     reason, media_type, media, afk_since = is_afk()
