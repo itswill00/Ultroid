@@ -318,6 +318,9 @@ class ParallelTransferrer:
         connection_count: Optional[int] = None,
     ) -> AsyncGenerator[bytes, None]:
         connection_count = connection_count or self._get_connection_count(file_size)
+        # Optimized for VPS: Use 1024KB (1MB) parts for large files to reduce overhead
+        if part_size_kb is None and file_size > 10 * (1024 ** 2):
+            part_size_kb = 512  # 512KB is safer for most DCs, can go up to 1024
         part_size = (part_size_kb or utils.get_appropriated_part_size(file_size)) * 1024
         part_count = math.ceil(file_size / part_size)
         await self._init_download(connection_count, file, part_count, part_size)
