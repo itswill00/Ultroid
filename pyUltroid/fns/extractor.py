@@ -291,50 +291,88 @@ class MediaExtractor:
 
     @run_async
     def download(self, url, format_type="video", job_id=None, progress_callback=None):
-        """Download media and return the file path(s)."""
-        if job_id:
-            os.makedirs(os.path.join(self.download_path, job_id), exist_ok=True)
+        """Download media with direct bypass for scraped URLs to avoid 403."""
+        out_path_dir = os.path.join(self.download_path, job_id) if job_id else self.download_path
+        os.makedirs(out_path_dir, exist_ok=True)
 
-        # Use cached info if available to avoid double extraction
+        # Step 1: Check Cache for Scraped Info
         info = self._extract_cache.get(url)
+        
+        # Step 2: If Scraped, Use Direct Downloader (Bypass yt-dlp)
+        if info and info.get("extractor") in ["tiktok_scraper", "instagram_scraper", "facebook_scraper", "tikwm"]:
+            LOGS.info(f"Extractor | Using Direct Downloader for {info['extractor']}")
+            
+            # Prepare Headers
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Referer": "https://www.tiktok.com/" if "tiktok" in url else "https://www.instagram.com/" if "instagram" in url else "https://www.facebook.com/"
+            }
 
+            # Handle Album (Multiple Files)
+            if info.get("type") == "album" or "entries" in info:
+                files = []
+                for idx, entry in enumerate(info["entries"]):
+                    ext = entry.get("ext", "jpg")
+                    filename = f"media_{idx}.{ext}"
+                    path = os.path.join(out_path_dir, filename)
+                    success = self._direct_download(entry["url"], path, headers)
+                    if success: files.append(path)
+                return files if files else None
+
+            # Handle Single File
+            video_url = info.get("url")
+            if video_url:
+                ext = info.get("ext", "mp4")
+                filename = f"media_video.{ext}"
+                path = os.path.join(out_path_dir, filename)
+                success = self._direct_download(video_url, path, headers)
+                return [path] if success else None
+
+        # Step 3: Fallback to yt-dlp for other platforms (YouTube, etc.)
         opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:
-                if not info:
+                # If we have cached info from yt-dlp previously
+                if not info or "error" in info:
                     info = ydl.extract_info(url, download=True)
                 else:
-                    # If we have cached info (e.g. from Sonzaix), download it
-                    # yt-dlp can download from a processed info dict via process_ie_data
-                    if "entries" in info:
-                        # For carousel/multi-file
-                        files = []
-                        for entry in info["entries"]:
-                            # Force download of the direct URL
-                            e_info = ydl.extract_info(entry["url"], download=True)
-                            if e_info:
-                                files.append(self._resolve_filename(ydl, e_info))
-                        return files or None
-                    else:
-                        # For single file
-                        info = ydl.extract_info(info["url"], download=True)
+                    info = ydl.extract_info(info["url"], download=True)
 
-                if not info:
-                    return None
-
-                # Handle single file
+                if not info: return None
                 if "entries" not in info:
                     return [self._resolve_filename(ydl, info)]
-
-                # Handle multi-file (TikTok slides, IG Carousel, etc.)
+                
                 files = []
                 for entry in info.get("entries") or []:
-                    if entry:
-                        files.append(self._resolve_filename(ydl, entry))
+                    if entry: files.append(self._resolve_filename(ydl, entry))
                 return files or None
             except Exception as e:
                 LOGS.error(f"Download failed for {url}: {e}")
                 return None
+
+    def _direct_download(self, url, path, headers):
+        """Internal helper for direct download using aria2c or requests."""
+        try:
+            # Try aria2c first for speed
+            if self._aria2c:
+                import subprocess
+                cmd = [self._aria2c, url, "-o", os.path.basename(path), "-d", os.path.dirname(path), "--quiet=true", "--allow-overwrite=true"]
+                for k, v in headers.items():
+                    cmd.extend(["--header", f"{k}: {v}"])
+                subprocess.run(cmd, check=True, timeout=60)
+                if os.path.exists(path): return True
+
+            # Fallback to requests (synchronous but safe for direct download)
+            import requests
+            r = requests.get(url, headers=headers, stream=True, timeout=30)
+            if r.status_code == 200:
+                with open(path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                return True
+        except Exception as e:
+            LOGS.error(f"Direct Download Failed: {e}")
+        return False
 
     def _sonzaix_dl(self, url):
         """Internal helper to fetch data from Sonzaix API."""
