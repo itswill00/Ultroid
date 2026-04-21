@@ -524,77 +524,79 @@ class MediaExtractor:
         return info
 
     def _facebook_scrape(self, url):
-        """Zero-Cookie Facebook scraping using mbasic and API fallback."""
-        LOGS.info(f"Extractor | Facebook Zero-Cookie Scraping: {url}")
+        """Genius Zero-Cookie Facebook scraper using Embed Bypass & JSON Blobs."""
+        LOGS.info(f"Extractor | Facebook Genius Scraper: {url}")
         try:
             import cloudscraper
+            from urllib.parse import quote, unquote
             scraper = cloudscraper.create_scraper()
-            
-            # Step 1: User-Agent & Header Setup (Mobile Emulation)
             headers = {
-                "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.5",
-                "Referer": "https://mbasic.facebook.com/",
+                "Referer": "https://www.facebook.com/",
             }
 
-            # Step 2: URL Normalization to mbasic
-            # This bypasses many JS-based bot protections
-            content_id = None
-            id_match = re.search(r"(?:v|videos|reel|reels|story_fbid|posts|share/p)/([0-9A-Za-z_-]+)", url)
-            if id_match:
-                content_id = id_match.group(1)
-                url = f"https://mbasic.facebook.com/video/video.php?v={content_id}"
-            else:
-                url = url.replace("www.facebook.com", "mbasic.facebook.com").replace("m.facebook.com", "mbasic.facebook.com")
-
-            # Step 3: Get Guest Session Cookies
-            scraper.get("https://mbasic.facebook.com/", headers=headers, timeout=10)
-            
-            # Step 4: Access Content
-            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
-            html_text = resp.text
-
-            if "/login" in resp.url or "Log In" in html_text:
-                LOGS.warning("Extractor | Facebook mbasic blocked. Trying Public API Fallback...")
-                return self._facebook_public_api(url)
+            # --- STRATEGY 1: Embed Player Bypass (Most Powerful for Videos) ---
+            embed_url = f"https://www.facebook.com/plugins/video.php?href={quote(url)}&show_text=0&width=560"
+            LOGS.info("Extractor | FB Strategy 1: Trying Embed Player Bypass...")
+            resp = scraper.get(embed_url, headers=headers, timeout=15)
+            html = resp.text
 
             def unescape_fb(text):
                 return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
 
-            # Step 5: Extract using multi-pattern
+            # Search for HD/SD URLs in Embed source
             video_url = None
-            patterns = [
-                re.compile(r'video_url":"(.*?)"'),
-                re.compile(r'href\s*=\s*"/video_redirect/\?src=(.*?)"'),
-                re.compile(r'hd_src:"(.*?)"'),
-                re.compile(r'sd_src:"(.*?)"'),
-                re.compile(r'https?://[^\s"\'\\]+?\.mp4[^\s"\'\\]*')
-            ]
-            
-            for pat in patterns:
-                match = pat.search(html_text)
+            for pattern in [re.compile(r'hd_src:"(.*?)"'), re.compile(r'sd_src:"(.*?)"'), re.compile(r'video_url":"(.*?)"')]:
+                match = pattern.search(html)
                 if match:
                     video_url = unescape_fb(match.group(1))
-                    if "/video_redirect/" in video_url:
-                        from urllib.parse import unquote
-                        video_url = unquote(video_url)
-                    if video_url: break
+                    if video_url: 
+                        LOGS.info("Extractor | FB Strategy 1: Success via Embed Bypass!")
+                        break
             
-            if not video_url:
-                # If local scraping fails, try API
-                return self._facebook_public_api(url)
+            if video_url:
+                return {
+                    "url": video_url, "title": "Facebook Video", "ext": "mp4",
+                    "uploader": "Facebook", "extractor": "facebook_embed_bypass"
+                }
 
-            return {
-                "url": video_url,
-                "title": "Facebook Video",
-                "ext": "mp4",
-                "uploader": "Facebook",
-                "extractor": "facebook_scraper",
-                "cookies": "; ".join([f"{c.name}={c.value}" for c in scraper.cookies])
-            }
+            # --- STRATEGY 2: mbasic + JSON Blob Extraction ---
+            LOGS.info("Extractor | FB Strategy 2: Trying mbasic JSON extraction...")
+            content_id = None
+            id_match = re.search(r"(?:v|videos|reel|reels|story_fbid|posts|share/p)/([0-9A-Za-z_-]+)", url)
+            if id_match:
+                content_id = id_match.group(1)
+                m_url = f"https://mbasic.facebook.com/video/video.php?v={content_id}"
+                resp = scraper.get(m_url, headers=headers, timeout=15)
+                html = resp.text
+                
+                # Look for video redirect
+                m = re.search(r'href\s*=\s*"/video_redirect/\?src=(.*?)"', html)
+                if m:
+                    video_url = unquote(unescape_fb(m.group(1)))
+                    LOGS.info("Extractor | FB Strategy 2: Success via mbasic redirect!")
+                    return {
+                        "url": video_url, "title": "Facebook Video", "ext": "mp4",
+                        "uploader": "Facebook", "extractor": "facebook_mbasic"
+                    }
+
+            # --- STRATEGY 3: Photo Extraction (If it's not a video) ---
+            LOGS.info("Extractor | FB Strategy 3: Checking if it's a Photo post...")
+            og_image = re.search(r'property="og:image"\s+content="(.*?)"', html)
+            if og_image:
+                img_url = unescape_fb(og_image.group(1))
+                if not any(x in img_url for x in ["/video/", ".mp4"]):
+                    return {
+                        "url": img_url, "title": "Facebook Photo", "ext": "jpg",
+                        "uploader": "Facebook", "extractor": "facebook_photo"
+                    }
+
+            # --- STRATEGY 4: Public API Aggregator (Last Resort) ---
+            return self._facebook_public_api(url)
+
         except Exception as e:
-            LOGS.error(f"Extractor | Facebook local scrape failed: {e}")
+            LOGS.error(f"Extractor | Facebook Genius Scraper failed: {e}")
             return self._facebook_public_api(url)
 
     def _facebook_public_api(self, url):
