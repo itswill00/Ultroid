@@ -342,6 +342,11 @@ async def _intel_chat_action(event):
             return
 
         user = await _get_user(event.user_id)
+        if not user:
+            # Fallback if user entity is not resolvable
+            LOGS.warning(f"GroupIntel | Could not resolve user {event.user_id} in {chat_id}")
+            return
+
         _, risk_label, risk_reasons = _risk_score(user)
 
         buf = _join_buffer[chat_id]
@@ -372,6 +377,11 @@ async def _intel_chat_action(event):
             return
 
         user = await _get_user(event.user_id)
+        if not user:
+            # Fallback if user entity is not resolvable
+            LOGS.warning(f"GroupIntel | Left event for unresolvable user {event.user_id}")
+            return
+
         actor_id = event.action_message.sender_id if event.action_message else None
 
         body = (
