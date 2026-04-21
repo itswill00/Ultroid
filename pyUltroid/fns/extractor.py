@@ -135,7 +135,7 @@ class MediaExtractor:
                 'preferredquality': '192',
             }]
         elif format_type in ["1080", "720", "480"]:
-            opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]"
+            opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]/best"
             opts["merge_output_format"] = "mp4"
         elif format_type == "extract":
             # Avoid any format selection for raw metadata extraction
