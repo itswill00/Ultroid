@@ -89,9 +89,9 @@ class MediaExtractor:
         else:
             LOGS.warning("Extractor | No cookies.txt found in root directory.")
 
-        # PoToken / VisitorData — read once at init.
-        _po = os.getenv("PO_TOKEN")
-        _vd = os.getenv("VISITOR_DATA")
+        # PoToken / VisitorData — read via Var from configs
+        _po = Var.PO_TOKEN
+        _vd = Var.VISITOR_DATA
         self._yt_extractor_args: dict = {"player_client": ["tv_embedded", "web"]}
         if _po:
             self._yt_extractor_args["po_token"] = [f"web+{_po}"]
