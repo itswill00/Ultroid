@@ -992,5 +992,3 @@ class MediaExtractor:
 
 # Global Instance
 extractor = MediaExtractor()
-r()
-r = MediaExtractor()
