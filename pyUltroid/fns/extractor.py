@@ -28,7 +28,7 @@ IG_GRAPHQL_ENDPOINT = "https://www.instagram.com/graphql/query/"
 IG_SHORTCODE_RE = re.compile(r"/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)", re.I)
 
 # Facebook Scraping Regex
-FB_VIDEO_RE = re.compile(r"facebook\.com/(?:watch|reel|videos|posts|reels)|fb\.watch")
+FB_VIDEO_RE = re.compile(r"facebook\.com/(?:watch|reel|videos|posts|reels|share|story\.php|groups)|fb\.watch")
 FB_HD_RE = re.compile(r'"progressive_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*,\s*"failure_reason"\s*:\s*[^,]+\s*,\s*"metadata"\s*:\s*\{\s*"quality"\s*:\s*"HD"\s*\}', re.S)
 FB_SD_RE = re.compile(r'"progressive_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"\s*,\s*"failure_reason"\s*:\s*[^,]+\s*,\s*"metadata"\s*:\s*\{\s*"quality"\s*:\s*"SD"\s*\}', re.S)
 
