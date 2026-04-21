@@ -19,28 +19,26 @@
 ### Apa itu Ultroid?
 Ultroid adalah asisten pribadi untuk akun Telegram Anda. Fokus utama kami adalah kecepatan dan kemudahan penggunaan. Anda bisa menambah fitur baru melalui addon tanpa harus mengutak-atik kode utama.
 
-### Cara Pasang
-Pilih metode yang paling cocok untuk Anda:
+### Cara Inisialisasi Lingkungan
+Pilih metode yang paling sesuai dengan host Anda:
 
-**Docker (Rekomendasi)**
+**Remote Server / Linux Host**
 ```bash
 git clone https://github.com/itswill00/Ultroid && cd Ultroid
-# Atur variabel di .env
+bash setup.sh
+```
+
+**Android Runtime (Termux)**
+```bash
+pkg update && pkg install python git -y
+git clone https://github.com/itswill00/Ultroid && cd Ultroid
+./setup.sh
+```
+
+**Container (Docker)**
+```bash
+# Pastikan variabel di .env sudah dikonfigurasi
 docker-compose up -d
-```
-
-**Termux**
-```bash
-pkg update && pkg install python git ffmpeg -y
-git clone https://github.com/itswill00/Ultroid && cd Ultroid
-./install-termux
-```
-
-**VPS / Linux**
-```bash
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-python3 -m pyUltroid
 ```
 
 ---
