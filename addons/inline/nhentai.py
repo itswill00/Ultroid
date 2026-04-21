@@ -1,65 +1,73 @@
-# Ultroid Addon - NHentai Inline (Surefire Version)
+# Ultroid Addon - NHentai Inline (API Proxy Version)
 # Author: itswill00
-# Logic: Cloudscraper Bypass + Multi-Mirror Fallback
+# Logic: Official API + Proxy (Most Stable)
 
 import re
-import cloudscraper
-from bs4 import BeautifulSoup
+import httpx
 from telethon import Button
 from telethon.tl.types import InputWebDocument as wb
-from . import InlinePlugin, in_pattern, asst, LOGS
+from . import InlinePlugin, in_pattern, asst, LOGS, async_searcher
 
-# Register to the main Inline Menu early for certainty
+# Register to the main Inline Menu
 InlinePlugin.update({"NHᴇɴᴛᴀɪ": "nh"})
 
-# Setup Scraper (Anti-Cloudflare)
-scraper = cloudscraper.create_scraper(
-    browser={
-        'browser': 'chrome',
-        'platform': 'windows',
-        'desktop': True
-    }
-)
-
-def get_nh_data(url):
-    """Certainty Fetcher: Cloudscraper + Mirror Fallback"""
-    mirrors = ["https://nhentai.xxx", "https://nhentai.to"]
-    for mirror in mirrors:
-        try:
-            target = f"{mirror}{url}"
-            res = scraper.get(target, timeout=10)
+async def fetch_nh_api_latest():
+    """Fetching latest galleries via Official API + Proxy"""
+    try:
+        # API All: Returns latest galleries
+        url = "https://nhentai.net/api/galleries/all?page=1"
+        proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
+        
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
             if res.status_code == 200:
-                soup = BeautifulSoup(res.text, 'html.parser')
-                galleries = soup.find_all('div', class_='gallery')
-                if galleries:
+                data = res.json()
+                if "result" in data:
                     results = []
-                    for gal in galleries[:15]:
-                        a_tag = gal.find('a')
-                        gid = a_tag['href'].split('/')[-2]
-                        title = gal.find('div', class_='caption').text.strip()
-                        img = gal.find('img')
-                        img_src = img.get('data-src') or img.get('src')
-                        # Ensure absolute URL for thumbs
-                        if img_src and img_src.startswith("//"):
-                            img_src = "https:" + img_src
-                        results.append({"id": gid, "title": title, "thumb": img_src})
+                    for gal in data["result"][:15]:
+                        gid = gal["id"]
+                        mid = gal["media_id"]
+                        title = gal["title"].get("pretty") or gal["title"].get("english")
+                        
+                        # Thumb: https://t.nhentai.net/galleries/<media_id>/thumb.jpg (usually jpg)
+                        thumb_url = f"https://t.nhentai.net/galleries/{mid}/thumb.jpg"
+                        results.append({"id": gid, "title": title, "thumb": thumb_url})
                     return results
-        except Exception as e:
-            LOGS.error(f"NH Mirror {mirror} Failed: {e}")
-            continue
+    except Exception as e:
+        LOGS.error(f"NHentai API Latest Error: {e}")
+    return []
+
+async def fetch_nh_api_search(query):
+    """Searching galleries via Official API + Proxy"""
+    try:
+        url = f"https://nhentai.net/api/galleries/search?query={query}&page=1"
+        proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
+        
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
+            if res.status_code == 200:
+                data = res.json()
+                if "result" in data:
+                    results = []
+                    for gal in data["result"][:15]:
+                        gid = gal["id"]
+                        mid = gal["media_id"]
+                        title = gal["title"].get("pretty") or gal["title"].get("english")
+                        thumb_url = f"https://t.nhentai.net/galleries/{mid}/thumb.jpg"
+                        results.append({"id": gid, "title": title, "thumb": thumb_url})
+                    return results
+    except Exception as e:
+        LOGS.error(f"NHentai API Search Error: {e}")
     return []
 
 @in_pattern("nh")
 async def nhentai_inline_handler(event):
     query = event.text.split(" ", maxsplit=1)[1].strip() if " " in event.text else ""
     
-    # Process synchronously in thread to avoid blocking since cloudscraper is sync
     if not query:
-        # Latest
-        data = get_nh_data("/")
+        data = await fetch_nh_api_latest()
     else:
-        # Search
-        data = get_nh_data(f"/search/?q={query}")
+        data = await fetch_nh_api_search(query)
 
     results = []
     for item in data:
@@ -76,8 +84,8 @@ async def nhentai_inline_handler(event):
     if not results:
         results.append(
             await event.builder.article(
-                title="System Offline",
-                text="Gagal menembus pertahanan NHentai. Semua mirror sedang down."
+                title="API Unavailable",
+                text="Gagal terhubung ke API NHentai via Proxy."
             )
         )
 
