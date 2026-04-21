@@ -19,6 +19,7 @@ from pyUltroid.dB.base import KeyManager
 
 from . import (
     LOG_CHANNEL,
+    LOGS,
     NOSPAM_CHAT,
     Redis,
     asst,
@@ -114,6 +115,7 @@ async def remove_afk(event):
 
 
 async def on_afk(event):
+    LOGS.info(f"AFK: Received message from {event.chat_id}")
     if event.is_private and Redis("PMSETTING") and not is_approved(event.chat_id):
         return
     elif "afk" in event.text.lower():
