@@ -10,6 +10,22 @@ import os
 import re
 import time
 
+try:
+    import httpx
+    _old_post = httpx.post
+    def _new_post(*args, **kwargs):
+        kwargs.pop("proxies", None)
+        return _old_post(*args, **kwargs)
+    httpx.post = _new_post
+    
+    _old_Client_post = httpx.Client.post
+    def _new_Client_post(self, *args, **kwargs):
+        kwargs.pop("proxies", None)
+        return _old_Client_post(self, *args, **kwargs)
+    httpx.Client.post = _new_Client_post
+except Exception:
+    pass
+
 from telethon import Button
 
 try:

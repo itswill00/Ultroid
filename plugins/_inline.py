@@ -12,6 +12,7 @@ from os import remove
 
 from git import Repo
 from telethon import Button
+from telethon.errors import MessageNotModifiedError
 from telethon.tl.types import InputWebDocument, Message
 from telethon.utils import resolve_bot_file_id
 
@@ -232,6 +233,8 @@ async def uptd_plugin(event):
     )
     try:
         await event.edit(help_, buttons=buttons)
+    except MessageNotModifiedError:
+        pass
     except Exception as er:
         LOGS.exception(er)
         help = f"Do `{HNDLR}help {key}` to get list of commands."

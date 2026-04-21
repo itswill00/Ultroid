@@ -352,7 +352,7 @@ async def _intel_chat_action(event):
 
         if len(buf) < JOIN_BATCH_MIN:
             action = getattr(event, "action", None)
-            via = "link" if isinstance(action, types.ChatAddByLink) else "added"
+            via = "link" if isinstance(action, types.MessageActionChatJoinedByLink) else "added"
             body = (
                 f"👤 **User:** {_format_user(user)}\n"
                 f"🔗 **Via:** {via}"

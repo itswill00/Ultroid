@@ -68,6 +68,9 @@ from . import *
 
 # ========================= CONSTANTS =============================
 
+Logm = KeyManager("PMLOGS", cast=list)
+keym = KeyManager("PMPERMIT", cast=list)
+
 # ========================= PERSISTENCE =============================
 
 # KeyManager handles the main approved list, but we need another for 
