@@ -72,13 +72,11 @@ class MediaExtractor:
             try:
                 with open("cookies.txt", "r") as _f:
                     _content = _f.read(500)
-                if "# Netscape" not in _content:
-                    LOGS.warning("Extractor | cookies.txt is NOT in Netscape format!")
-                elif "\t" not in _content and "  " in _content:
-                    LOGS.error("Extractor | cookies.txt has SPACE-indentation instead of TABS (paste error).")
-                else:
+                if "# Netscape" in _content or "# http.cookiejar" in _content:
                     self._cookie_file = "cookies.txt"
                     LOGS.info("Extractor | cookies.txt loaded.")
+                else:
+                    LOGS.warning("Extractor | cookies.txt is NOT in Netscape format!")
             except Exception as _e:
                 LOGS.warning(f"Extractor | Cookie integrity check failed: {_e}")
         else:
@@ -531,9 +529,14 @@ class MediaExtractor:
         """God Mode Zero-Cookie Facebook scraper with Nuclear Hijacking strategies."""
         LOGS.info(f"Extractor | Facebook NUCLEAR Mode: {url}")
         try:
-            import cloudscraper
+            import requests
             from urllib.parse import quote, unquote, urlparse, parse_qs
-            scraper = cloudscraper.create_scraper()
+            # Use requests.Session for more control over TLS and headers
+            scraper = requests.Session()
+            
+            # Match debug script UA
+            DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+            scraper.headers.update({"User-Agent": DESKTOP_UA})
             
             # --- PHASE -1: Cookie Integration ---
             if hasattr(self, "_cookie_file") and self._cookie_file:
@@ -542,7 +545,11 @@ class MediaExtractor:
                     cj = MozillaCookieJar(self._cookie_file)
                     cj.load(ignore_discard=True, ignore_expires=True)
                     scraper.cookies.update(cj)
-                except: pass
+                    # Session warmup
+                    scraper.get("https://www.facebook.com/", timeout=7)
+                    LOGS.info(f"Extractor | Facebook Cookies Integrated ({len(scraper.cookies)} items).")
+                except Exception as e: 
+                    LOGS.error(f"Extractor | Cookie Integration Error: {e}")
 
             def unescape_fb(text):
                 try:
@@ -553,11 +560,22 @@ class MediaExtractor:
             def nuclear_vacuum(text):
                 text = unescape_fb(text)
                 # 1. Look for HD Video (The Gold Standard)
-                for p in [r'"playable_url_quality_hd"\s*:\s*"(https?://[^"]+)"', r'"hd_src"\s*:\s*"(https?://[^"]+)"', r'hd_src_no_ratelimit:"(https?://[^"]+)"']:
+                for p in [
+                    r'"playable_url_quality_hd"\s*:\s*"(https?://[^"]+)"',
+                    r'"hd_src"\s*:\s*"(https?://[^"]+)"',
+                    r'hd_src_no_ratelimit:"(https?://[^"]+)"',
+                    r'"browser_native_hd_url"\s*:\s*"(https?://[^"]+)"'
+                ]:
                     m = re.search(p, text)
                     if m: return {"url": m.group(1), "ext": "mp4", "extractor": "fb_nuclear_hd"}
                 # 2. Look for SD/Progressive Video
-                for p in [r'"playable_url"\s*:\s*"(https?://[^"]+)"', r'"sd_src"\s*:\s*"(https?://[^"]+)"', r'"progressive_url"\s*:\s*"(https?://[^"]+)"', r'video_url":"(https?://[^"]+)"']:
+                for p in [
+                    r'"playable_url"\s*:\s*"(https?://[^"]+)"',
+                    r'"sd_src"\s*:\s*"(https?://[^"]+)"',
+                    r'"progressive_url"\s*:\s*"(https?://[^"]+)"',
+                    r'video_url":"(https?://[^"]+)"',
+                    r'"browser_native_sd_url"\s*:\s*"(https?://[^"]+)"'
+                ]:
                     m = re.search(p, text)
                     if m: return {"url": m.group(1), "ext": "mp4", "extractor": "fb_nuclear_sd"}
                 # 3. Look for High-Res Photos
@@ -590,60 +608,82 @@ class MediaExtractor:
                     if res: return res
             except: pass
 
-            # --- PHASE 0: Opera Mini Probing ---
-            OPERA_MINI = "Opera/9.80 (J2ME/MIDP; Opera Mini/9.80 (S60; SymbOS; Opera Mobi/23.348; U; en) Presto/2.5.25 Version/10.54"
+            # --- CUNNING STRATEGY 4: FDown.net Hijack (The Classic) ---
+            LOGS.info("Extractor | Cunning Strategy 4: FDown Hijack...")
             try:
-                resp = scraper.get(url, headers={"User-Agent": OPERA_MINI}, allow_redirects=True, timeout=12)
-                resolved_url = resp.url
-                html_text = resp.text
-            except:
-                resolved_url, html_text = url, ""
+                fd_resp = scraper.post("https://fdown.net/download.php", data={"URL": url}, timeout=10)
+                if fd_resp.status_code == 200:
+                    # Look for HD/SD links in HTML
+                    m_hd = re.search(r'id="hdlink"\s+href="([^"]+)"', fd_resp.text)
+                    if m_hd: return {"url": unescape_fb(m_hd.group(1)), "ext": "mp4", "extractor": "fb_fdown_hd"}
+                    m_sd = re.search(r'id="sdlink"\s+href="([^"]+)"', fd_resp.text)
+                    if m_sd: return {"url": unescape_fb(m_sd.group(1)), "ext": "mp4", "extractor": "fb_fdown_sd"}
+            except: pass
 
-            res = nuclear_vacuum(html_text)
-            if res: return res
-
-            # --- PHASE 1: Parameter Hijacking ---
-            search_url = unquote(resolved_url)
+            # --- PHASE 1: Direct ID Extraction ---
             content_id = None
             user_id = None
-            m_story = re.search(r"story_fbid=([0-9]+)", search_url)
-            m_user = re.search(r"[?&]id=([0-9]+)", search_url)
-            if m_story: content_id = m_story.group(1)
-            if m_user: user_id = m_user.group(1)
-            
-            if not content_id:
-                for p in [r"/posts/([0-9]+)", r"/videos/([0-9]+)", r"/reel/([0-9]+)", r"fbid=([0-9]+)", r"/([0-9]{10,})", r"post_id=([0-9]+)"]:
-                    m = re.search(p, search_url)
-                    if m: content_id = m.group(1); break
+            patterns = [
+                r"share/[pv]/([A-Za-z0-9]+)",
+                r"posts/([0-9]+)",
+                r"videos/([0-9]+)",
+                r"reel/([0-9]+)",
+                r"fbid=([0-9]+)",
+                r"story_fbid=([0-9]+)",
+                r"post_id=([0-9]+)",
+                r"/([0-9]{10,})"
+            ]
+            for p in patterns:
+                m = re.search(p, url)
+                if m: 
+                    content_id = m.group(1)
+                    break
 
-            # --- CUNNING STRATEGY 4: Embed & mbasic Deep Crawl ---
+            # --- PHASE 2: CUNNING STRATEGY 5 (Prioritized) ---
             if content_id:
-                LOGS.info(f"Extractor | Cunning Strategy 4: Deep Crawl ({content_id})")
-                targets = [f"https://www.facebook.com/plugins/post.php?href={quote(url)}", f"https://www.facebook.com/plugins/video.php?v={content_id}"]
-                if user_id: targets.append(f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}")
-                else: targets.append(f"https://mbasic.facebook.com/{content_id}")
+                LOGS.info(f"Extractor | Cunning Strategy 5: Deep Crawl ({content_id})")
+                targets = [
+                    f"https://mbasic.facebook.com/{content_id}",
+                    f"https://www.facebook.com/plugins/post.php?href={quote(url)}", 
+                    f"https://www.facebook.com/plugins/video.php?v={content_id}"
+                ]
+                
+                # Standard Desktop UA that matches debug script
+                DESKTOP_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 
                 for target in targets:
                     try:
-                        resp = scraper.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, timeout=10)
-                        res = nuclear_vacuum(resp.text)
+                        resp = scraper.get(target, headers={"User-Agent": DESKTOP_UA}, timeout=10)
+                        html = resp.text
+                        res = nuclear_vacuum(html)
                         if res: return res
-                        # Fallback for images in mbasic
+                        
+                        m_vid = re.search(r'href="(/video_redirect/[^"]+)"', html)
+                        if m_vid:
+                            vid_url = unquote(unescape_fb(m_vid.group(1).replace("&amp;", "&")))
+                            if "/video_redirect/?src=" in vid_url:
+                                vid_url = vid_url.split("src=")[1].split("&")[0]
+                                return {"url": unquote(vid_url), "ext": "mp4", "extractor": "fb_mbasic_vid"}
+                        
                         if "mbasic" in target:
-                            m_img = re.search(r'src="(https://scontent\..*?)"', resp.text)
-                            if m_img: return {"url": unescape_fb(m_img.group(1)), "ext": "jpg", "extractor": "fb_mbasic_fallback"}
+                            imgs = re.findall(r'src="(https://scontent\.[^"]+)"', html)
+                            if imgs:
+                                for img in imgs:
+                                    if "stp=dst-jpg" in img or "/v/" in img:
+                                        return {"url": unescape_fb(img), "ext": "jpg", "extractor": "fb_mbasic_img"}
+                                return {"url": unescape_fb(imgs[0]), "ext": "jpg", "extractor": "fb_mbasic_img"}
                     except: continue
+
+            # --- PHASE 3: Fallback URL Resolution ---
+            LOGS.info(f"Extractor | Resolving Facebook URL (Fallback): {url}")
+            resolved_url = url
+            try:
+                r = scraper.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, allow_redirects=True, timeout=10)
+                resolved_url = r.url
+            except: pass
 
             # --- PHASE 3: Wild Card Fallback ---
             return self._facebook_public_api(resolved_url)
-
-        except Exception as e:
-            LOGS.error(f"Extractor | FB God Mode Crash: {e}")
-            return self._facebook_public_api(url)
-
-        except Exception as e:
-            LOGS.error(f"Extractor | FB God Mode Crash: {e}")
-            return self._facebook_public_api(url)
 
         except Exception as e:
             LOGS.error(f"Extractor | FB God Mode Crash: {e}")
@@ -664,11 +704,13 @@ class MediaExtractor:
             }
             # Public Cobalt instances (can be rotated if one fails)
             cobalt_instances = [
+                "https://cobalt.now.sh/api/json",
                 "https://api.cobalt.tools/api/json",
                 "https://co.wuk.sh/api/json",
                 "https://cobalt.api.unblocked.top/api/json",
                 "https://cobalt-api.kwiateusz.xyz/api/json",
-                "https://api.cobalt.black/api/json"
+                "https://api.cobalt.black/api/json",
+                "https://cobalt.night-street.com/api/json"
             ]
             
             for instance in cobalt_instances:
