@@ -17,12 +17,12 @@ from telethon import events
 from pyUltroid.dB.afk_db import add_afk, del_afk, is_afk
 from pyUltroid.dB.base import KeyManager
 
+from pyUltroid import asst
 from . import (
     LOG_CHANNEL,
     NOSPAM_CHAT,
     Button,
     Redis,
-    asst,
     get_string,
     mediainfo,
     udB,
@@ -143,7 +143,7 @@ async def on_afk(event):
             Button.url("Support", url="https://t.me/ultroid_next")
         ],
         [Button.inline("✕ Close", data="close")]
-    ]
+    ] if getattr(asst, "_bot", False) else None
 
     pic = udB.get_key("AFK_PIC") or "https://graph.org/file/4136aa1650bc9d4109cc5.jpg" # Default cozy pic
     
@@ -158,7 +158,7 @@ async def on_afk(event):
         )
     except Exception as e:
         LOGS.exception(e)
-        msg = await event.reply(text, parse_mode="html", buttons=buttons)
+        msg = await event.reply(text, parse_mode="html")
 
     for x in old_afk_msg:
         try:

@@ -22,6 +22,7 @@ __doc__ = get_help("speedtest")
 import asyncio
 from datetime import datetime
 
+from pyUltroid import asst
 from . import HOSTED_ON, LOGS, Button, asst_cmd, humanbytes, ultroid_cmd
 
 try:
@@ -117,7 +118,7 @@ async def turbo_speedtest(ult):
                 Button.inline("Stats", data="alive")
             ],
             [Button.inline("✕ Close", data="close")]
-        ]
+        ] if getattr(asst, "_bot", False) else None
 
         if "image" in match and share_url:
             await asst.send_file(
