@@ -13,19 +13,19 @@ from . import in_pattern, asst, LOGS, async_searcher
 async def fetch_nh_latest():
     try:
         url = "https://nhentai.net/"
-        # Use direct fetch since we need it fast for inline
-        async with httpx.AsyncClient(timeout=10) as client:
-            res = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        # Use proxy to bypass Cloudflare
+        proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
             if res.status_code == 200:
                 soup = BeautifulSoup(res.text, 'html.parser')
                 galleries = soup.find_all('div', class_='gallery')
                 results = []
-                for gal in galleries[:15]: # Get more for inline
+                for gal in galleries[:15]:
                     gid = gal.find('a')['href'].split('/')[-2]
                     title = gal.find('div', class_='caption').text.strip()
-                    # Thumb: https://t.nhentai.net/galleries/<media_id>/thumb.jpg
-                    # We need media_id, let's get it from the img tag
-                    img_src = gal.find('img')['data-src'] if gal.find('img').has_attr('data-src') else gal.find('img')['src']
+                    img = gal.find('img')
+                    img_src = img.get('data-src') or img.get('src')
                     results.append({"id": gid, "title": title, "thumb": img_src})
                 return results
     except Exception as e:
