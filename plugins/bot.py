@@ -338,22 +338,22 @@ async def _(e):
     """Update Ultroid with a minimalist UI"""
     opt = e.pattern_match.group(1).strip()
     if "now" in opt or "fast" in opt:
-        xx = await e.eor("`Pembaruan paksa dimulai...`")
+        xx = await e.eor("`Force update started...`")
         await bash("git pull -f && pip3 install -r requirements.txt --break-system-packages")
-        await xx.edit("`Berhasil diperbarui! Merestart...`")
+        await xx.edit("`Successfully updated! Restarting...`")
         return os.execl(sys.executable, "python3", "-m", "pyUltroid")
 
-    xx = await e.eor("`Memeriksa pembaruan...`")
+    xx = await e.eor("`Checking for updates...`")
     update_avail, changelog, _ = await updater()
     
     if not update_avail:
-        return await xx.edit(f"✅ **Ultroid kamu sudah versi terbaru.**", link_preview=False)
+        return await xx.edit(f"✅ **Your Ultroid is already up-to-date.**", link_preview=False)
 
     # Minimalist Changelog UI via Assistant
-    msg = f"{changelog}\n\n**Apakah kamu ingin memperbarui sekarang?**"
+    msg = f"{changelog}\n\n**Do you want to update now?**"
     buttons = [
-        [Button.inline("✅ Update Sekarang", data="do_update"), 
-         Button.inline("❌ Batal", data="cancel_update")]
+        [Button.inline("✅ Update Now", data="do_update"), 
+         Button.inline("❌ Cancel", data="cancel_update")]
     ]
     
     await asst.send_message(e.chat_id, msg, parse_mode="html", buttons=buttons, link_preview=False)
@@ -361,14 +361,14 @@ async def _(e):
 
 @callback("do_update", owner=True)
 async def exec_update(event):
-    await event.edit("`Memulai pembaruan... Silakan tunggu.`")
+    await event.edit("`Starting update... Please wait.`")
     await bash("git pull -f && pip3 install -r requirements.txt --break-system-packages")
-    await event.edit("`Update berhasil! Bot sedang merestart...`")
+    await event.edit("`Update successful! Bot is restarting...`")
     os.execl(sys.executable, "python3", "-m", "pyUltroid")
 
 @callback("cancel_update", owner=True)
 async def cancel_upd(event):
-    await event.edit("❌ **Pembaruan dibatalkan.**")
+    await event.edit("❌ **Update canceled.**")
 
 
 @callback("updtavail", owner=True)
