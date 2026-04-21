@@ -1,6 +1,6 @@
-# Ultroid Addon - Hentai Nexus
-# Multisource NSFW Plugin (Owner Only)
-# Sources: NHentai, Hanime, Rule34
+# Ultroid Addon - NHentai Reader
+# Focus: NHentai.net (Owner Only)
+# Author: itswill00
 
 import re
 import base64
@@ -23,71 +23,8 @@ def decode_url(data):
     padding = '=' * (4 - len(data) % 4)
     return base64.urlsafe_b64decode(data + padding).decode()
 
-async def fetch_api(url, params=None):
-    try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-            res = await client.get(url, params=params, headers={"User-Agent": "Mozilla/5.0"})
-            if res.status_code == 200:
-                return res.json()
-    except Exception as e:
-        LOGS.error(f"HentaiNexus API Error: {e}")
-    return None
-
-async def fetch_html(url):
-    try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
-            # Using a simple proxy for potentially blocked sites
-            proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
-            res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
-            if res.status_code == 200:
-                return res.text
-    except Exception as e:
-        LOGS.error(f"HentaiNexus HTML Error: {e}")
-    return None
-
-# --- COMMANDS ---
-
-@ultroid_cmd(pattern="hentai( (.*)|$)", owner_only=True)
-async def hentai_hub(event):
-    query = event.pattern_match.group(1).strip()
-    if not query:
-        return await event.eor("`Gunakan: .hentai <kata kunci>`")
-
-    buttons = [
-        [
-            Button.inline("📖 NHentai (Manga)", data=f"hnex:nh:{encode_url(query)}"),
-            Button.inline("🎬 Hanime (Anime)", data=f"hnex:ha:{encode_url(query)}")
-        ],
-        [
-            Button.inline("🎨 Rule34 (Art)", data=f"hnex:r34:{encode_url(query)}")
-        ]
-    ]
-    await event.eor(f"**Hentai Nexus Hub**\n\nHasil untuk: `{query}`\nPilih sumber konten:", buttons=buttons)
-
-@ultroid_cmd(pattern="nh( (.*)|$)", owner_only=True)
-async def nh_direct(event):
-    query = event.pattern_match.group(1).strip()
-    if not query: return await event.eor("`Gunakan: .nh <kata kunci atau ID>`")
-    # Redirect to callback logic for consistency
-    await nh_search_logic(event, query)
-
-@ultroid_cmd(pattern="ha( (.*)|$)", owner_only=True)
-async def ha_direct(event):
-    query = event.pattern_match.group(1).strip()
-    if not query: return await event.eor("`Gunakan: .ha <kata kunci>`")
-    await ha_search_logic(event, query)
-
-@ultroid_cmd(pattern="r34( (.*)|$)", owner_only=True)
-async def r34_direct(event):
-    query = event.pattern_match.group(1).strip()
-    if not query: return await event.eor("`Gunakan: .r34 <tags>`")
-    await r34_search_logic(event, query)
-
-# --- LOGIC HELPERS ---
-
 async def fetch_nh_api(id):
     try:
-        # Use a proxy to avoid Cloudflare on API too
         url = f"https://nhentai.net/api/gallery/{id}"
         async with httpx.AsyncClient(timeout=15) as client:
             proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
@@ -98,129 +35,113 @@ async def fetch_nh_api(id):
         LOGS.error(f"NHentai API Error: {e}")
     return None
 
-async def nh_search_logic(event, query):
+# --- COMMANDS ---
+
+@ultroid_cmd(pattern="nh( (.*)|$)", owner_only=True)
+async def nh_search(event):
+    query = event.pattern_match.group(1).strip()
+    if not query:
+        return await event.eor("`Gunakan: .nh <kata kunci atau ID>`")
+
     xx = await event.eor("`Mencari di NHentai...`")
+    
+    # If query is ID
     if query.isdigit():
         data = await fetch_nh_api(query)
         if not data: return await xx.edit("`Gagal mengambil data. Mungkin ID salah atau diblokir.`")
         title = data['title']['pretty']
-        return await xx.edit(f"**Found Gallery:**\n`{title}`", buttons=[Button.inline("📥 Read Now", data=f"hnex:nhrd:{query}")])
-    
-    # DuckDuckGo search for list
+        msg = f"**Gallery Found:**\n`{title}`\n\n[Open on Web](https://nhentai.net/g/{query}/)"
+        return await xx.edit(msg, buttons=[Button.inline("📖 Read Now", data=f"nhp:1:{query}")])
+
+    # Search via DuckDuckGo
     search_url = f"https://duckduckgo.com/html/?q=site:nhentai.net+{query}"
     async with httpx.AsyncClient() as client:
         r = await client.get(search_url, headers={"User-Agent": "Mozilla/5.0"})
         soup = BeautifulSoup(r.text, 'html.parser')
         results = soup.find_all('a', class_='result__a', href=re.compile(r'nhentai\.net/g/\d+/'))
         
-        if not results: return await xx.edit("`Tidak ditemukan hasil di NHentai.`")
+        if not results: return await xx.edit("`Tidak ditemukan hasil.`")
         
         msg = f"**NHentai Results for:** `{query}`\n\n"
         buttons = []
         for i, res in enumerate(results[:5], 1):
             m = re.search(r'/g/(\d+)/', res['href'])
             if m:
-                id = m.group(1)
+                gid = m.group(1)
                 title = res.text.strip()
-                msg += f"{i}. [{title}](https://nhentai.net/g/{id}/)\n"
-                buttons.append([Button.inline(f"📖 Read #{i}", data=f"hnex:nhrd:{id}")])
+                msg += f"{i}. [{title}](https://nhentai.net/g/{gid}/)\n"
+                buttons.append([Button.inline(f"📖 Read #{i}", data=f"nhp:1:{gid}")])
+        
         await xx.edit(msg, buttons=buttons, link_preview=False)
-
-async def ha_search_logic(event, query):
-    xx = await event.eor("`Mencari di Hanime...`")
-    api_url = "https://search.htv-services.com/"
-    data = {"search_text": query, "tags": [], "tags_mode": "AND", "brands": [], "blacklist": [], "order_by": "created_at_unix", "ordering": "desc", "page": 0}
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.post(api_url, json=data)
-            res_data = res.json()
-            results = res_data.get('hits', [])
-            if isinstance(results, str):
-                try:
-                    results = json.loads(results)
-                except:
-                    return await xx.edit("`Gagal memproses data dari Hanime.`")
-            
-            if not results or not isinstance(results, list):
-                return await xx.edit("`Tidak ditemukan hasil di Hanime.`")
-            
-            msg = f"**Hanime Results for:** `{query}`\n\n"
-            buttons = []
-            for i, hit in enumerate(results[:5], 1):
-                slug = hit.get('slug')
-                title = hit.get('name', 'Unknown')
-                if not slug: continue
-                rating = hit.get('rating', 'N/A')
-                msg += f"{i}. [{title}](https://hanime.tv/videos/hentai/{slug}) - {rating}⭐\n"
-                buttons.append([Button.inline(f"🎬 Watch #{i}", data=f"hnex:hard:{slug}")])
-            
-            if not buttons:
-                return await xx.edit("`Tidak ditemukan hasil yang valid di Hanime.`")
-            await xx.edit(msg, buttons=buttons, link_preview=False)
-    except Exception as e:
-        await xx.edit(f"**Error:** `{e}`")
-
-async def r34_search_logic(event, query):
-    xx = await event.eor("`Mencari di Rule34...`")
-    api_url = "https://api.rule34.xxx/index.php"
-    params = {"page": "dapi", "s": "post", "q": "index", "json": 1, "tags": query, "limit": 10}
-    data = await fetch_api(api_url, params)
-    if not data: return await xx.edit("`Tidak ditemukan hasil di Rule34.`")
-    
-    media = []
-    for post in data:
-        media.append(post['file_url'])
-    
-    await event.delete()
-    await ultroid_bot.send_file(event.chat_id, media, caption=f"**Rule34 Results:** `{query}`")
 
 # --- CALLBACKS ---
 
 if asst:
     from . import callback
 
-    @callback(re.compile("hnex:(.*)"))
-    async def hnex_callback(event):
+    @callback(re.compile(r"nhp:(\d+):(\d+)"))
+    async def nh_reader_callback(event):
         if event.sender_id != ultroid_bot.uid:
             return await event.answer("Akses ditolak.", alert=True)
         
-        data = event.pattern_match.group(1).decode().split(":")
-        cmd = data[0]
+        page = int(event.pattern_match.group(1))
+        gid = event.pattern_match.group(2)
         
-        if cmd == "nh":
-            query = decode_url(data[1])
-            await nh_search_logic(event, query)
-        elif cmd == "ha":
-            query = decode_url(data[1])
-            await ha_search_logic(event, query)
-        elif cmd == "r34":
-            query = decode_url(data[1])
-            await r34_search_logic(event, query)
-        elif cmd == "nhrd":
-            id = data[1]
-            await event.edit("`Fetching data from NHentai...`")
-            data = await fetch_nh_api(id)
-            if not data: return await event.edit("Gagal mengambil data gallery.")
+        await event.answer("Memuat halaman...", alert=False)
+        
+        data = await fetch_nh_api(gid)
+        if not data:
+            return await event.respond("Gagal mengambil data manga.")
             
-            media_id = data['media_id']
-            pages = data['images']['pages']
+        media_id = data['media_id']
+        pages = data['images']['pages']
+        total_pages = len(pages)
+        
+        if page < 1: page = 1
+        if page > total_pages: page = total_pages
+        
+        # Determine extension
+        ext_map = {"j": "jpg", "p": "png", "g": "gif"}
+        current_page_data = pages[page-1]
+        ext = ext_map.get(current_page_data['t'], "jpg")
+        
+        img_url = f"https://i.nhentai.net/galleries/{media_id}/{page}.{ext}"
+        proxied_img = IMG_PROXY + img_url
+        
+        title = data['title']['pretty']
+        caption = f"**{title}**\n`ID: {gid}`\n\n📖 **Halaman:** `{page}/{total_pages}`"
+        
+        buttons = []
+        nav_row = []
+        # Previous button
+        if page > 1:
+            nav_row.append(Button.inline("⬅️ Prev", data=f"nhp:{page-1}:{gid}"))
+        else:
+            nav_row.append(Button.inline("⏹ Start", data="none"))
             
+        # Page Indicator
+        nav_row.append(Button.inline(f"{page}/{total_pages}", data="none"))
+        
+        # Next button
+        if page < total_pages:
+            nav_row.append(Button.inline("Next ➡️", data=f"nhp:{page+1}:{gid}"))
+        else:
+            nav_row.append(Button.inline("⏹ End", data="none"))
+            
+        buttons.append(nav_row)
+        buttons.append([Button.inline("❌ Close Reader", data="nh_close")])
+        
+        try:
+            await event.edit(caption, file=proxied_img, buttons=buttons)
+        except Exception:
+            # If edit photo fails (maybe first time call), send new and delete old
             await event.delete()
-            images = []
-            count = 0
-            ext_map = {"j": "jpg", "p": "png", "g": "gif"}
-            for i, page in enumerate(pages, 1):
-                ext = ext_map.get(page['t'], "jpg")
-                img_url = f"https://i.nhentai.net/galleries/{media_id}/{i}.{ext}"
-                images.append(IMG_PROXY + img_url)
-                count += 1
-                if len(images) == 10:
-                    await ultroid_bot.send_file(event.chat_id, images)
-                    images = []
-                if count >= 60: break # Increased limit slightly
-            if images: await ultroid_bot.send_file(event.chat_id, images)
-            await ultroid_bot.send_message(event.chat_id, f"✅ **Finished!** Sent {count} pages from NHentai (ID: {id}).")
-        
-        elif cmd == "hard":
-            slug = data[1]
-            await event.edit(f"**Direct Link:** https://hanime.tv/videos/hentai/{slug}", buttons=[Button.url("Watch on Web", f"https://hanime.tv/videos/hentai/{slug}")])
+            await ultroid_bot.send_file(event.chat_id, proxied_img, caption=caption, buttons=buttons)
+
+    @callback("none")
+    async def nh_none(event):
+        await event.answer()
+
+    @callback("nh_close")
+    async def nh_close(event):
+        await event.delete()
