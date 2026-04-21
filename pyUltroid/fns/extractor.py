@@ -585,15 +585,18 @@ class MediaExtractor:
                     return {"url": img_url, "title": "Facebook Photo", "ext": "jpg", "uploader": "Facebook", "extractor": "fb_cunning"}
 
             # --- PHASE 1: Numeric ID Extraction ---
-            LOGS.info(f"Extractor | FB Phase 1: Resolved to -> {resolved_url}")
+            # Use unquote to handle encoded characters in redirect URLs (like login?next=...)
+            search_url = unquote(resolved_url)
+            LOGS.info(f"Extractor | FB Phase 1: Probing URL -> {search_url}")
+            
             content_id = None
             id_patterns = [
                 r"story_fbid=([0-9]+)", r"/posts/([0-9]+)", r"/videos/([0-9]+)", 
                 r"/reel/([0-9]+)", r"fbid=([0-9]+)", r"/([0-9]{10,})",
-                r"/share/[pv]/([a-zA-Z0-9_-]+)"
+                r"/share/[pv]/([a-zA-Z0-9_-]+)", r"post_id=([0-9]+)"
             ]
             for p in id_patterns:
-                m = re.search(p, resolved_url)
+                m = re.search(p, search_url)
                 if m:
                     content_id = m.group(1)
                     break
@@ -619,7 +622,7 @@ class MediaExtractor:
                 m_can = re.search(r'<link\s+rel="canonical"\s+href="(.*?)"', html_text) or \
                         re.search(r'<meta\s+property="og:url"\s+content="(.*?)"', html_text)
                 if m_can:
-                    can_url = m_can.group(1).replace("\\/", "/")
+                    can_url = unquote(m_can.group(1).replace("\\/", "/"))
                     resolved_url = can_url
                     for p in id_patterns:
                         m_m = re.search(p, can_url)
@@ -649,14 +652,11 @@ class MediaExtractor:
 
             # Strategy B: Mobile Header Flip (mbasic)
             LOGS.info("Extractor | FB Strategy B: Mobile Header Flip...")
-            if "mbasic.facebook.com" not in resolved_url:
-                m_target = resolved_url.replace("www.facebook.com", "mbasic.facebook.com")
-                if "mbasic.facebook.com" not in m_target:
-                    m_target = m_target.replace("facebook.com", "mbasic.facebook.com")
-            else:
-                m_target = resolved_url
-
-            if content_id and content_id.isdigit() and "share/p/" in resolved_url:
+            # FORCE mbasic.facebook.com to avoid en-gb.mbasic DNS errors
+            parsed = urlparse(resolved_url)
+            m_target = f"https://mbasic.facebook.com{parsed.path}?{parsed.query}"
+            
+            if content_id and content_id.isdigit():
                 m_target = f"https://mbasic.facebook.com/{content_id}"
             
             LOGS.info(f"Extractor | FB Strategy B: Targeting -> {m_target}")
