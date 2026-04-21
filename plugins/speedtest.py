@@ -66,32 +66,32 @@ async def turbo_speedtest(ult):
         match = ult.pattern_match.group(1).strip().lower()
     except (IndexError, AttributeError):
         match = ""
-    x = await ult.eor("`Measuring network performance...`")
+    x = await ult.eor("`Establishing connection to the nearest node...`")
 
     try:
         # Step 1: Initialize
         asyncio.get_running_loop()
         s = speedtest.Speedtest()
 
-        await x.edit("`Selecting optimal service node...`")
+        await x.edit("`Selecting the optimal service node...`")
         best = await asyncio.to_thread(s.get_best_server)
 
         # Step 2: Download
-        await x.edit(f"`Measuring download throughput...` \n**Node:** `{best['sponsor']} ({best['name']})`")
+        await x.edit(f"`Measuring download throughput...` \n<b>Node:</b> <code>{best['sponsor']} ({best['name']})</code>", parse_mode="html")
         await asyncio.to_thread(s.download)
 
         # Step 3: Upload
-        await x.edit("`Measuring upload throughput...` \n**Latency:** `{:.2f} ms`".format(s.results.ping))
+        await x.edit(f"`Measuring upload throughput...` \n<b>Latency:</b> <code>{s.results.ping:.2f} ms</code>", parse_mode="html")
         await asyncio.to_thread(s.upload)
 
         # Step 4: Finalize
         if "image" in match:
-            await x.edit("`Exporting diagnostic report...`")
+            await x.edit("`Gathering the final results...`")
             share_url = await asyncio.to_thread(s.results.share)
 
         res = s.results.dict()
 
-        # UI Formatting (Professional & Neutral)
+        # UI Formatting (Ultra-Premium Dashboard)
         down = humanbytes(res['download'] / 8) + "/s"
         up = humanbytes(res['upload'] / 8) + "/s"
         isp = res['client']['isp']
@@ -99,28 +99,45 @@ async def turbo_speedtest(ult):
         ping = f"{res['ping']:.2f} ms"
 
         text = (
-            f"**Network Statistics**\n"
-            f"───"
-            f"\n**Service Provider:** `{isp}`"
-            f"\n**Assigned Node:** `{server}`"
-            f"\n───"
-            f"\n**Download:** `{down}`"
-            f"\n**Upload:** `{up}`"
-            f"\n**Latency:** `{ping}`"
-            f"\n───"
-            f"\n⚙️ `{HOSTED_ON}` | `{datetime.now().strftime('%H:%M %Z')}`"
+            f"<b>Network Statistics</b>\n"
+            f"───\n"
+            f"📡 <b>ISP:</b> <code>{isp}</code>\n"
+            f"📍 <b>Node:</b> <code>{server}</code>\n"
+            f"───\n"
+            f"📥 <b>Download:</b> <code>{down}</code>\n"
+            f"📤 <b>Upload:</b> <code>{up}</code>\n"
+            f"⏳ <b>Latency:</b> <code>{ping}</code>\n"
+            f"───\n"
+            f"<i>Verified on my Private VPS at {datetime.now().strftime('%H:%M %Z')}</i>"
         )
 
+        buttons = [
+            [
+                Button.inline("Re-Test", data="speedtest"),
+                Button.inline("Stats", data="alive")
+            ],
+            [Button.inline("✕ Close", data="close")]
+        ]
+
         if "image" in match and share_url:
-            await ult.client.send_file(
+            await asst.send_file(
                 ult.chat_id,
                 file=share_url,
                 caption=text,
+                parse_mode="html",
+                buttons=buttons,
                 reply_to=ult.id
             )
             await x.delete()
         else:
-            await x.edit(text)
+            await asst.send_message(
+                ult.chat_id,
+                text,
+                parse_mode="html",
+                buttons=buttons,
+                reply_to=ult.id
+            )
+            await x.delete()
 
     except Exception as e:
         LOGS.exception(e)

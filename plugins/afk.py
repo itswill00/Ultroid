@@ -125,34 +125,46 @@ async def on_afk(event):
     sender = await event.get_sender()
     if sender.bot or sender.verified:
         return
-    text, media_type, media, afk_time = is_afk()
-    msg1, msg2 = None, None
-    if text and media:
-        if "sticker" in media_type:
-            msg1 = await event.reply(file=media)
-            msg2 = await event.reply(get_string("afk_3").format(afk_time, text))
-        else:
-            msg1 = await event.reply(
-                get_string("afk_3").format(afk_time, text), file=media
-            )
-    elif media:
-        if "sticker" in media_type:
-            msg1 = await event.reply(file=media)
-            msg2 = await event.reply(get_string("afk_4").format(afk_time))
-        else:
-            msg1 = await event.reply(get_string("afk_4").format(afk_time), file=media)
-    elif text:
-        msg1 = await event.reply(get_string("afk_3").format(afk_time, text))
-    else:
-        msg1 = await event.reply(get_string("afk_4").format(afk_time))
+    
+    reason, media_type, media, afk_since = is_afk()
+    
+    # Premium Template
+    header = "<b>Master is currently away.</b>"
+    text = f"{header}\n\n"
+    text += f"⏳ <b>Gone for:</b> <code>{afk_since}</code>\n"
+    if reason:
+        text += f"📝 <b>Reason:</b> <code>{reason}</code>\n"
+    text += f"\n<i>I'll let him know you reached out as soon as he's back!</i>"
+
+    buttons = [
+        [
+            Button.inline("Who are you?", data="asst_info"),
+            Button.url("Support", url="https://t.me/ultroid_next")
+        ],
+        [Button.inline("✕ Close", data="close")]
+    ]
+
+    pic = udB.get_key("AFK_PIC") or "https://graph.org/file/4136aa1650bc9d4109cc5.jpg" # Default cozy pic
+    
+    try:
+        msg = await asst.send_file(
+            event.chat_id,
+            pic,
+            caption=text,
+            parse_mode="html",
+            buttons=buttons,
+            reply_to=event.id
+        )
+    except Exception as e:
+        LOGS.exception(e)
+        msg = await event.reply(text, parse_mode="html", buttons=buttons)
+
     for x in old_afk_msg:
         try:
             await x.delete()
         except BaseException:
             pass
-    old_afk_msg.append(msg1)
-    if msg2:
-        old_afk_msg.append(msg2)
+    old_afk_msg.append(msg)
 
 
 if udB.get_key("AFK_DB"):
