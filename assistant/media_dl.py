@@ -29,6 +29,7 @@ from pyUltroid.dB.base import KeyManager
 from pyUltroid.fns.admins import admin_check
 from pyUltroid.fns.extractor import (
     ADULT_RE,
+    FB_VIDEO_RE,
     INSTAGRAM_RE,
     TIKTOK_RE,
     TWITTER_RE,
@@ -79,7 +80,7 @@ LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 # HELPERS
 # --------------------------------------------------------------------------
 
-async def show_dl_prompt(event, url):
+async def show_dl_prompt(event, url, info=None):
     """Sends format selection choice."""
     # Prune stale prompts (>10 min) to prevent unbounded cache growth.
     _now = time.time()
@@ -91,12 +92,21 @@ async def show_dl_prompt(event, url):
     _ult_cache["media_dl"][msg_id] = {
         "url": url,
         "sender": event.sender_id,
-        "time": _now
+        "time": _now,
+        "info": info
     }
 
-    source = "TikTok" if "tiktok" in url else "Instagram" if "instagram" in url else "Twitter/X" if ("twitter" in url or "/x.com" in url) else "🔞 NSFW Media" if re.search(r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner", url) else "🌐 Universal Media"
+    source = (
+        "TikTok" if TIKTOK_RE.search(url) else 
+        "Instagram" if INSTAGRAM_RE.search(url) else 
+        "Twitter/X" if TWITTER_RE.search(url) else 
+        "Facebook" if FB_VIDEO_RE.search(url) else
+        "YouTube" if YOUTUBE_RE.search(url) else
+        "🔞 NSFW Media" if ADULT_RE.search(url) else 
+        "🌐 Universal Media"
+    )
 
-    if "NSFW" in source or "Universal" in source:
+    if "YouTube" in source or "NSFW" in source or "Universal" in source:
         buttons = [
             [
                 Button.inline("🎬 1080p", data=f"get_dl|1080|{msg_id}"),
@@ -379,7 +389,26 @@ async def manual_downloader(event):
     elif cmd == "ytv":
         await dler_process(event, url, "video")
     else:
-        await show_dl_prompt(event, url)
+        # Pre-emptive extraction to determine media type
+        status = await event.reply("`[DL] Identifying media...`")
+        try:
+            info = await extractor.extract(url)
+            if not info or "error" in info:
+                # If extraction fails, fall back to showing the generic prompt
+                await status.delete()
+                return await show_dl_prompt(event, url)
+            
+            # If it's a photo/album, just download it
+            if info.get("ext") == "jpg" or info.get("type") == "album" or "photo" in (info.get("title") or "").lower():
+                await status.delete()
+                return await dler_process(event, url, "video") # "video" handles both as a fallback in dler_process
+            
+            # If it's a video, show prompt (passing info to cache for efficiency)
+            await status.delete()
+            await show_dl_prompt(event, url, info=info)
+        except Exception:
+            await status.delete()
+            await show_dl_prompt(event, url)
 
 # --------------------------------------------------------------------------
 # AUTOMATIC LISTENER
@@ -406,6 +435,7 @@ async def auto_media_downloader(event):
         or INSTAGRAM_RE.search(text)
         or TWITTER_RE.search(text)
         or YOUTUBE_RE.search(text)
+        or FB_VIDEO_RE.search(text)
         or ADULT_RE.search(text)
     )
 
