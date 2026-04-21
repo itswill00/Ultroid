@@ -20,13 +20,17 @@ async def get_data_from_mirror(url_path):
             res = await client.get(f"{mirror}{url_path}", headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
             if res.status_code == 200:
                 soup = BeautifulSoup(res.text, 'html.parser')
-                galleries = soup.find_all('div', class_='gallery')
+                # nhentai.xxx uses 'gallery_item' class
+                galleries = soup.find_all('div', class_='gallery_item')
                 results = []
                 for gal in galleries[:15]:
                     a_tag = gal.find('a')
+                    if not a_tag: continue
                     gid = a_tag['href'].split('/')[-2]
-                    title = gal.find('div', class_='caption').text.strip()
+                    caption = gal.find('div', class_='caption')
+                    title = caption.text.strip() if caption else "No Title"
                     img = gal.find('img')
+                    # Mirror uses data-src for lazy loading
                     img_src = img.get('data-src') or img.get('src')
                     if img_src and img_src.startswith("//"):
                         img_src = "https:" + img_src
@@ -50,7 +54,12 @@ async def fetch_nh_data(query=""):
         async with httpx.AsyncClient(timeout=15) as client:
             res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
             if res.status_code == 200:
-                data = res.json()
+                try:
+                    data = res.json()
+                except Exception:
+                    # If not JSON, it might be a Cloudflare block from proxy
+                    raise Exception("Proxy returned non-JSON response")
+                
                 if "result" in data:
                     results = []
                     for gal in data["result"][:15]:
