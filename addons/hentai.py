@@ -35,16 +35,72 @@ async def fetch_nh_api(id):
         LOGS.error(f"NHentai API Error: {e}")
     return None
 
+async def fetch_latest_nh():
+    try:
+        url = "https://nhentai.net/"
+        async with httpx.AsyncClient(timeout=15) as client:
+            proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
+            res = await client.get(proxy_url)
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, 'html.parser')
+                galleries = soup.find_all('div', class_='gallery')
+                results = []
+                for gal in galleries[:5]: # Get latest 5
+                    gid = gal.find('a')['href'].split('/')[-2]
+                    title = gal.find('div', class_='caption').text.strip()
+                    results.append((gid, title))
+                return results
+    except Exception as e:
+        LOGS.error(f"NHentai Latest Error: {e}")
+    return []
+
+async def fetch_random_nh():
+    try:
+        # Use httpx to follow redirect and get the final URL
+        url = "https://nhentai.net/random/"
+        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            # We need to hit nhentai directly or via a proxy that supports redirects
+            # CodeTabs might not follow redirect correctly for this, let's try direct
+            res = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            if res.status_code == 200:
+                # URL will be like https://nhentai.net/g/123456/
+                gid = str(res.url).split('/')[-2]
+                return gid
+    except Exception as e:
+        LOGS.error(f"NHentai Random Error: {e}")
+    return None
+
 # --- COMMANDS ---
 
 @ultroid_cmd(pattern="nh( (.*)|$)", owner_only=True)
 async def nh_search(event):
     query = event.pattern_match.group(1).strip()
-    if not query:
-        return await event.eor("`Gunakan: .nh <kata kunci atau ID>`")
-
-    xx = await event.eor("`Mencari di NHentai...`")
+    xx = await event.eor("`Processing...`")
     
+    # Discovery: Latest
+    if not query:
+        latest = await fetch_latest_nh()
+        if not latest:
+            return await xx.edit("`Gagal mengambil data terbaru.`")
+        msg = "**Latest NHentai Updates:**\n\n"
+        buttons = []
+        for i, (gid, title) in enumerate(latest, 1):
+            msg += f"{i}. [{title}](https://nhentai.net/g/{gid}/)\n"
+            buttons.append([Button.inline(f"📖 Read #{i}", data=f"nhp:1:{gid}")])
+        return await xx.edit(msg, buttons=buttons, link_preview=False)
+
+    # Discovery: Random
+    if query.lower() == "random":
+        gid = await fetch_random_nh()
+        if not gid:
+            return await xx.edit("`Gagal mendapatkan manga acak.`")
+        data = await fetch_nh_api(gid)
+        if not data:
+            return await xx.edit("`Gagal memuat data manga acak.`")
+        title = data['title']['pretty']
+        msg = f"**🎲 Random Gacha Found:**\n`{title}`\n\n[Open on Web](https://nhentai.net/g/{gid}/)"
+        return await xx.edit(msg, buttons=[Button.inline("📖 Read Now", data=f"nhp:1:{gid}")])
+
     # If query is ID
     if query.isdigit():
         data = await fetch_nh_api(query)
