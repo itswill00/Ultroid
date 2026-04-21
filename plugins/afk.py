@@ -7,7 +7,7 @@
 
 from . import get_help
 
-__doc__ = get_help("afk")
+__doc__ = get_help("help_afk")
 
 
 import asyncio
@@ -17,18 +17,17 @@ from telethon import events
 from pyUltroid.dB.afk_db import add_afk, del_afk, is_afk
 from pyUltroid.dB.base import KeyManager
 
-from pyUltroid import asst
 from . import (
     LOG_CHANNEL,
     NOSPAM_CHAT,
-    Button,
     Redis,
+    asst,
     get_string,
     mediainfo,
     udB,
     ultroid_bot,
     ultroid_cmd,
-    upload_file,
+    upload_file
 )
 
 old_afk_msg = []
@@ -115,58 +114,45 @@ async def remove_afk(event):
 
 
 async def on_afk(event):
-    LOGS.info(f"AFK: Received message from {event.chat_id}")
-    if not is_afk():
+    if event.is_private and Redis("PMSETTING") and not is_approved(event.chat_id):
         return
-    # if event.is_private and Redis("PMSETTING") and not is_approved(event.chat_id):
-    #     return
-    if "afk" in event.text.lower():
+    elif "afk" in event.text.lower():
         return
-    # if event.chat_id in NOSPAM_CHAT:
-    #     return
+    elif not is_afk():
+        return
+    if event.chat_id in NOSPAM_CHAT:
+        return
     sender = await event.get_sender()
-    if sender and (sender.bot or getattr(sender, "verified", False)):
+    if sender.bot or sender.verified:
         return
-    
-    reason, media_type, media, afk_since = is_afk()
-    
-    # Premium Template
-    header = "<b>Master is currently away.</b>"
-    text = f"{header}\n\n"
-    text += f"⏳ <b>Gone for:</b> <code>{afk_since}</code>\n"
-    if reason:
-        text += f"📝 <b>Reason:</b> <code>{reason}</code>\n"
-    text += f"\n<i>I'll let him know you reached out as soon as he's back!</i>"
-
-    buttons = [
-        [
-            Button.inline("Who are you?", data="asst_info"),
-            Button.url("Support", url="https://t.me/ultroid_next")
-        ],
-        [Button.inline("✕ Close", data="close")]
-    ] if getattr(asst, "_bot", False) else None
-
-    pic = udB.get_key("AFK_PIC") or "https://graph.org/file/4136aa1650bc9d4109cc5.jpg" # Default cozy pic
-    
-    try:
-        msg = await asst.send_file(
-            event.chat_id,
-            pic,
-            caption=text,
-            parse_mode="html",
-            buttons=buttons,
-            reply_to=event.id
-        )
-    except Exception as e:
-        LOGS.exception(e)
-        msg = await event.reply(text, parse_mode="html")
-
+    text, media_type, media, afk_time = is_afk()
+    msg1, msg2 = None, None
+    if text and media:
+        if "sticker" in media_type:
+            msg1 = await event.reply(file=media)
+            msg2 = await event.reply(get_string("afk_3").format(afk_time, text))
+        else:
+            msg1 = await event.reply(
+                get_string("afk_3").format(afk_time, text), file=media
+            )
+    elif media:
+        if "sticker" in media_type:
+            msg1 = await event.reply(file=media)
+            msg2 = await event.reply(get_string("afk_4").format(afk_time))
+        else:
+            msg1 = await event.reply(get_string("afk_4").format(afk_time), file=media)
+    elif text:
+        msg1 = await event.reply(get_string("afk_3").format(afk_time, text))
+    else:
+        msg1 = await event.reply(get_string("afk_4").format(afk_time))
     for x in old_afk_msg:
         try:
             await x.delete()
         except BaseException:
             pass
-    old_afk_msg.append(msg)
+    old_afk_msg.append(msg1)
+    if msg2:
+        old_afk_msg.append(msg2)
 
 
 if udB.get_key("AFK_DB"):
