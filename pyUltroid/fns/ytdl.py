@@ -36,6 +36,7 @@ except ImportError:
 from yt_dlp import YoutubeDL
 
 from .. import LOGS, udB
+from .extractor import extractor
 from .helper import download_file, humanbytes, run_async, time_formatter
 from .tools import set_attributes
 
@@ -71,110 +72,47 @@ async def download_yt(event, link, ytd):
     info = await dler(event, link, ytd, download=True)
     if not info:
         return
-    if info.get("_type", None) == "playlist":
-        total = info["playlist_count"]
-        for num, file in enumerate(info["entries"]):
-            num += 1
-            id_ = file["id"]
-            thumb = id_ + ".jpg"
-            title = file["title"]
-            await download_file(
-                file.get("thumbnail", None) or file["thumbnails"][-1]["url"], thumb
-            )
-            ext = "." + ytd["outtmpl"]["default"].split(".")[-1]
-            if ext == ".m4a":
-                ext = ".mp3"
-            id = None
-            for x in glob.glob(f"{id_}*"):
-                if not x.endswith("jpg"):
-                    id = x
-            if not id:
-                return
-            ext = "." + id.split(".")[-1]
-            file = title + ext
-            try:
-                os.rename(id, file)
-            except FileNotFoundError:
-                try:
-                    os.rename(id + ext, file)
-                except FileNotFoundError as er:
-                    if os.path.exists(id):
-                        file = id
-                    else:
-                        raise er
-            if file.endswith(".part"):
-                os.remove(file)
-                os.remove(thumb)
-                await event.client.send_message(
-                    event.chat_id,
-                    f"`[{num}/{total}]` `Invalid Video format.\nIgnoring that...`",
-                )
-                return
-            attributes = await set_attributes(file)
-            res, _ = await event.client.fast_uploader(
-                file, show_progress=True, event=event, to_delete=True
-            )
-            from_ = info["extractor"].split(":")[0]
-            caption = f"`[{num}/{total}]` `{title}`\n\n`from {from_}`"
-            await event.client.send_file(
-                event.chat_id,
-                file=res,
-                caption=caption,
-                attributes=attributes,
-                supports_streaming=True,
-                thumb=thumb,
-                reply_to=reply_to,
-            )
-            os.remove(thumb)
-        try:
-            await event.delete()
-        except BaseException:
-            pass
-        return
-    title = info["title"]
-    if len(title) > 20:
-        title = title[:17] + "..."
-    id_ = info["id"]
-    thumb = id_ + ".jpg"
-    await download_file(
-        info.get("thumbnail", None) or f"https://i.ytimg.com/vi/{id_}/hqdefault.jpg",
-        thumb,
-    )
-    ext = "." + ytd["outtmpl"]["default"].split(".")[-1]
-    for _ext in [".m4a", ".mp3", ".opus"]:
-        if ext == _ext:
-            ext = _ext
-            break
-    id = None
-    for x in glob.glob(f"{id_}*"):
-        if not x.endswith("jpg"):
-            id = x
-    if not id:
-        return
-    ext = "." + id.split(".")[-1]
-    file = title + ext
-    try:
-        os.rename(id, file)
-    except FileNotFoundError:
-        os.rename(id + ext, file)
-    attributes = await set_attributes(file)
-    res, _ = await event.client.fast_uploader(
-        file, show_progress=True, event=event, to_delete=True
-    )
-    caption = f"`{info['title']}`"
-    await event.client.send_file(
-        event.chat_id,
-        file=res,
-        caption=caption,
-        attributes=attributes,
-        supports_streaming=True,
-        thumb=thumb,
-        reply_to=reply_to,
-    )
-    os.remove(thumb)
+    
+    local_files = info.get("local_files") or []
+    if not local_files:
+        return await event.edit("`[Error] No files downloaded.`")
+
+    total = len(local_files)
+    title = info.get("title") or "Downloaded Media"
+    
+    # Send files
+    for num, file_path in enumerate(local_files, start=1):
+        if not os.path.exists(file_path):
+            continue
+        
+        # Prepare attributes (for video/audio meta)
+        attributes = await set_attributes(file_path)
+        
+        # Upload
+        res, _ = await event.client.fast_uploader(
+            file_path, show_progress=True, event=event, to_delete=True
+        )
+        
+        # Caption
+        from_ = info.get("extractor", "Universal")
+        caption = f"**{title}**"
+        if total > 1:
+            caption = f"`[{num}/{total}]` " + caption
+        caption += f"\n\n`from {from_}`"
+        
+        # Send
+        await event.client.send_file(
+            event.chat_id,
+            file=res,
+            caption=caption,
+            attributes=attributes,
+            supports_streaming=True,
+            reply_to=reply_to,
+        )
+
     try:
         await event.delete()
-    except BaseException:
+    except:
         pass
 
 
@@ -244,31 +182,25 @@ def get_buttons(listt):
 
 
 async def dler(event, url, opts: dict = {}, download=False):
-    await event.edit("`Getting Data...`")
-    if "quiet" not in opts:
-        opts["quiet"] = True
-    opts["username"] = udB.get_key("YT_USERNAME")
-    opts["password"] = udB.get_key("YT_PASSWORD")
-    if download:
-        await ytdownload(url, opts)
+    """Unified downloader bridge for Userbot plugins."""
+    await event.edit("`[DL] Processing Request...`")
+    fmt = "video"
+    if opts.get("format") == "bestaudio":
+        fmt = "audio"
     try:
-        return await extract_info(url, opts)
+        if download:
+            files = await extractor.download(url, format_type=fmt)
+            if not files: return None
+            info = await extractor.extract(url)
+            if isinstance(files, list):
+                info["local_files"] = files
+                info["id"] = info.get("id") or "downloaded_media"
+            return info
+        else:
+            return await extractor.extract(url)
     except Exception as e:
-        await event.edit(f"{type(e)}: {e}")
-        return
-
-
-@run_async
-def ytdownload(url, opts):
-    try:
-        return YoutubeDL(opts).download([url])
-    except Exception as ex:
-        LOGS.error(ex)
-
-
-@run_async
-def extract_info(url, opts):
-    return YoutubeDL(opts).extract_info(url=url, download=False)
+        await event.edit(f"`[Error] {str(e)[:100]}`")
+        return None
 
 
 @run_async
