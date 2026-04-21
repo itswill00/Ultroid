@@ -14,7 +14,14 @@ from pyUltroid.fns.helper import run_async
 TIKTOK_RE = re.compile(r"https?://(?:www\.|vm\.|vt\.)?tiktok\.com/\S+")
 INSTAGRAM_RE = re.compile(r"https?://(?:www\.)?instagram\.com/(?:p|reels|reel|tv)/\S+")
 TWITTER_RE = re.compile(r"https?://(?:www\.|mobile\.)?(?:twitter|x)\.com/\S+")
-ADULT_RE = re.compile(r"https?://(?:www\.)?(?:pornhub\.com|xvideos\.com|xhamster\.com|xnxx\.com|spankbang\.com|eporner\.com)/\S+")
+ADULT_RE = re.compile(
+    r"https?://(?:www\.)?(?:"
+    r"pornhub|xvideos|xhamster|xnxx|spankbang|eporner|redtube|youporn|tube8|xtube|"
+    r"txxx|beeg|xhamsterlive|chaturbate|stripchat|bravotube|thumbzilla|faphouse|"
+    r"rule34video|hqporner|daftsex|porntrex|vjav|javhd|missav|javguru|javcl|"
+    r"japonx|netfapx|xozilla|pornhat|tubegalore|cliphunter|xmovies8"
+    r")\.(?:com|net|org|tv|xxx|sex|tube|video|pro|cc|ws|mobi|co|sx)/\S+"
+)
 YOUTUBE_RE = re.compile(r"https?://(?:www\.)?(?:youtube\.com/(?:watch|shorts|live)\S*|youtu\.be/\S+)")
 
 # TikTok Scraping Regex
@@ -108,8 +115,12 @@ class MediaExtractor:
             "extractor_args": {"youtube": self._yt_extractor_args},
             "http_headers": {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "Accept": "*/*",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.google.com/",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "cross-site",
+                "Sec-Fetch-Dest": "document",
             },
         }
 
