@@ -560,7 +560,8 @@ class MediaExtractor:
             # Extract ID from various formats
             id_patterns = [
                 r"story_fbid=([0-9]+)", r"/posts/([0-9]+)", r"/videos/([0-9]+)", 
-                r"/reel/([0-9]+)", r"fbid=([0-9]+)", r"/([0-9]{10,})"
+                r"/reel/([0-9]+)", r"fbid=([0-9]+)", r"/([0-9]{10,})",
+                r"/share/[pv]/([a-zA-Z0-9_-]+)"
             ]
             for p in id_patterns:
                 m = re.search(p, resolved_url)
@@ -568,17 +569,45 @@ class MediaExtractor:
                     content_id = m.group(1)
                     break
             
+            # Resolve alphanumeric IDs to numeric if possible (needed for Strategy A)
+            if content_id and not content_id.isdigit() and html_text:
+                LOGS.info(f"Extractor | FB Phase 1: Alphanumeric ID ({content_id}) detected. Probing HTML for numeric ID...")
+                # Search for various numeric ID indicators in FB's complex HTML/JSON
+                m_num = re.search(r'\"post_id\":\"([0-9]+)\"', html_text) or \
+                        re.search(r'\"video_id\":\"([0-9]+)\"', html_text) or \
+                        re.search(r'\"target_id\":\"([0-9]+)\"', html_text) or \
+                        re.search(r'\"entity_id\":\"([0-9]+)\"', html_text) or \
+                        re.search(r'\"object_id\":\"([0-9]+)\"', html_text) or \
+                        re.search(r'content_owner_id_new":"([0-9]+)"', html_text)
+                if m_num:
+                    LOGS.info(f"Extractor | FB Phase 1: Resolved {content_id} -> {m_num.group(1)}")
+                    content_id = m_num.group(1)
+
+            # Canonical Discovery Fallback
+            if (not content_id or not content_id.isdigit()) and html_text:
+                m_can = re.search(r'<link\s+rel="canonical"\s+href="(.*?)"', html_text) or \
+                        re.search(r'<meta\s+property="og:url"\s+content="(.*?)"', html_text)
+                if m_can:
+                    can_url = m_can.group(1).replace("\\/", "/")
+                    LOGS.info(f"Extractor | FB Phase 1: Canonical Discovery -> {can_url}")
+                    resolved_url = can_url  # Update for Strategy B/C and Wild Card
+                    for p in id_patterns:
+                        m_m = re.search(p, can_url)
+                        if m_m and m_m.group(1).isdigit():
+                            content_id = m_m.group(1)
+                            break
+
             if not content_id and html_text:
-                # Try finding ID in HTML metadata
-                m = re.search(r'content_owner_id_new":"([0-9]+)"', html_text) or re.search(r'\"top_level_post_id\":\"([0-9]+)\"', html_text)
+                # Last ditch regex effort
+                m = re.search(r'\"top_level_post_id\":\"([0-9]+)\"', html_text)
                 if m: content_id = m.group(1)
 
             # --- PHASE 2: Multi-Strategy Attack ---
             def unescape_fb(text):
                 return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
 
-            # Strategy A: Numeric Embed Bypass (Most stable)
-            if content_id:
+            # Strategy A: Numeric Embed Bypass (Most stable for public videos)
+            if content_id and content_id.isdigit():
                 LOGS.info(f"Extractor | FB Strategy A: Numeric ID Bypass ({content_id})")
                 target = f"https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/video.php?v={content_id}"
                 resp = scraper.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, timeout=10)
@@ -590,12 +619,23 @@ class MediaExtractor:
 
             # Strategy B: Mobile Header Flip (mbasic)
             LOGS.info("Extractor | FB Strategy B: Mobile Header Flip...")
-            m_target = resolved_url.replace("www.facebook.com", "mbasic.facebook.com")
+            m_target = resolved_url.replace("www.facebook.com", "mbasic.facebook.com").replace("facebook.com", "mbasic.facebook.com")
+            if content_id and content_id.isdigit() and "share/p/" in resolved_url:
+                m_target = f"https://mbasic.facebook.com/{content_id}"
+
             resp = scraper.get(m_target, headers={"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"}, timeout=10)
-            m = re.search(r'href\s*=\s*"/video_redirect/\?src=(.*?)"', resp.text)
-            if m:
-                LOGS.info("Extractor | FB Strategy B: SUCCESS!")
-                return {"url": unquote(unescape_fb(m.group(1))), "title": "Facebook Video", "ext": "mp4", "uploader": "Facebook", "extractor": "fb_god_mode"}
+            
+            # Video redirect pattern
+            m_vid = re.search(r'href\s*=\s*"/video_redirect/\?src=(.*?)"', resp.text)
+            if m_vid:
+                LOGS.info("Extractor | FB Strategy B: SUCCESS! (Video)")
+                return {"url": unquote(unescape_fb(m_vid.group(1))), "title": "Facebook Video", "ext": "mp4", "uploader": "Facebook", "extractor": "fb_god_mode"}
+            
+            # Photo pattern
+            m_img = re.search(r'src="(https://scontent\..*?)"', resp.text)
+            if m_img:
+                LOGS.info("Extractor | FB Strategy B: SUCCESS! (Photo)")
+                return {"url": unescape_fb(m_img.group(1)), "title": "Facebook Photo", "ext": "jpg", "uploader": "Facebook", "extractor": "fb_god_mode"}
 
             # Strategy C: OEmbed Discovery
             LOGS.info("Extractor | FB Strategy C: OEmbed Discovery...")
@@ -609,7 +649,11 @@ class MediaExtractor:
                         if m:
                             # Re-scrape the discovered src
                             resp = scraper.get(unquote(unescape_fb(m.group(1))), timeout=10)
-                            # (Try pattern match again on this new HTML)
+                            for p in [re.compile(r'hd_src:"(.*?)"'), re.compile(r'sd_src:"(.*?)"')]:
+                                m_find = p.search(resp.text)
+                                if m_find:
+                                    LOGS.info("Extractor | FB Strategy C: SUCCESS!")
+                                    return {"url": unescape_fb(m_find.group(1)), "title": "Facebook Media", "ext": "mp4", "uploader": "Facebook", "extractor": "fb_god_mode"}
                 except: pass
 
             # --- PHASE 3: Wild Card Fallback ---
@@ -633,7 +677,13 @@ class MediaExtractor:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
             # Public Cobalt instances (can be rotated if one fails)
-            cobalt_instances = ["https://api.cobalt.tools/api/json", "https://co.wuk.sh/api/json"]
+            cobalt_instances = [
+                "https://api.cobalt.tools/api/json",
+                "https://co.wuk.sh/api/json",
+                "https://cobalt.api.unblocked.top/api/json",
+                "https://cobalt-api.kwiateusz.xyz/api/json",
+                "https://api.cobalt.black/api/json"
+            ]
             
             for instance in cobalt_instances:
                 try:
