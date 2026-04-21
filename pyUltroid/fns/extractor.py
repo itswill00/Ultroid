@@ -524,96 +524,102 @@ class MediaExtractor:
         return info
 
     def _facebook_scrape(self, url):
-        """Ultra-robust Facebook scraping for HD/SD videos."""
-        LOGS.info(f"Extractor | Facebook Scraping started: {url}")
+        """Zero-Cookie Facebook scraping using mbasic and API fallback."""
+        LOGS.info(f"Extractor | Facebook Zero-Cookie Scraping: {url}")
         try:
             import cloudscraper
-            import json
             scraper = cloudscraper.create_scraper()
             
-            # Step 1: Normalization & Redirect Follow
+            # Step 1: User-Agent & Header Setup (Mobile Emulation)
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Referer": "https://www.facebook.com/",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Referer": "https://mbasic.facebook.com/",
             }
 
-            # Use cookies if available
-            if self._cookie_file:
-                try:
-                    from http.cookiejar import MozillaCookieJar
-                    cj = MozillaCookieJar(self._cookie_file)
-                    cj.load(ignore_discard=True, ignore_expires=True)
-                    scraper.cookies.update(cj)
-                    LOGS.info("Extractor | Facebook: Cookies loaded from cookies.txt")
-                except Exception as e:
-                    LOGS.warning(f"Extractor | Facebook: Failed to load cookies: {e}")
-
-            # Follow initial redirect
-            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
-            final_url = resp.url
-            html_text = resp.text
-            
-            # Normalize for scraping
+            # Step 2: URL Normalization to mbasic
+            # This bypasses many JS-based bot protections
             content_id = None
-            id_match = re.search(r"(?:v|videos|reel|reels|story_fbid|posts|share/p)/([0-9A-Za-z_-]+)", final_url)
+            id_match = re.search(r"(?:v|videos|reel|reels|story_fbid|posts|share/p)/([0-9A-Za-z_-]+)", url)
             if id_match:
                 content_id = id_match.group(1)
-                # Try to access reel surface for better scraping
-                scrape_target = f"https://www.facebook.com/reel/{content_id}/"
-                resp = scraper.get(scrape_target, headers=headers, timeout=15)
-                html_text = resp.text
+                url = f"https://mbasic.facebook.com/video/video.php?v={content_id}"
+            else:
+                url = url.replace("www.facebook.com", "mbasic.facebook.com").replace("m.facebook.com", "mbasic.facebook.com")
+
+            # Step 3: Get Guest Session Cookies
+            scraper.get("https://mbasic.facebook.com/", headers=headers, timeout=10)
             
-            if "/login" in resp.url:
-                LOGS.warning("Extractor | Facebook redirected to login page. Scraping might fail without fresh cookies.")
+            # Step 4: Access Content
+            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+            html_text = resp.text
+
+            if "/login" in resp.url or "Log In" in html_text:
+                LOGS.warning("Extractor | Facebook mbasic blocked. Trying Public API Fallback...")
+                return self._facebook_public_api(url)
 
             def unescape_fb(text):
-                return text.replace(r"\/", "/").encode().decode('unicode-escape')
+                return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
 
-            # Step 2: Multi-Pattern Extraction
+            # Step 5: Extract using multi-pattern
             video_url = None
-            # Patterns from groupbot and others
             patterns = [
-                FB_HD_RE, 
-                FB_SD_RE,
-                re.compile(r'"browser_native_hd_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"'),
-                re.compile(r'"browser_native_sd_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"'),
                 re.compile(r'video_url":"(.*?)"'),
+                re.compile(r'href\s*=\s*"/video_redirect/\?src=(.*?)"'),
                 re.compile(r'hd_src:"(.*?)"'),
-                re.compile(r'sd_src:"(.*?)"')
+                re.compile(r'sd_src:"(.*?)"'),
+                re.compile(r'https?://[^\s"\'\\]+?\.mp4[^\s"\'\\]*')
             ]
             
             for pat in patterns:
                 match = pat.search(html_text)
                 if match:
                     video_url = unescape_fb(match.group(1))
+                    if "/video_redirect/" in video_url:
+                        from urllib.parse import unquote
+                        video_url = unquote(video_url)
                     if video_url: break
             
             if not video_url:
-                # Last resort: search for any large mp4 link in the HTML
-                m = re.search(r'https?://[^\s"\'\\]+?\.mp4[^\s"\'\\]*', html_text)
-                if m: video_url = unescape_fb(m.group(0))
+                # If local scraping fails, try API
+                return self._facebook_public_api(url)
 
-            if not video_url:
-                return {"error": "Facebook video URL not found. Session might be required."}
-            
-            # Step 3: Metadata
-            title = "Facebook Video"
-            title_match = re.search(r'<title.*?>(.*?)</title>', html_text)
-            if title_match:
-                title = title_match.group(1).split(" | Facebook")[0]
-            
             return {
                 "url": video_url,
-                "title": title,
+                "title": "Facebook Video",
                 "ext": "mp4",
                 "uploader": "Facebook",
                 "extractor": "facebook_scraper",
                 "cookies": "; ".join([f"{c.name}={c.value}" for c in scraper.cookies])
             }
         except Exception as e:
-            return {"error": str(e)}
+            LOGS.error(f"Extractor | Facebook local scrape failed: {e}")
+            return self._facebook_public_api(url)
+
+    def _facebook_public_api(self, url):
+        """Fallback to third-party Facebook downloader APIs."""
+        LOGS.info("Extractor | Trying Facebook Public API Fallback...")
+        try:
+            import cloudscraper
+            scraper = cloudscraper.create_scraper()
+            # Using a reliable public scraping endpoint
+            api_url = f"https://api.sonzaix.indevs.in/facebook/video?url={url}"
+            resp = scraper.get(api_url, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                video_url = data.get("url") or data.get("hd") or data.get("sd")
+                if video_url:
+                    return {
+                        "url": video_url,
+                        "title": data.get("title", "Facebook Video"),
+                        "ext": "mp4",
+                        "uploader": "Facebook",
+                        "extractor": "facebook_api"
+                    }
+        except Exception as e:
+            LOGS.debug(f"Extractor | Facebook API Fallback failed: {e}")
+        return {"error": "All Facebook extraction methods failed."}
 
     def _youtube_sonzai(self, url):
         """YouTube API fallback using Sonzai/Indevs API."""
