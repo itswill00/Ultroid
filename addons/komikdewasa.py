@@ -70,7 +70,9 @@ async def komik_dewasa_search(event):
 
 # --- Assistant Callbacks ---
 if asst:
-    @asst.on(asst_cmd(pattern="kd_ch:(.*)"))
+    from . import callback
+
+    @callback(re.compile("kd_ch:(.*)"))
     async def kd_callback_chapters(event):
         # Access control: only owner can click
         if event.sender_id != ultroid_bot.uid:
@@ -84,7 +86,7 @@ if asst:
         if not html:
             return await event.respond("Gagal mengambil data. Cloudflare memblokir akses.")
 
-        soup = BeautifulSoup(html, 'html.parser')
+        soup = BeautifulSoup(html, 'parser.parser' if 'lxml' not in str(BeautifulSoup) else 'lxml')
         chapters = soup.find_all('li', class_='wp-manga-chapter')
         
         if not chapters:
@@ -100,7 +102,7 @@ if asst:
         buttons.append([Button.inline("« Kembali ke Pencarian", data="kd_back")])
         await event.edit(f"**Daftar Chapter:**\n{url}", buttons=buttons, link_preview=False)
 
-    @asst.on(asst_cmd(pattern="kd_rd:(.*)"))
+    @callback(re.compile("kd_rd:(.*)"))
     async def kd_callback_read(event):
         if event.sender_id != ultroid_bot.uid:
             return await event.answer("Akses ditolak.", alert=True)
@@ -142,6 +144,6 @@ if asst:
         
         await ultroid_bot.send_message(event.chat_id, f"✅ **Selesai!** Berhasil mengirim {count} halaman.")
 
-    @asst.on(asst_cmd(pattern="kd_back"))
+    @callback("kd_back")
     async def kd_back(event):
         await event.edit("Gunakan kembali perintah `.kd <judul>` untuk mencari.")
