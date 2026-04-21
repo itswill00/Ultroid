@@ -142,7 +142,7 @@ async def uconverter(event):
         )
         os.remove(file)
     else:
-        await xx.edit("`Failed to convert`")
+        await xx.edit("`Gagal mengonversi`")
         return
     await xx.delete()
 

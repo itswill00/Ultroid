@@ -527,16 +527,16 @@ _NO_FLOOD_PRUNE_THRESHOLD = 80
 
 
 def technical_ui(body, header=None):
-    """Zero-gimmick technical UI formatter."""
+    """Simple and clean UI formatter."""
     res = ""
     if header:
-        res += f"**{header.upper()}**\n───\n"
+        res += f"**{header.title()}**\n"
     res += body
     return res
 
 
 async def progress(current, total, event, start, type_of_ps, file_name=None, buttons=None):
-    """Universal progress bar with modern UI and flood protection."""
+    """Universal progress bar with clean, compact UI."""
     now = time.time()
     chat_id = event.chat_id
     msg_id = event.id
@@ -562,23 +562,21 @@ async def progress(current, total, event, start, type_of_ps, file_name=None, but
     speed = current / diff if diff > 0 else 0
     eta = round((total - current) / speed) * 1000 if speed > 0 else 0
 
-    # Modern High-Density Progress Bar
+    # Clean Progress Bar
     filled = math.floor(percentage / 10)
     bar = "▰" * filled + "▱" * (10 - filled)
     
-    ui_header = f"**[ {type_of_ps.upper()} ]**\n"
+    ui_header = f"**{type_of_ps.title()}**\n"
     if file_name:
         ui_header += f"📄 `{file_name}`\n"
     
     ui_body = (
-        f"**Status:** `{bar} {percentage:.1f}%`\n"
-        f"**Processed:** `{humanbytes(current)}` of `{humanbytes(total)}`\n"
-        f"**Speed:** `{humanbytes(speed)}/s` | **ETA:** `{time_formatter(eta)}`"
+        f"**Progress:** `{bar} {percentage:.1f}%`\n"
+        f"**Data:** `{humanbytes(current)}` / `{humanbytes(total)}`\n"
+        f"**Speed:** `{humanbytes(speed)}/s` | **Sisa:** `{time_formatter(eta)}`"
     )
     
-    ui_footer = "\n`─── Powered by Ultroid ───`"
-    
-    await event.edit(ui_header + "───\n" + ui_body + ui_footer, buttons=buttons)
+    await event.edit(ui_header + ui_body, buttons=buttons)
 
 
 # ------------------System\\Heroku stuff----------------

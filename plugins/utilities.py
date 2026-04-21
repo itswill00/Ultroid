@@ -299,7 +299,7 @@ async def _(event):
     try:
         _ = await event.client.get_entity(user)
     except Exception as er:
-        return await xx.edit(f"**ERROR :** {er}")
+        return await xx.edit(f"**Terjadi kesalahan:** {er}")
     if not isinstance(_, User):
         try:
             peer = get_peer_id(_)
@@ -313,12 +313,12 @@ async def _(event):
             )
             await xx.delete()
         except Exception as er:
-            await event.eor("**ERROR ON CHATINFO**\n" + str(er))
+            await event.eor("**Terjadi kesalahan saat mengambil info chat**\n" + str(er))
         return
     try:
         full_user = (await event.client(GetFullUserRequest(user))).full_user
     except Exception as er:
-        return await xx.edit(f"ERROR : {er}")
+        return await xx.edit(f"**Terjadi kesalahan:** {er}")
     user = _
     user_photos = (
         await event.client.get_profile_photos(user.id, limit=0)
@@ -446,7 +446,7 @@ async def abs_rmbg(event):
         dr = out["errors"][0]
         de = dr.get("detail", "")
         return await xx.edit(
-            f"**ERROR ~** `{dr['title']}`,\n`{de}`",
+            f"**Terjadi kesalahan:** `{dr['title']}`,\n`{de}`",
         )
     zz = Image.open(out)
     if zz.mode != "RGB":
@@ -633,7 +633,7 @@ async def ipinfo(event):
     except BaseException:
         err = det["error"]["title"]
         msg = det["error"]["message"]
-        await event.eor(f"ERROR:\n{err}\n{msg}", time=5)
+        await event.eor(f"**Terjadi kesalahan:**\n{err}\n{msg}", time=5)
 
 
 @ultroid_cmd(
@@ -743,7 +743,7 @@ async def get_restricted_msg(event):
         input_entity = await event.client.get_input_entity(chat)
         message = await event.client.get_messages(input_entity, ids=msg)
     except BaseException as er:
-        return await event.eor(f"**ERROR**\n`{er}`")
+        return await event.eor(f"**Terjadi kesalahan:**\n`{er}`")
 
     if not message:
         return await event.eor("`Message not found or may not exist.`")

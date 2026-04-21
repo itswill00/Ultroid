@@ -48,7 +48,7 @@ async def _(e):
     xx = await e.eor(get_string("com_1"))
     x, y = await bash("neofetch|sed 's/\x1B\\[[0-9;\\?]*[a-zA-Z]//g' >> neo.txt")
     if y and y.endswith("NOT_FOUND"):
-        return await xx.edit(f"Error: `{y}`")
+        return await xx.edit(f"**Terjadi kesalahan:** `{y}`")
     with open("neo.txt", "r", encoding="utf-8") as neo:
         p = (neo.read()).replace("\n\n", "")
     haa = await Carbon(code=p, file_name="neofetch", backgroundColor=choice(ATRA_COL))
@@ -79,7 +79,7 @@ async def _(event):
     OUT = f"**☞ BASH\n\n• COMMAND:**\n`{cmd}` \n\n"
     err, out = "", ""
     if stderr:
-        err = f"**• ERROR:** \n`{stderr}`\n\n"
+        err = f"**• Terjadi kesalahan:** \n`{stderr}`\n\n"
     if stdout:
         if (carb or udB.get_key("CARBON_ON_BASH")) and (
             event.is_private
@@ -350,7 +350,7 @@ async def aexec(code, event):
         # Execute it with proper parameters
         return await func(event, event.client)
     except Exception as e:
-        raise Exception(f"Failed to execute code: {str(e)}")
+        raise Exception(f"Gagal mengeksekusi kode: {str(e)}")
 
 
 DUMMY_CPP = """#include <iostream>
@@ -377,7 +377,7 @@ async def doie(e):
     m = await bash("g++ -o CppUltroid cpp-ultroid.cpp")
     o_cpp = f"• **Eval-Cpp**\n`{match}`"
     if m[1]:
-        o_cpp += f"\n\n**• Error :**\n`{m[1]}`"
+        o_cpp += f"\n\n**• Terjadi kesalahan:**\n`{m[1]}`"
         if len(o_cpp) > 3000:
             os.remove("cpp-ultroid.cpp")
             if os.path.exists("CppUltroid"):
@@ -390,7 +390,7 @@ async def doie(e):
     if m[0] != "":
         o_cpp += f"\n\n**• Output :**\n`{m[0]}`"
     if m[1]:
-        o_cpp += f"\n\n**• Error :**\n`{m[1]}`"
+        o_cpp += f"\n\n**• Terjadi kesalahan:**\n`{m[1]}`"
     if len(o_cpp) > 3000:
         with BytesIO(str.encode(o_cpp)) as out_file:
             out_file.name = "eval.txt"

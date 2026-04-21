@@ -185,11 +185,11 @@ from pyUltroid.fns.helper import technical_ui
 @ultroid_cmd(pattern="ping$", chats=[], type=["official", "assistant"])
 async def _(event):
     start = time.time()
-    x = await event.eor("`Pinging...`")
+    x = await event.eor("`Cek ping...`")
     end = round((time.time() - start) * 1000)
     uptime = time_formatter((time.time() - start_time) * 1000)
-    res = f"**Latency:** `{end}ms`\n**Uptime:** `{uptime}`"
-    await x.edit(technical_ui(res, header="SYSTEM"))
+    res = f"**Latency:** `{end}ms` · **Uptime:** `{uptime}`"
+    await x.edit(res)
 
 
 @ultroid_cmd(
