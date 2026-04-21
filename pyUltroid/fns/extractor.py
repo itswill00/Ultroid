@@ -110,7 +110,7 @@ class MediaExtractor:
             "age_limit": 21,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "concurrent_fragment_downloads": 10,
+            "concurrent_fragment_downloads": 1 if ADULT_RE.search(url) else 10,
             "buffersize": 1048576,  # 1 MB buffer for VPS throughput
             "extractor_args": {"youtube": self._yt_extractor_args},
             "http_headers": {
@@ -125,12 +125,14 @@ class MediaExtractor:
         }
 
         if self._aria2c:
-            opts["external_downloader"] = "aria2c"
-            opts["external_downloader_args"] = [
-                "--min-split-size=1M",
-                "--max-connection-per-server=16",
-                "--split=16",
-            ]
+            # Disable aria2c for NSFW sites as they often block multi-connection downloads
+            if not ADULT_RE.search(url):
+                opts["external_downloader"] = "aria2c"
+                opts["external_downloader_args"] = [
+                    "--min-split-size=1M",
+                    "--max-connection-per-server=16",
+                    "--split=16",
+                ]
 
         # Apply cached one-time results
         if self._js_runtime:
