@@ -518,7 +518,7 @@ class MediaExtractor:
             return {"error": str(e)}
 
     def _tiktok_scrape(self, url):
-        """Scrape TikTok HTML for metadata."""
+        """Robust TikTok scraping using multi-target strategy."""
         try:
             import cloudscraper
             import json
@@ -526,70 +526,97 @@ class MediaExtractor:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Referer": "https://www.tiktok.com/",
             }
             
-            # Resolve short URL if needed
+            # Step 1: Resolve URL and extract aweme_id
             resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
-            final_url = resp.url
-            html_text = resp.text
+            resolved_url = resp.url
+            aweme_match = re.search(r"/(?:video|photo|v)/(\d+)", resolved_url)
+            aweme_id = aweme_match.group(1) if aweme_match else None
+            
+            if not aweme_id:
+                # Try to find ID in HTML if not in URL
+                aweme_match = re.search(r'video(?:Id|ID|id)"\s*:\s*"(\d+)"', resp.text)
+                aweme_id = aweme_match.group(1) if aweme_match else None
 
-            # Parse JSON from HTML
+            # Step 2: Define targets to scrape
+            targets = [resolved_url]
+            if aweme_id:
+                targets.append(f"https://www.tiktok.com/embed/v3/{aweme_id}")
+                targets.append(f"https://www.tiktok.com/@_/video/{aweme_id}")
+
             data = None
-            for regex in [UNIVERSAL_RE, SIGI_RE, NEXT_RE]:
-                match = regex.search(html_text)
-                if match:
-                    try:
-                        data = json.loads(match.group(1))
-                        break
-                    except:
-                        continue
+            item = None
             
-            if not data:
-                return {"error": "Could not find metadata in HTML"}
+            # Step 3: Try each target
+            for target in targets:
+                if target != resolved_url:
+                    resp = scraper.get(target, headers=headers, timeout=15)
+                
+                html_text = resp.text
+                if "/login" in resp.url or "verify-center" in html_text:
+                    continue
 
-            # Walk through JSON to find itemStruct (logic simplified from groupbot)
-            def find_key(obj, key):
-                if isinstance(obj, dict):
-                    if key in obj: return obj[key]
-                    for v in obj.values():
-                        res = find_key(v, key)
-                        if res: return res
-                elif isinstance(obj, list):
-                    for i in obj:
-                        res = find_key(i, key)
-                        if res: return res
-                return None
+                for regex in [UNIVERSAL_RE, SIGI_RE, NEXT_RE]:
+                    match = regex.search(html_text)
+                    if match:
+                        try:
+                            data = json.loads(match.group(1))
+                            # Deep search for itemStruct/itemInfo
+                            def find_item(obj):
+                                if isinstance(obj, dict):
+                                    if "itemStruct" in obj: return obj["itemStruct"]
+                                    if "itemInfo" in obj: return obj["itemInfo"].get("itemStruct") or obj["itemInfo"]
+                                    for v in obj.values():
+                                        res = find_item(v)
+                                        if res: return res
+                                elif isinstance(obj, list):
+                                    for i in obj:
+                                        res = find_item(i)
+                                        if res: return res
+                                return None
+                            
+                            item = find_item(data)
+                            if item: break
+                        except:
+                            continue
+                if item: break
 
-            item = find_key(data, "itemStruct") or find_key(data, "itemInfo")
             if not item:
-                return {"error": "itemStruct not found"}
-            
-            if "itemStruct" in item: item = item["itemStruct"]
+                return {"error": "Could not extract TikTok itemStruct from any target."}
 
-            # Format as yt-dlp compatible dict
+            # Step 4: Map to internal info dict
             info = {
-                "title": item.get("desc") or "TikTok Video",
-                "uploader": item.get("author", {}).get("nickname") or "TikTok User",
-                "id": item.get("id"),
+                "title": item.get("desc") or item.get("description") or "TikTok Media",
+                "uploader": item.get("author", {}).get("nickname") or item.get("author", {}).get("uniqueId") or "TikTok User",
+                "id": aweme_id or item.get("id"),
                 "extractor": "tiktok_scraper"
             }
 
-            # Check for slideshow (images)
-            images = item.get("imagePost", {}).get("images")
-            if images:
+            # Handle Slideshow (Images)
+            image_post = item.get("imagePost") or item.get("image_post")
+            if image_post and image_post.get("images"):
                 info["entries"] = []
-                for img in images:
-                    u = img.get("displayImage", {}).get("urlList", [None])[0]
+                info["type"] = "album"
+                for img in image_post["images"]:
+                    # Try various URL locations
+                    u = (img.get("displayImage") or img.get("imageURL") or img.get("video") or {}).get("urlList", [None])[0]
                     if u:
                         info["entries"].append({"url": u, "ext": "jpg", "title": info["title"]})
-                info["type"] = "album"
             else:
-                video_url = item.get("video", {}).get("playAddr")
+                # Handle Video
+                video = item.get("video") or {}
+                video_url = video.get("playAddr") or video.get("downloadAddr") or video.get("play_addr", {}).get("url_list", [None])[0]
                 if not video_url:
-                    # Fallback to other possible keys
-                    video_url = item.get("video", {}).get("downloadAddr")
+                    # Last ditch effort for video URL
+                    video_url = item.get("video_url")
+                
                 info["url"] = video_url
                 info["ext"] = "mp4"
+
+            if not info.get("url") and not info.get("entries"):
+                return {"error": "Media URLs not found in TikTok data."}
 
             return info
         except Exception as e:
