@@ -518,7 +518,8 @@ class MediaExtractor:
             return {"error": str(e)}
 
     def _tiktok_scrape(self, url):
-        """Robust TikTok scraping using multi-target strategy."""
+        """Robust TikTok scraping with detailed logging."""
+        LOGS.info(f"Extractor | TikTok Scraping started for: {url}")
         try:
             import cloudscraper
             import json
@@ -527,35 +528,52 @@ class MediaExtractor:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "Referer": "https://www.tiktok.com/",
+                "Accept-Language": "en-US,en;q=0.9",
             }
             
-            # Step 1: Resolve URL and extract aweme_id
-            resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+            # Step 1: Resolve URL
+            try:
+                resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
+            except Exception as e:
+                LOGS.error(f"Extractor | TikTok resolve failed: {e}")
+                return {"error": f"Resolve failed: {e}"}
+
             resolved_url = resp.url
-            aweme_match = re.search(r"/(?:video|photo|v)/(\d+)", resolved_url)
+            html_text = resp.text
+            LOGS.info(f"Extractor | Resolved URL: {resolved_url} (Status: {resp.status_code})")
+
+            if resp.status_code == 403:
+                LOGS.warning("Extractor | TikTok returned 403 Forbidden on initial request.")
+            
+            aweme_match = re.search(r"/(?:video|photo|v|reels)/(\d+)", resolved_url)
             aweme_id = aweme_match.group(1) if aweme_match else None
             
             if not aweme_id:
-                # Try to find ID in HTML if not in URL
-                aweme_match = re.search(r'video(?:Id|ID|id)"\s*:\s*"(\d+)"', resp.text)
+                aweme_match = re.search(r'video(?:Id|ID|id)"\s*:\s*"(\d+)"', html_text)
                 aweme_id = aweme_match.group(1) if aweme_match else None
 
-            # Step 2: Define targets to scrape
+            # Step 2: Define targets
             targets = [resolved_url]
             if aweme_id:
+                LOGS.info(f"Extractor | Found Aweme ID: {aweme_id}")
                 targets.append(f"https://www.tiktok.com/embed/v3/{aweme_id}")
                 targets.append(f"https://www.tiktok.com/@_/video/{aweme_id}")
 
             data = None
             item = None
             
-            # Step 3: Try each target
             for target in targets:
+                LOGS.info(f"Extractor | Trying target: {target}")
                 if target != resolved_url:
-                    resp = scraper.get(target, headers=headers, timeout=15)
+                    try:
+                        resp = scraper.get(target, headers=headers, timeout=15)
+                        html_text = resp.text
+                    except Exception as e:
+                        LOGS.warning(f"Extractor | Target {target} failed: {e}")
+                        continue
                 
-                html_text = resp.text
                 if "/login" in resp.url or "verify-center" in html_text:
+                    LOGS.warning(f"Extractor | Target {target} blocked by Captcha/Login.")
                     continue
 
                 for regex in [UNIVERSAL_RE, SIGI_RE, NEXT_RE]:
@@ -563,7 +581,6 @@ class MediaExtractor:
                     if match:
                         try:
                             data = json.loads(match.group(1))
-                            # Deep search for itemStruct/itemInfo
                             def find_item(obj):
                                 if isinstance(obj, dict):
                                     if "itemStruct" in obj: return obj["itemStruct"]
@@ -578,15 +595,17 @@ class MediaExtractor:
                                 return None
                             
                             item = find_item(data)
-                            if item: break
-                        except:
+                            if item:
+                                LOGS.info(f"Extractor | Successfully parsed itemStruct from {target}")
+                                break
+                        except Exception as e:
                             continue
                 if item: break
 
             if not item:
-                return {"error": "Could not extract TikTok itemStruct from any target."}
+                LOGS.warning("Extractor | Could not find itemStruct in HTML metadata.")
+                return {"error": "ItemStruct not found"}
 
-            # Step 4: Map to internal info dict
             info = {
                 "title": item.get("desc") or item.get("description") or "TikTok Media",
                 "uploader": item.get("author", {}).get("nickname") or item.get("author", {}).get("uniqueId") or "TikTok User",
@@ -594,60 +613,79 @@ class MediaExtractor:
                 "extractor": "tiktok_scraper"
             }
 
-            # Handle Slideshow (Images)
             image_post = item.get("imagePost") or item.get("image_post")
             if image_post and image_post.get("images"):
                 info["entries"] = []
                 info["type"] = "album"
                 for img in image_post["images"]:
-                    # Try various URL locations
                     u = (img.get("displayImage") or img.get("imageURL") or img.get("video") or {}).get("urlList", [None])[0]
                     if u:
                         info["entries"].append({"url": u, "ext": "jpg", "title": info["title"]})
+                LOGS.info(f"Extractor | Detected Slideshow with {len(info['entries'])} images.")
             else:
-                # Handle Video
                 video = item.get("video") or {}
                 video_url = video.get("playAddr") or video.get("downloadAddr") or video.get("play_addr", {}).get("url_list", [None])[0]
                 if not video_url:
-                    # Last ditch effort for video URL
                     video_url = item.get("video_url")
                 
                 info["url"] = video_url
                 info["ext"] = "mp4"
+                LOGS.info(f"Extractor | Detected Video: {info['url'][:50]}...")
 
             if not info.get("url") and not info.get("entries"):
-                return {"error": "Media URLs not found in TikTok data."}
+                return {"error": "Media URLs missing"}
 
             return info
         except Exception as e:
+            LOGS.error(f"Extractor | TikTok scraping crash: {e}")
             return {"error": str(e)}
 
     def _tikwm_dl(self, url):
-        """Fallback TikTok API using tikwm.com."""
+        """Enhanced TikWM fallback with better logging and error handling."""
+        LOGS.info(f"Extractor | Trying TikWM API for: {url}")
         try:
             import cloudscraper
             scraper = cloudscraper.create_scraper()
-            res = scraper.post("https://www.tikwm.com/api/", data={"url": url}, timeout=15)
-            if res.status_code == 200:
-                data = res.json()
-                if data.get("code") == 0:
-                    item = data.get("data")
-                    info = {
-                        "title": item.get("title") or "TikTok Video",
-                        "uploader": item.get("author", {}).get("nickname") or "TikTok User",
-                        "extractor": "tikwm"
-                    }
-                    
-                    if item.get("images"):
-                        info["entries"] = [{"url": u, "ext": "jpg"} for u in item["images"]]
-                        info["type"] = "album"
-                    else:
-                        info["url"] = item.get("play") or item.get("wmplay")
-                        info["ext"] = "mp4"
-                    return info
+            # TikWM sometimes needs specific headers or it returns 403
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Origin": "https://www.tikwm.com",
+                "Referer": "https://www.tikwm.com/",
+            }
+            res = scraper.post("https://www.tikwm.com/api/", data={"url": url}, headers=headers, timeout=15)
+            
+            if res.status_code != 200:
+                LOGS.warning(f"Extractor | TikWM API returned HTTP {res.status_code}")
+                return {"error": f"TikWM HTTP {res.status_code}"}
+            
+            data = res.json()
+            if data.get("code") == 0:
+                item = data.get("data")
+                info = {
+                    "title": item.get("title") or item.get("desc") or "TikTok Video",
+                    "uploader": item.get("author", {}).get("nickname") or "TikTok User",
+                    "id": item.get("id"),
+                    "extractor": "tikwm"
+                }
+                
+                images = item.get("images")
+                if images and isinstance(images, list):
+                    info["entries"] = [{"url": u, "ext": "jpg"} for u in images]
+                    info["type"] = "album"
+                    LOGS.info(f"Extractor | TikWM: Detected Slideshow ({len(images)} images)")
+                else:
+                    info["url"] = item.get("play") or item.get("wmplay") or item.get("hdplay")
+                    info["ext"] = "mp4"
+                    LOGS.info(f"Extractor | TikWM: Detected Video URL")
+                return info
+            else:
+                msg = data.get("msg") or "Unknown TikWM error"
+                LOGS.warning(f"Extractor | TikWM API error: {msg}")
+                return {"error": msg}
         except Exception as e:
-            LOGS.debug(f"Extractor | TikWM API error: {e}")
-        return {"error": "TikWM API failed"}
+            LOGS.error(f"Extractor | TikWM API crash: {e}")
+            return {"error": str(e)}
 
 # Global Instance
 extractor = MediaExtractor()
