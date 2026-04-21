@@ -357,7 +357,7 @@ class MediaExtractor:
                 return [path] if success else None
 
         # Step 3: Fallback to yt-dlp for other platforms (YouTube, etc.)
-        opts = self.get_opts(format_type, job_id=job_id, progress_callback=progress_callback)
+        opts = self.get_opts(url, format_type, job_id=job_id, progress_callback=progress_callback)
         with YoutubeDL(opts) as ydl:
             try:
                 # If we have cached info from yt-dlp previously
@@ -992,3 +992,5 @@ class MediaExtractor:
 
 # Global Instance
 extractor = MediaExtractor()
+r()
+r = MediaExtractor()
