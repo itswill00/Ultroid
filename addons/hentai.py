@@ -135,19 +135,17 @@ async def nh_search(event):
 if asst:
     from . import callback
 
-    @callback(re.compile(r"nhp:(\d+):(\d+)"))
+    @callback(re.compile(r"nhp:(\d+):(.*)"), owner=True)
     async def nh_reader_callback(event):
-        if event.sender_id != ultroid_bot.uid:
-            return await event.answer("Akses ditolak.", alert=True)
+        page = int(event.data_match.group(1).decode())
+        nh_id = event.data_match.group(2).decode().strip("'").strip("b") # Ensure it's a clean string ID
         
-        page = int(event.pattern_match.group(1))
-        gid = event.pattern_match.group(2)
+        # Show loading
+        await event.answer("Sabar ya, lagi ambil halaman...", wheel=True)
         
-        await event.answer("Memuat halaman...", alert=False)
-        
-        data = await fetch_nh_api(gid)
+        data = await fetch_nh_api(nh_id)
         if not data:
-            return await event.respond("Gagal mengambil data manga.")
+            return await event.edit("Gagal mengambil data manga. Coba lagi nanti.")
             
         media_id = data['media_id']
         pages = data['images']['pages']
