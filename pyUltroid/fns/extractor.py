@@ -165,23 +165,6 @@ class MediaExtractor:
             opts["progress_hooks"] = [progress_callback]
 
         return opts
-            opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]/best"
-            opts["merge_output_format"] = "mp4"
-        elif format_type == "extract":
-            # Avoid any format selection for raw metadata extraction
-            pass
-        else:
-            # Default to 'best' single-file format to avoid merge/ffmpeg issues on certain VPS
-            opts["format"] = "best"
-            opts["merge_output_format"] = "mp4"
-
-        if custom_opts:
-            opts.update(custom_opts)
-
-        if progress_callback:
-            opts["progress_hooks"] = [progress_callback]
-
-        return opts
 
     @run_async
     def extract(self, url):
