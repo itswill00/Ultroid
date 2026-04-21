@@ -12,7 +12,7 @@ __doc__ = get_help("greetings")
 """
 ✘ Commands Available -
 
----- Welcomes ----
+───- Welcomes ───-
 • `{i}setwelcome <message/reply to message>`
     Set welcome message in the current chat.
 
@@ -22,7 +22,7 @@ __doc__ = get_help("greetings")
 • `{i}getwelcome`
     Get the welcome message in the current chat.
 
----- GoodByes ----
+───- GoodByes ───-
 • `{i}setgoodbye <message/reply to message>`
     Set goodbye message in the current chat.
 

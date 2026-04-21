@@ -112,6 +112,9 @@ async def _(event):
         await event.eor(str(exc), time=5)
 
 
+from pyUltroid.fns.helper import technical_ui
+
+
 @ultroid_cmd(
     pattern="id( (.*)|$)",
     manager=True,
@@ -125,7 +128,7 @@ async def _(event):
         except Exception as er:
             return await event.eor(str(er))
         return await event.eor(
-            f"**Chat ID:**  `{event.chat_id}`\n**User ID:**  `{ids}`"
+            technical_ui(f"**Chat ID:**  `{event.chat_id}`\n**User ID:**  `{ids}`", header="TOOLS")
         )
     data = f"**Current Chat ID:**  `{event.chat_id}`"
     if event.reply_to_msg_id:
@@ -135,7 +138,7 @@ async def _(event):
         bot_api_file_id = event.file.id
         data += f"\n**Bot API File ID:**  `{bot_api_file_id}`"
     data += f"\n**Msg ID:**  `{event.id}`"
-    await ult.eor(data)
+    await ult.eor(technical_ui(data, header="TOOLS"))
 
 
 @ultroid_cmd(pattern="bots( (.*)|$)", groups_only=True, manager=True)

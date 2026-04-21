@@ -8,7 +8,7 @@ from . import asst_cmd
 @asst_cmd(pattern="id", public=True)
 async def assistant_id(event):
     """Extract IDs of users, chats, and replied media."""
-    text = "**System Identification**\n---"
+    text = "**System Identification**\n───"
     text += f"\n**Chat ID:** `{event.chat_id}`"
     text += f"\n**User ID:** `{event.sender_id}`"
 
@@ -38,7 +38,7 @@ async def assistant_info(event):
 
     text = (
         f"**Profile Info**\n"
-        f"---"
+        f"───"
         f"\n**First:** {first}"
         f"\n**Last:** {last}"
         f"\n**Username:** @{user}"

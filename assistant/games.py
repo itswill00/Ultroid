@@ -143,7 +143,7 @@ async def eiagx(e):
     await e.answer(ans)
 
 
-# ----------------------- Main Command ------------------- #
+# ─────────────────────-- Main Command ──────────────────- #
 
 GIMAGE = "https://graph.org/file/1c51015bae5205a65fd69.jpg"
 
@@ -160,7 +160,7 @@ async def magic(event):
     )
 
 
-# -------------------------- Trivia ----------------------- #
+# ────────────────────────-- Trivia ─────────────────────-- #
 
 TR_BTS = {}
 DIFI_KEYS = ["Easy", "Medium", "Hard"]

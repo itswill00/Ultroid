@@ -526,6 +526,15 @@ No_Flood = {}
 _NO_FLOOD_PRUNE_THRESHOLD = 80
 
 
+def technical_ui(body, header=None):
+    """Zero-gimmick technical UI formatter."""
+    res = ""
+    if header:
+        res += f"**[ {header.upper()} ]**\n───\n"
+    res += body
+    return res
+
+
 async def progress(current, total, event, start, type_of_ps, file_name=None, buttons=None):
     """Universal progress bar with modern UI and flood protection."""
     now = time.time()

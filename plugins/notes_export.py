@@ -134,11 +134,11 @@ async def export_md(e):
         with open(filename, "w", encoding="utf-8") as f:
             f.write("# Notes Export\n\n")
             f.write(f"> Generated: {datetime.now().strftime('%d %b %Y %H:%M:%S')}\n\n")
-            f.write("---\n\n")
+            f.write("───\n\n")
             for keyword, content in notes.items():
                 f.write(f"## `{keyword}`\n\n")
                 f.write(f"{content}\n\n")
-                f.write("---\n\n")
+                f.write("───\n\n")
 
         await e.client.send_file(
             e.chat_id,

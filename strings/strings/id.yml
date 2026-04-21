@@ -495,7 +495,7 @@ fsh_1: "**Daftar file yang disimpan.:**"
 fsh_2: "**File telah disimpan!**\n\n**Bagikan Link:** {}"
 fsh_3: "`Balas pesan untuk membuat link yang dapat dibagikan!`"
 fsh_4: "**Tidak ada file yang disimpan!**"
-# ---------------------------------------------------#
+# ───────────────────────────────────────────────────#
 
 # assisant
 ast_1: "Pilih API yang ingin Anda setel."
@@ -532,7 +532,7 @@ pmbot_5: "Tolong balas seseorang untuk Unban dia."
 pmbot_6: "Pengguna ini tidak pernah dibanned!"
 pmbot_7: "`Selamat! Anda telah dibatalkan pemblokirannya.`"
 
-# -------------------------- VcBot ------------------------------- #
+# ────────────────────────-- VcBot ──────────────────────────────- #
 
 vcbot_1: "`Meninggalkan obrolan suara.`"
 vcbot_2: "**ERROR:**\n{}"
@@ -610,7 +610,7 @@ help_calculator: "-\n\n• `{i} Calc` - Inline Calculator"
 help_notes: "-\n\n• `{i} addNote <Word> <balas ke pesan>`\n    Tambahkan Catatan di obrolan yang digunakan dengan menjawab pesan dan kata yang dipilih.\n\n• `{i} Remnote <Word>`\n    Hapus catatan dari obrolan yang digunakan.\n\n• `{i} ListNote`\n    Daftar semua catatan.\n\n• Menggunakan :\n   Setel catatan dalam grup sehingga semua dapat menggunakannya.\n   ketik `#(kata kunci catatan)` untuk mendapatkannya"
 help_qrcode: "-\n\n• `{i} qrcode <teks/balas ke teks>`\n   `Membuat qrcode teks`\n\n• `{i} addQr <gambar balasan> <Text>`\n   `Membuat QR teks dan menambahkannya ke gambar.`\n\n• `{i} qrdecode <balas ke qrcode>`\n   `Ini memecahkan kode qrcode.`"
 help_tag: "-\n\n• `{i} tagall`\n    Tag top 100 anggota obrolan.\n\n• `{i} tagadmins`\n    Tag admin obrolan itu.\n\n• `{i} tagowner`\n    Tag pemilik obrolan itu\n\n• `{i} tagbots`\n    Tag bot obrolan itu.\n\n• `{i} tagrec`\n    Tag baru -baru ini anggota aktif.\n\n• `{i} tagon`\n    Tag anggota online (bekerja hanya jika privasi mati).\n\n• `{i} tagoff`\n    Tag anggota offline (bekerja hanya jika privasi mati)."
-help_greetings: "-\n\n---- menyambut ----\n• `{i} setWelcome <pesan/balas ke pesan>`\n    Setel pesan selamat datang di obrolan saat ini.\n\n• `{i} clearwelcome`\n    Hapus sambutan dalam obrolan saat ini.\n\n• `{i} getWelcome`\n    Dapatkan pesan selamat datang dalam obrolan saat ini.\n\n---- Selamat tinggal ----\n• `{i} setgoodbye <pesan/balas ke pesan>`\n    Tetapkan pesan selamat tinggal di obrolan saat ini.\n\n• `{i} cleargoodbye`\n    Hapus selamat tinggal di obrolan saat ini.\n\n• `{i} getgoodbye`\n    Dapatkan pesan selamat tinggal di obrolan saat ini.\n\n• `{i} terima kasih On/Off`\n    Kirim stiker terima kasih untuk mencapai jumlah anggota 100*X di grup Anda."
+help_greetings: "-\n\n───- menyambut ───-\n• `{i} setWelcome <pesan/balas ke pesan>`\n    Setel pesan selamat datang di obrolan saat ini.\n\n• `{i} clearwelcome`\n    Hapus sambutan dalam obrolan saat ini.\n\n• `{i} getWelcome`\n    Dapatkan pesan selamat datang dalam obrolan saat ini.\n\n───- Selamat tinggal ───-\n• `{i} setgoodbye <pesan/balas ke pesan>`\n    Tetapkan pesan selamat tinggal di obrolan saat ini.\n\n• `{i} cleargoodbye`\n    Hapus selamat tinggal di obrolan saat ini.\n\n• `{i} getgoodbye`\n    Dapatkan pesan selamat tinggal di obrolan saat ini.\n\n• `{i} terima kasih On/Off`\n    Kirim stiker terima kasih untuk mencapai jumlah anggota 100*X di grup Anda."
 help_stickertools: "-\n\n• `{i} hancurkan <balas ke animasi stiker>`\n    Untuk menghancurkan stiker.\n\n• `{i} Tiny <Reply to Media>`\n    Untuk membuat stiker kecil.\n\n• `{i} kang <balasan ke gambar/stiker>`\n    Kang stiker (tambahkan ke paket Anda).\n\n• `{i} packkang <pack name>`\n    Kang set stiker lengkap (dengan nama khusus).\n\n• `{i} round <Balas ke media apa pun>`\n    Untuk mengekstrak stiker bundar."
 help_locks: "-\n\n• `{i} lock <msgs/media/stiker/gif/game/inline/polls/undangan/pin/changeInfo>`\n    Kunci pengaturan yang digunakan dalam grup bekas.\n\n• `{i} buka kunci <msgs/media/stiker/gif/game/inline/polls/undangan/pin/changeInfo>`\n    Buka kunci pengaturan yang digunakan dalam grup bekas."
 help_polls: "-\n\n• `{i} polling <puest>;<pection>;<pect> `\n    Dapatkan jajak pendapat anonim dengan opsi yang diberikan\n\n• `{i} polling <puest>;<pection>;<pect> |<ype> `\n    Dapatkan jajak pendapat yang ditentukan dengan jenis yang diinginkan!\n    Jenis harus salah satu dari `publik`,` multipel atau `kuis`\n\n• `{i} polling <puest>;<pection>;<pect> |QUIZ_ <Acciphero> `\n    Dapatkan jajak pendapat kuis di mana jawaban adalah jumlah opsi yang benar"

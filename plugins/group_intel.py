@@ -529,7 +529,7 @@ async def _monitor_cmd(ult):
         _save_groups(groups)
         return await ult.eor(
             f"✅ **Intel — Monitoring Enabled**\n"
-            f"---"
+            f"───"
             f"\n📍 **Group:** {gtitle}"
             f"\n🆔 **ID:** `{gid}`"
         )
@@ -551,7 +551,7 @@ async def _monitor_cmd(ult):
         groups = _get_groups()
         if not groups:
             return await ult.eor("`No groups in watchlist. Use .monitor add inside a group.`")
-        lines = "📋 **Intel — Watchlist**\n---\n"
+        lines = "📋 **Intel — Watchlist**\n───\n"
         for gid, title in groups.items():
             lines += f"• `{title}` — `{gid}`\n"
         flags = _get_flags()
@@ -587,7 +587,7 @@ async def _monitor_cmd(ult):
             f"📊 **Activity Report**\n"
             f"📍 **Group:** {chat.title}\n"
             f"🕒 **Period:** {period}\n"
-            f"---"
+            f"───"
         )
         for ev, count in sorted(data.items(), key=lambda x: -x[1]):
             lines += f"\n• **{ev.title()}:** {count}"

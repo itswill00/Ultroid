@@ -470,7 +470,7 @@ zip_1: "Media və ya fayla yanıt verin."
 zip_2: "First add All Files Via `{}addzip` then doZip to zip all files at one."
 zip_3: "`Yalnız zip faylı yanıtla.`"
 
-# ------------------------- assistant --------------------------#
+# ────────────────────────- assistant ────────────────────────--#
 
 ast_1: "Api tapa bilmədim."
 ast_2: "**remove.bg API**\nApi key əlavə et\n\n /cancel edərək prosesi dayandır."
@@ -489,7 +489,7 @@ clst_3: "■ Log hazırlanır..."
 clst_4: "Gözlənilməz xəta baş verdi..."
 clst_5: "Uğurlu!"
 
-# -------------------------- VcBot ------------------------------- #
+# ────────────────────────-- VcBot ──────────────────────────────- #
 
 vcbot_1: "`Left the voice chat.`"
 vcbot_2: "**ERROR:**\n{}"
@@ -592,7 +592,7 @@ help_qrcode: "-\n\n• `{i} qrcode <mətn / mətnə cavab>`\n   `Mətnin qrcode 
 games_2: "Kateqoriya seçin!"
 games_1: "Oyunu seçin 🎮"
 help_tag: "-\n\n• `{i} tagall`\n    TAP 100 Söhbəti üzvü.\n\n• `{i} tagadmins``\n    Bu söhbətin etiketi.\n\n• `{i} Tagowner`\n    Bu söhbətin etiket sahibi\n\n• `{i} tagbots``\n    Bu söhbətin etiketli botları.\n\n• `{i} tagrec`\n    Bu yaxınlarda aktiv üzvlər etiketi.\n\n• `{i} tagon`\n    Onlayn üzvləri etiketli üzvlər (yalnız gizlilik olduqda işləyir).\n\n• `{i} tagoff`\n    Etiket Offline üzvləri (yalnız gizlilik varsa işləyin)."
-help_greetings: "-\n\n---- alqışlayır ----\n• `{i} Setwaydous * mesaj / mesaja cavab>`\n    Mövcud söhbətdə xoş mesaj seçin.\n\n• `{i} Clearwelwelwely`\n    Mövcud söhbətdə xoş gəlmisiniz.\n\n• `{i} getwelcome`\n    Mövcud söhbətdə xoş mesaj alın.\n\n---- Xeyirxələr ----\n• `{i} setgoodbye <mesaj / mesaja cavab>`\n    Mövcud söhbətdə vidalaşma mesajı seçin.\n\n• '{i} cleargoodbye``\n    Mövcud söhbətdə vidalaşağı silmək.\n\n• `{i} getgoodbye``\n    Mövcud söhbətdə videokabin mesajı alın.\n\n• `{i} -də təşəkkür edirəm / off``\n    Qruplarınızda 100 * X sayəsində bir üzvü vuraraq təşəkkür edirəm Etiket göndərin."
+help_greetings: "-\n\n───- alqışlayır ───-\n• `{i} Setwaydous * mesaj / mesaja cavab>`\n    Mövcud söhbətdə xoş mesaj seçin.\n\n• `{i} Clearwelwelwely`\n    Mövcud söhbətdə xoş gəlmisiniz.\n\n• `{i} getwelcome`\n    Mövcud söhbətdə xoş mesaj alın.\n\n───- Xeyirxələr ───-\n• `{i} setgoodbye <mesaj / mesaja cavab>`\n    Mövcud söhbətdə vidalaşma mesajı seçin.\n\n• '{i} cleargoodbye``\n    Mövcud söhbətdə vidalaşağı silmək.\n\n• `{i} getgoodbye``\n    Mövcud söhbətdə videokabin mesajı alın.\n\n• `{i} -də təşəkkür edirəm / off``\n    Qruplarınızda 100 * X sayəsində bir üzvü vuraraq təşəkkür edirəm Etiket göndərin."
 help_stickertools: "-\n\n• `{i} məhv <cizgi stikerinə cavab>`\n    Etiketi məhv etmək.\n\n• `{i} kiçik <mediaya cavab>`\n    Kiçik etiketlər yaratmaq.\n\n• `{i} kang <Image / Etiketə cavab>`\n    Kang Etiket (paketinizə əlavə edin).\n\n• `{i} paketkang <paket adı>`\n    Kang tam etiket dəsti (xüsusi adı ilə).\n\n• `{i} dəyirmi <hər hansı bir mediaya cavab>`\n    Dəyirmi etiket çıxarmaq."
 help_locks: "-\n\n• `{i} kilid <msgs / media / stiker / gif / oyun / anketlər / Dəvətlər / Dəvət / Pin / ChangeInfo>`\n    İstifadə olunmuş qrupda istifadə olunan qəbulu kilidləyin.\n\n• `{i} kilidini açmaq <MSGS / Media / Sticker / GIF / Oyun / Anketlər / Dəvət / Dəvət / Pin / ChangeInfo>`\n    İstifadə olunmuş qrupda istifadə olunan qəbulu kilidini açın."
 pmbot_5: "Zəhmət olmasa onu açmaq üçün kiməsə cavab verin."

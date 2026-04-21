@@ -495,7 +495,7 @@ fsh_1: "**Lista de arquivos armazenados.:**"
 fsh_2: "**O arquivo foi armazenado!**\n\n**Link compartilhável:** {}"
 fsh_3: "`Responda a uma mensagem para criar um link compartilhável!`"
 fsh_4: "**Nenhum arquivo armazenado!**"
-#------------------------- assistant --------------------------#
+#────────────────────────- assistant ────────────────────────--#
 
 ast_1: "Escolha qual API você deseja definir."
 ast_2: "**remove.bg API**\nInsira sua chave de API de remove.bg.\n\nUse /cancel para encerrar a operação."
@@ -531,7 +531,7 @@ pmbot_5: "Por favor, responda a alguém para Desbani-lo."
 pmbot_6: "O usuário nunca foi banido!"
 pmbot_7: "`Parabéns! Você foi desbanido.`"
 
-#-------------------------- VcBot ------------------------------- #
+#────────────────────────-- VcBot ──────────────────────────────- #
 
 vcbot_1: "`Saiu do chat de voz.`"
 vcbot_2: "**ERRO:**\n{}"
@@ -610,7 +610,7 @@ help_calculator: "-\n\n• `{i} calc` - calculadora em linha"
 help_notes: "-\n\n• `{i} AddNote <dordm> <Responder a uma mensagem>`\n    Adicione nota no bate -papo usado com a mensagem respondida e a palavra escolhida.\n\n• `{i} Remnote <Word>`\n    Remova a nota do bate -papo usado.\n\n• `{i} listnote`\n    Liste todas as notas.\n\n• Usar :\n   Defina notas no grupo para que todos possam usá -lo.\n   Digite `#(palavra -chave nota)` para obtê -la"
 help_qrcode: "-\n\n• `{i} qrcode <text/responda ao texto>`\n   `Faz o Qrcode of Text`\n\n• `{i} addqr <Responder Image> <sext>`\n   `Faz QR do texto e adicione -o à imagem.\n\n• `{i} qrdecode <Responder a qrcode>`\n   `Decodifica o qrcode.`"
 help_tag: "-\n\n• `{i} tagall`\n    Tag Top 100 membros do bate -papo.\n\n• `{i} tagadMins`\n    Marque os administradores desse bate -papo.\n\n• `{i} Togowner`\n    Proprietário da tag daquele bate -papo\n\n• `{i} tagbots`\n    Tag Bots desse bate -papo.\n\n• `{i} tagrec`\n    Tag recentemente membros ativos.\n\n• `{i} Tagon`\n    Tag os membros on -line (só trabalhe se privacidade).\n\n• `{i} Tagoff`\n    Tag os membros offline (trabalhe apenas se privacidade)."
-help_greetings: "-\n\n---- acidentes ----\n• `{i} setWelcome <message/responda à mensagem>`\n    Defina a mensagem de boas -vindas no bate -papo atual.\n\n• `{i} ClearWelcome`\n    Exclua as boas -vindas no bate -papo atual.\n\n• `{i} getWelcome`\n    Obtenha a mensagem de boas -vindas no bate -papo atual.\n\n---- Adeus ----\n• `{i} setGoodbye <mensagem/resposta a mensagem>`\n    Defina a mensagem de adeus no bate -papo atual.\n\n• `{i} cleargoodbye`\n    Exclua o adeus no bate -papo atual.\n\n• `{i} getgoodbye`\n    Obtenha a mensagem de adeus no bate -papo atual.\n\n• `{i} agradecimentos on/off`\n    Envie um adesivo de agradecimento ao acertar uma contagem de membros de 100*x em seus grupos."
+help_greetings: "-\n\n───- acidentes ───-\n• `{i} setWelcome <message/responda à mensagem>`\n    Defina a mensagem de boas -vindas no bate -papo atual.\n\n• `{i} ClearWelcome`\n    Exclua as boas -vindas no bate -papo atual.\n\n• `{i} getWelcome`\n    Obtenha a mensagem de boas -vindas no bate -papo atual.\n\n───- Adeus ───-\n• `{i} setGoodbye <mensagem/resposta a mensagem>`\n    Defina a mensagem de adeus no bate -papo atual.\n\n• `{i} cleargoodbye`\n    Exclua o adeus no bate -papo atual.\n\n• `{i} getgoodbye`\n    Obtenha a mensagem de adeus no bate -papo atual.\n\n• `{i} agradecimentos on/off`\n    Envie um adesivo de agradecimento ao acertar uma contagem de membros de 100*x em seus grupos."
 help_stickertools: "-\n\n• `{i} Destroy <Responder ao adesivo animado>`\n    Para destruir o adesivo.\n\n• `{i} minúsculo <resposta à mídia>`\n    Para criar pequenos adesivos.\n\n• `{i} kang <resposta a imagem/adesivo>`\n    Kang o adesivo (adicione ao seu pacote).\n\n• `{i} packkang <nome da embalagem>`\n    Kang o conjunto de adesivos completo (com nome personalizado).\n\n• `{i} rodada <Responder a qualquer mídia>`\n    Para extrair adesivo redondo."
 help_locks: "-\n\n• `{i} bloqueio <msgs/mídia/adesivo/gif/games/inline/polls/convites/pin/changeinfo>`\n    Bloqueie a configuração usada no grupo usado.\n\n• `{i} desbloqueio <msgs/mídia/adesivo/gif/games/inline/polls/convites/pin/changeinfo>`\n    Desbloqueie a configuração usada no grupo usado."
 help_polls: "-\n\n• `{i} enrida <mestion>;<pution>;<pution> `\n    Obtenha a pesquisa anônima com determinadas opções\n\n• `{i} enrida <mestion>;<pution>;<pution> |<type> `\n    Obtenha a pesquisa especificada com o tipo desejado!\n    O tipo deve ser algum dos `public`,` múltipla` ou `quiz`\n\n• `{i} enrida <mestion>;<pution>;<pution> |quiz_ <lormerno> `\n    Obtenha a pesquisa do teste onde a resposta é o número de opções que está correto"

@@ -189,7 +189,7 @@ async def system_vitals(e):
 
     res = (
         f"📊 **System Dashboard**\n"
-        f"---"
+        f"───"
         f"\n**CPU**   `{cpu_pct:>5.1f}%`  `{_bar(cpu_pct)}`"
         f"\n**RAM**   `{mem_pct:>5.1f}%`  `{_bar(mem_pct)}`"
         f"\n**Disk**  `{d_pct:>5.1f}%`  `{_bar(d_pct)}`"
@@ -208,7 +208,7 @@ async def system_info(e):
     un = platform.uname()
     text = (
         f"🖥️ **System Specifications**\n"
-        f"---"
+        f"───"
         f"\n**OS:** {un.system} {un.release}"
         f"\n**Arch:** `{un.machine}`"
         f"\n**Python:** `{platform.python_version()}`"

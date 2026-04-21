@@ -100,14 +100,14 @@ async def turbo_speedtest(ult):
 
         text = (
             f"**Network Statistics**\n"
-            f"---"
+            f"───"
             f"\n**Service Provider:** `{isp}`"
             f"\n**Assigned Node:** `{server}`"
-            f"\n---"
+            f"\n───"
             f"\n**Download:** `{down}`"
             f"\n**Upload:** `{up}`"
             f"\n**Latency:** `{ping}`"
-            f"\n---"
+            f"\n───"
             f"\n⚙️ `{HOSTED_ON}` | `{datetime.now().strftime('%H:%M %Z')}`"
         )
 

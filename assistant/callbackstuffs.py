@@ -32,10 +32,10 @@ except ImportError as e:
     LOGS.error(f"GDriveManager import failed: {e}")
     GDriveManager = None
 
-# --------------------------------------------------------------------#
+# ──────────────────────────────────────────────────────────────────--#
 telegraph = telegraph_client()
 GDrive = GDriveManager() if GDriveManager else None
-# --------------------------------------------------------------------#
+# ──────────────────────────────────────────────────────────────────--#
 
 def text_to_url(event):
     """function to get media url (with|without) Webpage"""
@@ -46,7 +46,7 @@ def text_to_url(event):
     return event.text
 
 
-# --------------------------------------------------------------------#
+# ──────────────────────────────────────────────────────────────────--#
 
 _buttons = {
     "otvars": {
@@ -1353,7 +1353,7 @@ async def process_verification(event):
     await event.answer("Identity recognized.", alert=True)
     await event.edit(
         f"**Verification Success**\n"
-        f"---\n"
+        f"───\n"
         f"User `{user_id}` recognized.\n\n"
         f"`Identity Updated`"
     )
@@ -1375,6 +1375,6 @@ async def process_captcha(event):
     await event.answer("Verification complete.", alert=True)
     await event.edit(
         f"**Verification Complete**\n"
-        f"---\n"
+        f"───\n"
         f"User `{user_id}` authorized."
     )

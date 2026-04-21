@@ -265,7 +265,7 @@ async def gdrive_stats(event):
     pct = data["percentage"]
 
     msg = "**📊 Google Drive Storage Stats**\n"
-    msg += "---"
+    msg += "───"
     msg += f"\n**Total Capacity:** `{total}`"
     msg += f"\n**Used Space:** `{used}`"
     msg += f"\n**Remaining:** `{free}`\n\n"

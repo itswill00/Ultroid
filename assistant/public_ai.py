@@ -16,9 +16,9 @@ from pyUltroid.fns.helper import inline_mention
 # Re-define OWNER_ID locally or use safely from udB
 OWNER_ID = udB.get_key("OWNER_ID")
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # ADMINISTRATIVE COMMANDS (Owner Only)
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(pattern="gift( (.*)|$)", owner=True)
 async def gift_tokens(event):
@@ -72,9 +72,9 @@ async def check_user_tokens(event):
     balance = Bank.get().get(str(uid), 0)
     await event.reply(f"`[Ultroid Bank] User {uid} has {balance:,} tokens.`")
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # PERSONA MANAGEMENT
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(pattern="setsystem( (.*)|$)", owner=True)
 async def set_ai_system(event):
@@ -100,9 +100,9 @@ async def reset_ai_system(event):
     udB.del_key("GROQ_SYSTEM_PROMPT")
     await event.reply("`[PERSONA] System Prompt reset to default.`")
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # USER COMMANDS
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(pattern="apply_ai$")
 async def apply_ai_gate(event):
@@ -153,9 +153,9 @@ async def public_ask(event):
     from pyUltroid.fns.ai_engine import run_ai_task
     await run_ai_task(event, query)
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # CALLBACK HANDLERS
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @callback(re.compile("ai_(app|rej)_(.*)"))
 async def ai_callback_handler(event):

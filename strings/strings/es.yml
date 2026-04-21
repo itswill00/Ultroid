@@ -490,7 +490,7 @@ fsh_1: "**Lista de archivos almacenados.:**"
 fsh_2: "**¡El archivo ha sido almacenado!**\n\n**Enlace para compartir:** {}"
 fsh_3: "`Responda a un mensaje para crear un vínculo para compartir!`"
 fsh_4: "**No hay archivos almacenados!**"
-#---------------------------------------------------#
+#───────────────────────────────────────────────────#
 
 # assisant
 ast_1: "Elija qué API desea configurar."
@@ -527,7 +527,7 @@ pmbot_5: "Por favor, responde a alguien para desbanearlo."
 pmbot_6: "El usuario nunca fue baneado!"
 pmbot_7: "`¡Felicitaciones! te han desbaneado.`"
 
-# -------------------------- VcBot ------------------------------- #
+# ────────────────────────-- VcBot ──────────────────────────────- #
 
 vcbot_1: "`Dejó el chat de voz.`"
 vcbot_2: "**ERROR:**\n{}"
@@ -607,7 +607,7 @@ help_calculator: "-\n\n• `{i} calc` - calculadora en línea"
 help_notes: "-\n\n• `{i} AddNote <Stor> <Responder a un mensaje>`\n    Agregue nota en el chat usado con mensaje respondido y palabra elegida.\n\n• `{i} Remnote <Sdity>`\n    Elimine la nota del chat usado.\n\n• `{i} listnote`\n    Enumere todas las notas.\n\n• Usar :\n   Establezca notas en el grupo para que todos puedan usarlo.\n   escriba `#(palabra clave de nota)` para obtenerlo"
 help_qrcode: "-\n\n• `{i} qrcode <text/respuesta al texto>`\n   `Hace QRCode de Text`\n\n• `{i} addqr <Imagen de respuesta> <Ext>`\n   `Hace QR de texto y agrégalo a la imagen.\n\n• `{i} qrdecode <respuesta a qrcode>`\n   `Decodifica el Ccode."
 help_tag: "-\n\n• `{i} tagall`\n    Etiqueta los 100 miembros del chat.\n\n• `{i} tagadmins`\n    Etiqueta administradores de ese chat.\n\n• `{i} TAGOWNER`\n    Propietario de la etiqueta de ese chat\n\n• `{i} tagbots`\n    Bots de etiqueta de ese chat.\n\n• `{i} tagRec`\n    Etiqueta miembros recientemente activos.\n\n• `{i} Tagon`\n    Etiquete a los miembros en línea (trabajen solo si la privacidad apagada).\n\n• `{i} Tagoff`\n    Etiquete miembros fuera de línea (trabajen solo si la privacidad desactivada)."
-help_greetings: "-\n\n---- bienvenido ----\n• `{i} setWelcome <mensaje/respuesta al mensaje>`\n    Establezca un mensaje de bienvenida en el chat actual.\n\n• `{i} ClearWelcome`\n    Elimine la bienvenida en el chat actual.\n\n• `{i} getWelcome`\n    Obtenga el mensaje de bienvenida en el chat actual.\n\n---- Adiós ----\n• `{i} setGoodbye <mensaje/respuesta al mensaje>`\n    Establezca el mensaje de despedida en el chat actual.\n\n• `{i} cleargoodbye`\n    Elimina el adiós en el chat actual.\n\n• `{i} getgoodbye`\n    Obtenga el mensaje de despedida en el chat actual.\n\n• `{i} agradecer a los miembros de agradecimiento/apagado\n    Envíe una pegatina de agradecimiento al alcanzar un recuento de miembros de 100*x en sus grupos."
+help_greetings: "-\n\n───- bienvenido ───-\n• `{i} setWelcome <mensaje/respuesta al mensaje>`\n    Establezca un mensaje de bienvenida en el chat actual.\n\n• `{i} ClearWelcome`\n    Elimine la bienvenida en el chat actual.\n\n• `{i} getWelcome`\n    Obtenga el mensaje de bienvenida en el chat actual.\n\n───- Adiós ───-\n• `{i} setGoodbye <mensaje/respuesta al mensaje>`\n    Establezca el mensaje de despedida en el chat actual.\n\n• `{i} cleargoodbye`\n    Elimina el adiós en el chat actual.\n\n• `{i} getgoodbye`\n    Obtenga el mensaje de despedida en el chat actual.\n\n• `{i} agradecer a los miembros de agradecimiento/apagado\n    Envíe una pegatina de agradecimiento al alcanzar un recuento de miembros de 100*x en sus grupos."
 help_stickertools: "-\n\n• `{i} destruir <respuesta a la etiqueta animada>`\n    Para destruir la pegatina.\n\n• `{i} Tiny <Respuesta a los medios>`\n    Para crear pequeñas pegatinas.\n\n• `{i} kang <respuesta a imagen/etiqueta>`\n    Kang la pegatina (agregue a su paquete).\n\n• `{i} Packkang <Nombre de paquete>`\n    Kang el conjunto completo de etiquetas (con nombre personalizado).\n\n• `{i} redondo <respuesta a cualquier medio>`\n    Extraer pegatina redonda."
 help_locks: "-\n\n• `{i} bloquear <msgs/media/sticker/gif/games/inline/encuests/invites/pin/changeInfo>`\n    Bloquee la configuración usada en el grupo usado.\n\n• `{i} desbloquear <msgs/media/sticker/gif/games/inline/encuests/invites/pin/changeInfo>`\n    Desbloquee la configuración usada en el grupo usado."
 help_polls: "-\n\n• `{i} encuesta <Caguardia>;<opción>;<Opción> `\n    Obtenga la encuesta anónima con opciones dadas\n\n• `{i} encuesta <Caguardia>;<opción>;<opción> |<prote> `\n    ¡Obtenga la encuesta especificada con el tipo deseado!\n    El tipo debería ser cualquiera de los `público`,` múltiples 'o' Quiz`\n\n• `{i} encuesta <Caguardia>;<opción>;<opción> |QUIZ_ <SpantseNo> `\n    Obtenga la encuesta de cuestionario donde responde es el número de opciones que es correcta"

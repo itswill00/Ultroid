@@ -76,9 +76,9 @@ async def _init_bot_id_cache():
 
 LOGS.info("Loading Universal Media Downloader Service (Interactive Mode)...")
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # HELPERS
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 async def show_dl_prompt(event, url, info=None):
     """Sends format selection choice."""
@@ -153,7 +153,7 @@ async def dler_process(event, url, fmt):
     job_id = str(uuid.uuid4())[:8]
     _ult_cache["job_owners"][job_id] = event.sender_id
 
-    # --- Progress Hooks ---
+    # ─── Progress Hooks ───
     loop = asyncio.get_running_loop()
     last_update = [0]
     cancel_btn = [Button.inline("❌ Cancel", data=f"cancel_dl|{job_id}")]
@@ -179,7 +179,7 @@ async def dler_process(event, url, fmt):
                     except Exception:
                         pass
 
-    # --- Resource Governance & Download ---
+    # ─── Resource Governance & Download ───
     is_admin_or_sudo = event.sender_id in owner_and_sudos()
 
     try:
@@ -231,7 +231,7 @@ async def dler_process(event, url, fmt):
 
         caption = (
             f"**[ {source} | {fmt.upper()} ]**\n"
-            f"---"
+            f"───"
             f"\n👤 **Uploader:** [{uploader}]({uploader_url})"
             f"\n📄 **Title:** `{title}`"
             f"\n⏱️ **Duration:** `{duration}s`"
@@ -239,7 +239,7 @@ async def dler_process(event, url, fmt):
             f"\n🪄 **Powered by Ultroid**"
         )
 
-        # --- Upload Progress Hooks ---
+        # ─── Upload Progress Hooks ───
         # IMPORTANT: Two separate hooks are needed to avoid the double-callback
         # bottleneck. Calling event.edit() inside the FastTelethon upload loop
         # blocks the asyncio event loop per-chunk, severely throttling throughput.
@@ -349,9 +349,9 @@ async def dler_process(event, url, fmt):
         _ult_cache["job_owners"].pop(job_id, None)
         shutil.rmtree(f"downloads/{job_id}", ignore_errors=True)
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # TOGGLE COMMAND
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(pattern="dlservice( (on|off)|$)", func=lambda e: e.is_group)
 async def toggle_dl_service(event):
@@ -375,9 +375,9 @@ async def toggle_dl_service(event):
             DisabledDL.add(chat_id)
         await event.reply("`[DL SERVICE] Automatic media downloader disabled for this group.`")
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # MANUAL COMMANDS
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(pattern="(dl|yta|ytv)( (.*)|$)", public=True)
 async def manual_downloader(event):
@@ -420,9 +420,9 @@ async def manual_downloader(event):
             await status.delete()
             await show_dl_prompt(event, url)
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # AUTOMATIC LISTENER
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @asst_cmd(incoming=True, func=lambda e: e.is_group and not (e.text and e.text.startswith("/")), public=True)
 async def auto_media_downloader(event):
@@ -452,9 +452,9 @@ async def auto_media_downloader(event):
     if match:
         await show_dl_prompt(event, match.group(0))
 
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 # CALLBACK HANDLERS
-# --------------------------------------------------------------------------
+# ────────────────────────────────────────────────────────────────────────--
 
 @callback(re.compile(b"get_dl\\|(1080|720|480|video|audio)\\|(.*)"))
 async def process_media_selection(event):

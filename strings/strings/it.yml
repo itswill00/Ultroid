@@ -182,7 +182,7 @@ wrd_1: "**Word** - `{}`\n\n**Meanings** - \n"
 wrd_2: "**Word** - `{}`\n\n**Synonyms** - \n"
 wrd_3: "**Word** - `{}`\n\n**Antonyms** - \n"
 
-# ---------------------------------------------------#
+# ───────────────────────────────────────────────────#
 
 # assisant
 ast_1: "Scegli quale API desideri impostare."
@@ -341,7 +341,7 @@ youtube_4: "`Dai un link video diretto a scaricare`"
 help_profile: "-\n\n• `{i} setName <nome // cognome>`\n    Cambia il nome del tuo profilo.\n\n• `{i} setBio <bio>`\n    Modifica la biografia del tuo profilo.\n\n• `{i} setPic <risposta a pic>`\n    Cambia la tua foto del profilo.\n\n• `{i} delpfp <n> (opzionale)`\n    Elimina una foto del profilo, se non viene fornito valore, altrimenti elimina n numero di foto.\n\n• `{i} poto <username>`\n    Carica la foto di chat/utente se disponibile."
 vcbot_17: "`Rispondi a MSG dell'utente o aggiungi il suo nome utente ...`"
 audiotools_2: "Scaricato correttamente, ora convertiti in voce"
-help_greetings: "-\n\n---- accoglie ----\n• `{i} setwelcome <messaggio/risposta al messaggio>`\n    Imposta il messaggio di benvenuto nella chat corrente.\n\n• `{i} clearWelcome`\n    Elimina l'accoglienza nella chat corrente.\n\n• `{i} getwelcome`\n    Ottieni il messaggio di benvenuto nella chat corrente.\n\n---- Arrivederci ----\n• `{i} setGoodBye <Messaggio/Rispondi al messaggio>`\n    Imposta il messaggio di addio nella chat corrente.\n\n• `{i} clearGoodBye`\n    Elimina l'addio nella chat corrente.\n\n• `{i} getGoodBye`\n    Ottieni il messaggio di addio nella chat corrente.\n\n• `{i} Grazie a/off`\n    Invia un adesivo di ringraziamento per colpire un numero di membri di 100*X nei tuoi gruppi."
+help_greetings: "-\n\n───- accoglie ───-\n• `{i} setwelcome <messaggio/risposta al messaggio>`\n    Imposta il messaggio di benvenuto nella chat corrente.\n\n• `{i} clearWelcome`\n    Elimina l'accoglienza nella chat corrente.\n\n• `{i} getwelcome`\n    Ottieni il messaggio di benvenuto nella chat corrente.\n\n───- Arrivederci ───-\n• `{i} setGoodBye <Messaggio/Rispondi al messaggio>`\n    Imposta il messaggio di addio nella chat corrente.\n\n• `{i} clearGoodBye`\n    Elimina l'addio nella chat corrente.\n\n• `{i} getGoodBye`\n    Ottieni il messaggio di addio nella chat corrente.\n\n• `{i} Grazie a/off`\n    Invia un adesivo di ringraziamento per colpire un numero di membri di 100*X nei tuoi gruppi."
 unban_1: "`Rispondi a un utente o dai nome utente per unkinglo!`"
 ban_1: "`Rispondi a un utente o fai nome utente per vietarlo!`"
 help_6: "••Chat vocale"

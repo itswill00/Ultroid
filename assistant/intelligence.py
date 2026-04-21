@@ -39,7 +39,7 @@ async def assistant_translate(event):
 
         text = (
             f"**Translation**\n"
-            f"---\n"
+            f"───\n"
             f"**Source ({result.src}):** `{text_to_tr}`\n"
             f"**Result ({result.dest}):** `{result.text}`"
         )
@@ -78,7 +78,7 @@ async def assistant_ask_ai(event):
         )
 
         response = completion.choices[0].message.content
-        header = "**AI Response**\n---\n"
+        header = "**AI Response**\n───\n"
 
         if len(response) > 4000:
             with open("response.txt", "w") as f:

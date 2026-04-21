@@ -179,7 +179,7 @@ async def asst_help(event):
         )
         buttons = [[Button.inline("About Owner 👤", data="ownerinfo")]]
 
-    text = f"{header}\n---\n{content}"
+    text = f"{header}\n───\n{content}"
     await event.reply(text, buttons=buttons)
 
 
