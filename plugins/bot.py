@@ -88,98 +88,63 @@ in_alive = "{}\n\n• **Version** : <code>{}</code>\n• **Core** : <code>{}</co
 
 @callback("alive")
 async def alive(event):
-    text = f"Ultroid Userbot\n\n- Version: {ultroid_version}\n- Core: {UltVer}\n- Telethon: {__version__}"
+    import psutil
+    cpu = psutil.cpu_percent()
+    mem = psutil.virtual_memory().percent
+    text = f"📊 Server Stats 📊\n\n💻 CPU: {cpu}%\n🧠 RAM: {mem}%\n\nUltroid v{ultroid_version}"
     await event.answer(text, alert=True)
 
 
-@ultroid_cmd(
-    pattern="alive( (.*)|$)",
-)
+@ultroid_cmd(pattern="alive( (.*)|$)")
 async def lol(ult):
-    match = ult.pattern_match.group(1).strip()
-    inline = None
-    if match in ["inline", "i"]:
-        try:
-            res = await ult.client.inline_query(asst.me.username, "alive")
-            return await res[0].click(ult.chat_id)
-        except BotMethodInvalidError:
-            pass
-        except BaseException as er:
-            LOGS.exception(er)
-        inline = True
-    pic = udB.get_key("ALIVE_PIC")
+    """Ultra-Premium Alive Command"""
+    xx = await ult.eor("`Checking system status...`建立")
+    uptime = time_formatter((time.time() - start_time) * 1000)
+    pic = udB.get_key("ALIVE_PIC") or ULTPIC()
     if isinstance(pic, list):
         pic = choice(pic)
-    uptime = time_formatter((time.time() - start_time) * 1000)
-    header = udB.get_key("ALIVE_TEXT") or get_string("bot_1")
-    y = Repo().active_branch
-    xx = Repo().remotes[0].config_reader.get("url")
-    rep = xx.replace(".git", f"/tree/{y}")
-    kk = f" `[{y}]({rep})` "
-    if inline:
-        kk = f"<a href={rep}>{y}</a>"
-        parse = "html"
-        als = in_alive.format(
-            header,
-            f"{ultroid_version} [{HOSTED_ON}]",
-            UltVer,
-            pyver(),
-            uptime,
-            kk,
+    
+    # System Data
+    branch = Repo().active_branch
+    rev_url = Repo().remotes[0].config_reader.get("url").replace(".git", f"/tree/{branch}")
+    header = udB.get_key("ALIVE_TEXT") or "<b>Ultroid Userbot</b>"
+    
+    # Premium HTML Template
+    als = f"{header}\n\n"
+    als += f"👤 <b>Owner:</b> <a href='tg://user?id={ult.sender_id}'>{OWNER_NAME}</a>\n"
+    als += f"⚙️ <b>Engine:</b> <code>v{ultroid_version}</code>\n"
+    als += f"🛠 <b>Core:</b> <code>{UltVer}</code>\n"
+    als += f"🐍 <b>Python:</b> <code>{pyver()}</code>\n"
+    als += f"⏳ <b>Uptime:</b> <code>{uptime}</code>\n"
+    als += f"🎋 <b>Branch:</b> <a href='{rev_url}'>[{branch}]</a>\n\n"
+    als += f"<i>System is running smoothly on {HOSTED_ON}.</i>"
+
+    buttons = [
+        [
+            Button.inline("Ping", data="pkng"),
+            Button.inline("Stats", data="alive"),
+        ],
+        [
+            Button.inline("Help Menu", data="open"),
+            Button.url("Support", url="https://t.me/ultroid_next")
+        ],
+        [Button.inline("✕ Close", data="close")]
+    ]
+
+    try:
+        await asst.send_file(
+            ult.chat_id,
+            pic,
+            caption=als,
+            parse_mode="html",
+            buttons=buttons,
+            reply_to=ult.reply_to_msg_id
         )
+        await xx.delete()
+    except Exception as e:
+        LOGS.exception(e)
+        await xx.edit(f"<b>Error:</b> <code>{e}</code>", parse_mode="html")
 
-        if _e := udB.get_key("ALIVE_EMOJI"):
-            als = als.replace("🌀", _e)
-    else:
-        parse = "md"
-        als = (get_string("alive_1")).format(
-            header,
-            OWNER_NAME,
-            f"{ultroid_version} [{HOSTED_ON}]",
-            UltVer,
-            uptime,
-            pyver(),
-            __version__,
-            kk,
-        )
-
-        if a := udB.get_key("ALIVE_EMOJI"):
-            als = als.replace("✵", a)
-    if pic:
-        try:
-            await ult.reply(
-                als,
-                file=pic,
-                parse_mode=parse,
-                link_preview=False,
-                buttons=buttons if inline else None,
-            )
-            return await ult.try_delete()
-        except ChatSendMediaForbiddenError:
-            pass
-        except BaseException as er:
-            LOGS.exception(er)
-            try:
-                await ult.reply(file=pic)
-                await ult.reply(
-                    als,
-                    parse_mode=parse,
-                    buttons=buttons if inline else None,
-                    link_preview=False,
-                )
-                return await ult.try_delete()
-            except BaseException as er:
-                LOGS.exception(er)
-    await eor(
-        ult,
-        als,
-        parse_mode=parse,
-        link_preview=False,
-        buttons=buttons if inline else None,
-    )
-
-
-from pyUltroid.fns.helper import technical_ui
 
 
 @ultroid_cmd(pattern="ping$", chats=[], type=["official", "assistant"])
