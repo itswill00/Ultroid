@@ -5,7 +5,7 @@
 <h1 align="center">Ultroid</h1>
 
 <p align="center">
-  <b>Userbot Telegram yang simpel, stabil, dan bisa diandalkan.</b>
+  <b>A simple, stable, and reliable Telegram Userbot.</b>
 </p>
 
 <p align="center">
@@ -16,11 +16,11 @@
 
 ---
 
-### Apa itu Ultroid?
-Ultroid adalah asisten pribadi untuk akun Telegram Anda. Fokus utama kami adalah kecepatan dan kemudahan penggunaan. Anda bisa menambah fitur baru melalui addon tanpa harus mengutak-atik kode utama.
+### What is Ultroid?
+Ultroid is a personal assistant for your Telegram account. We focus on speed and ease of use, allowing you to extend features through addons without touching the core code.
 
-### Cara Inisialisasi Lingkungan
-Pilih metode yang paling sesuai dengan host Anda:
+### Environment Initialization
+Choose the method that best fits your host:
 
 **Remote Server / Linux Host**
 ```bash
@@ -35,41 +35,41 @@ git clone https://github.com/itswill00/Ultroid && cd Ultroid
 ./setup.sh
 ```
 
-**Container (Docker)**
+**Update & Maintenance**
+Keep your bot and configuration up-to-date:
 ```bash
-# Pastikan variabel di .env sudah dikonfigurasi
-docker-compose up -d
+bash sync.sh
 ```
 
 ---
 
-### Konfigurasi Dasar
-Pastikan variabel berikut sudah terisi di `.env` Anda:
+### Basic Configuration
+Ensure the following variables are set in your `.env` file:
 
-| Variabel | Kegunaan |
+| Variable | Usage |
 | :--- | :--- |
-| `API_ID` | API ID dari my.telegram.org |
-| `API_HASH` | API Hash dari my.telegram.org |
-| `SESSION` | String sesi Telethon |
-| `BOT_TOKEN` | Token bot untuk fitur asisten |
-| `REDIS_URI` | URL database Redis |
+| `API_ID` | API ID from my.telegram.org |
+| `API_HASH` | API Hash from my.telegram.org |
+| `SESSION` | Telethon Session String |
+| `BOT_TOKEN` | Assistant bot token for inline features |
+| `REDIS_URI` | Redis database URL |
 
 ---
 
-### Fitur Unggulan
-- **Manajemen Grup:** Kick, ban, mute, dan pembersihan pesan otomatis.
-- **AI Integration:** Chatting dengan Groq atau Gemini langsung dari kolom chat.
-- **Media Tools:** Edit gambar, konversi audio, dan download video dari berbagai platform.
-- **Addon Manager:** Pasang fitur tambahan cukup dengan perintah `.install`.
-- **Log Activity:** Pantau semua aktivitas bot melalui grup log khusus.
+### Key Features
+- **Group Management:** Automated kick, ban, mute, and message purging.
+- **AI Integration:** Chat with Groq or Gemini directly from your chat bar.
+- **Media Tools:** Edit images, convert audio, and download videos from various platforms.
+- **Addon Manager:** Install community features instantly with the `.install` command.
+- **Resource Optimized:** Intelligent "Lite Mode" for low-RAM devices and older phones.
 
 ---
 
-### Kontribusi & Support
-Punya ide atau menemukan bug? Silakan buka **Issue** atau kirim **Pull Request**.
+### Contribution & Support
+Have an idea or found a bug? Feel free to open an **Issue** or submit a **Pull Request**.
 
 *   **Telegram:** [@ultroid_next](https://t.me/ultroid_next)
 *   **Maintenance:** [itswill00](https://github.com/itswill00)
 
 ---
-<p align="center">Lisensi: AGPL-3.0</p>
+<p align="center">License: AGPL-3.0</p>
