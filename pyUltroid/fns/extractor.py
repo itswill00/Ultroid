@@ -528,8 +528,8 @@ class MediaExtractor:
         return info
 
     def _facebook_scrape(self, url):
-        """God Mode Zero-Cookie Facebook scraper with ultra-cunning and aggressive strategies."""
-        LOGS.info(f"Extractor | Facebook Ultra-Cunning Mode: {url}")
+        """God Mode Zero-Cookie Facebook scraper with Nuclear Hijacking strategies."""
+        LOGS.info(f"Extractor | Facebook NUCLEAR Mode: {url}")
         try:
             import cloudscraper
             from urllib.parse import quote, unquote, urlparse, parse_qs
@@ -537,131 +537,102 @@ class MediaExtractor:
             
             # --- PHASE -1: Cookie Integration ---
             if hasattr(self, "_cookie_file") and self._cookie_file:
-                LOGS.info("Extractor | FB Phase -1: Injecting cookies.txt into scraper...")
                 try:
                     from http.cookiejar import MozillaCookieJar
                     cj = MozillaCookieJar(self._cookie_file)
                     cj.load(ignore_discard=True, ignore_expires=True)
                     scraper.cookies.update(cj)
-                except Exception as ce:
-                    LOGS.warning(f"Extractor | FB Cookie injection failed: {ce}")
-
-            # --- PHASE 0: User-Agent Rotation (Opera Mini) ---
-            OPERA_MINI = "Opera/9.80 (J2ME/MIDP; Opera Mini/9.80 (S60; SymbOS; Opera Mobi/23.348; U; en) Presto/2.5.25 Version/10.54"
-            headers = {
-                "User-Agent": OPERA_MINI,
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            }
-            
-            try:
-                resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
-                resolved_url = resp.url
-                html_text = resp.text
-            except Exception as e:
-                LOGS.warning(f"Extractor | FB Resolution failed: {e}")
-                resolved_url = url
-                html_text = ""
+                except: pass
 
             def unescape_fb(text):
-                return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
+                try:
+                    return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
+                except: return text.replace(r"\/", "/")
 
-            # --- CUNNING STRATEGY 1: Brute-Force Regex Vacuum ---
-            def vacuum(text):
-                for p in [
-                    r'<meta\s+property="og:video[:url]*"\s+content="(.*?)"',
-                    r'"progressive_url"\s*:\s*"(.*?)"', r'"hd_src"\s*:\s*"(.*?)"',
-                    r'"sd_src"\s*:\s*"(.*?)"', r'"video_url"\s*:\s*"(.*?)"',
-                    r'"scaled_image_url"\s*:\s*"(.*?)"', r'"large_image_url"\s*:\s*"(.*?)"',
-                    r'<meta\s+property="og:image"\s+content="(.*?)"'
-                ]:
+            # --- CUNNING STRATEGY 1: Nuclear Regex Vacuum ---
+            def nuclear_vacuum(text):
+                text = unescape_fb(text)
+                # 1. Look for HD Video (The Gold Standard)
+                for p in [r'"playable_url_quality_hd"\s*:\s*"(https?://[^"]+)"', r'"hd_src"\s*:\s*"(https?://[^"]+)"', r'hd_src_no_ratelimit:"(https?://[^"]+)"']:
                     m = re.search(p, text)
-                    if m:
-                        link = unescape_fb(m.group(1))
-                        if "fbcdn" in link or "scontent" in link:
-                            ext = "mp4" if (".mp4" in link or "video" in p) else "jpg"
-                            return {"url": link, "title": f"Facebook {'Video' if ext=='mp4' else 'Photo'}", "ext": ext, "uploader": "Facebook", "extractor": "fb_vacuum"}
+                    if m: return {"url": m.group(1), "ext": "mp4", "extractor": "fb_nuclear_hd"}
+                # 2. Look for SD/Progressive Video
+                for p in [r'"playable_url"\s*:\s*"(https?://[^"]+)"', r'"sd_src"\s*:\s*"(https?://[^"]+)"', r'"progressive_url"\s*:\s*"(https?://[^"]+)"', r'video_url":"(https?://[^"]+)"']:
+                    m = re.search(p, text)
+                    if m: return {"url": m.group(1), "ext": "mp4", "extractor": "fb_nuclear_sd"}
+                # 3. Look for High-Res Photos
+                for p in [r'"large_image_url"\s*:\s*"(https?://[^"]+)"', r'"scaled_image_url"\s*:\s*"(https?://[^"]+)"', r'og:image"\s+content="(https?://[^"]+)"']:
+                    m = re.search(p, text)
+                    if m: return {"url": m.group(1), "ext": "jpg", "extractor": "fb_nuclear_img"}
                 return None
 
-            res = vacuum(html_text)
+            # --- CUNNING STRATEGY 2: Publer.io Hijack (The Professional Bypass) ---
+            LOGS.info("Extractor | Cunning Strategy 2: Publer Hijack...")
+            try:
+                p_api = "https://publer.io/api/v1/tools/media-downloader"
+                p_resp = scraper.post(p_api, json={"url": url, "link": url}, timeout=12)
+                if p_resp.status_code == 200:
+                    p_payload = p_resp.json().get("payload", [])
+                    for item in p_payload:
+                        path = item.get("path")
+                        if path:
+                            LOGS.info("Extractor | Cunning Strategy 2: SUCCESS!")
+                            return {"url": path, "title": "Facebook Media (Publer)", "ext": "mp4" if ".mp4" in path else "jpg", "extractor": "fb_publer"}
+            except Exception as e: LOGS.debug(f"Publer failed: {e}")
+
+            # --- CUNNING STRATEGY 3: SnapSave Hijack (The Liar Bypass) ---
+            LOGS.info("Extractor | Cunning Strategy 3: SnapSave Hijack...")
+            try:
+                ss_api = "https://snapsave.app/action.php?lang=en"
+                ss_resp = scraper.post(ss_api, data={"url": url}, headers={"Referer": "https://snapsave.app/"}, timeout=10)
+                if ss_resp.status_code == 200:
+                    res = nuclear_vacuum(ss_resp.text)
+                    if res: return res
+            except: pass
+
+            # --- PHASE 0: Opera Mini Probing ---
+            OPERA_MINI = "Opera/9.80 (J2ME/MIDP; Opera Mini/9.80 (S60; SymbOS; Opera Mobi/23.348; U; en) Presto/2.5.25 Version/10.54"
+            try:
+                resp = scraper.get(url, headers={"User-Agent": OPERA_MINI}, allow_redirects=True, timeout=12)
+                resolved_url = resp.url
+                html_text = resp.text
+            except:
+                resolved_url, html_text = url, ""
+
+            res = nuclear_vacuum(html_text)
             if res: return res
 
             # --- PHASE 1: Parameter Hijacking ---
             search_url = unquote(resolved_url)
             content_id = None
             user_id = None
-            
-            # Precise regex to avoid 'story_fb[id]' collision
             m_story = re.search(r"story_fbid=([0-9]+)", search_url)
             m_user = re.search(r"[?&]id=([0-9]+)", search_url)
-            
             if m_story: content_id = m_story.group(1)
             if m_user: user_id = m_user.group(1)
-
+            
             if not content_id:
-                id_patterns = [
-                    r"/posts/([0-9]+)", r"/videos/([0-9]+)", r"/reel/([0-9]+)", 
-                    r"fbid=([0-9]+)", r"/([0-9]{10,})", r"/share/[pv]/([a-zA-Z0-9_-]+)", 
-                    r"post_id=([0-9]+)"
-                ]
-                for p in id_patterns:
+                for p in [r"/posts/([0-9]+)", r"/videos/([0-9]+)", r"/reel/([0-9]+)", r"fbid=([0-9]+)", r"/([0-9]{10,})", r"post_id=([0-9]+)"]:
                     m = re.search(p, search_url)
-                    if m:
-                        content_id = m.group(1)
-                        break
+                    if m: content_id = m.group(1); break
 
-            # --- CUNNING STRATEGY 2: SnapSave Hijack (The "Liar" Strategy) ---
-            LOGS.info("Extractor | Cunning Strategy 2: SnapSave Hijack...")
-            try:
-                # SnapSave/Publer/FDown often have simple API endpoints we can mimic
-                ss_api = "https://snapsave.app/action.php?lang=en"
-                ss_resp = scraper.post(ss_api, data={"url": url}, headers={"Referer": "https://snapsave.app/"}, timeout=10)
-                if ss_resp.status_code == 200:
-                    # SnapSave usually returns encoded HTML; vacuum it
-                    res = vacuum(ss_resp.text)
-                    if res:
-                        LOGS.info("Extractor | Cunning Strategy 2: SUCCESS!")
-                        return res
-            except: pass
-
-            # --- CUNNING STRATEGY 3: Embed Backdoor Bypass ---
+            # --- CUNNING STRATEGY 4: Embed & mbasic Deep Crawl ---
             if content_id:
-                LOGS.info(f"Extractor | Cunning Strategy 3: Embed Backdoor ({content_id})")
-                targets = [
-                    f"https://www.facebook.com/plugins/post.php?href={quote(url)}",
-                    f"https://www.facebook.com/plugins/video.php?v={content_id}"
-                ]
-                if user_id:
-                    targets.append(f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}")
+                LOGS.info(f"Extractor | Cunning Strategy 4: Deep Crawl ({content_id})")
+                targets = [f"https://www.facebook.com/plugins/post.php?href={quote(url)}", f"https://www.facebook.com/plugins/video.php?v={content_id}"]
+                if user_id: targets.append(f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}")
+                else: targets.append(f"https://mbasic.facebook.com/{content_id}")
 
                 for target in targets:
-                    resp = scraper.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, timeout=10)
-                    res = vacuum(resp.text)
-                    if res:
-                        LOGS.info("Extractor | Cunning Strategy 3: SUCCESS!")
-                        return res
-
-            # Strategy B: Mobile Header Flip (mbasic)
-            LOGS.info("Extractor | FB Strategy B: Mobile Header Flip...")
-            if content_id and user_id:
-                m_target = f"https://mbasic.facebook.com/story.php?story_fbid={content_id}&id={user_id}"
-            elif content_id and content_id.isdigit():
-                m_target = f"https://mbasic.facebook.com/{content_id}"
-            else:
-                m_target = resolved_url.replace("www.facebook.com", "mbasic.facebook.com").replace("m.facebook.com", "mbasic.facebook.com")
-            
-            LOGS.info(f"Extractor | FB Strategy B: Targeting -> {m_target}")
-            resp = scraper.get(m_target, headers={"User-Agent": OPERA_MINI}, timeout=10)
-            
-            m_vid = re.search(r'href\s*=\s*"/video_redirect/\?src=(.*?)"', resp.text)
-            if m_vid:
-                LOGS.info("Extractor | FB Strategy B: SUCCESS! (Video)")
-                return {"url": unquote(unescape_fb(m_vid.group(1))), "title": "Facebook Video", "ext": "mp4", "uploader": "Facebook", "extractor": "fb_god_mode"}
-            
-            m_img = re.search(r'href\s*=\s*"/photo\.php\?fbid=([0-9]+).*?src=(.*?)[&"]', resp.text)
-            if m_img:
-                img_url = unquote(unescape_fb(m_img.group(2)))
-                LOGS.info("Extractor | FB Strategy B: SUCCESS! (Photo)")
-                return {"url": img_url, "title": "Facebook Photo", "ext": "jpg", "uploader": "Facebook", "extractor": "fb_god_mode"}
+                    try:
+                        resp = scraper.get(target, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, timeout=10)
+                        res = nuclear_vacuum(resp.text)
+                        if res: return res
+                        # Fallback for images in mbasic
+                        if "mbasic" in target:
+                            m_img = re.search(r'src="(https://scontent\..*?)"', resp.text)
+                            if m_img: return {"url": unescape_fb(m_img.group(1)), "ext": "jpg", "extractor": "fb_mbasic_fallback"}
+                    except: continue
 
             # --- PHASE 3: Wild Card Fallback ---
             return self._facebook_public_api(resolved_url)
