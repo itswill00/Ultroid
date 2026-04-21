@@ -524,54 +524,93 @@ class MediaExtractor:
         return info
 
     def _facebook_scrape(self, url):
-        """Robust Facebook scraping for HD/SD video URLs with metadata."""
+        """Ultra-robust Facebook scraping for HD/SD videos."""
+        LOGS.info(f"Extractor | Facebook Scraping started: {url}")
         try:
             import cloudscraper
             import json
             scraper = cloudscraper.create_scraper()
+            
+            # Step 1: Normalization & Redirect Follow
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-                "Accept-Language": "en-US,en;q=0.5",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Referer": "https://www.facebook.com/",
             }
-            
-            # Follow redirects (especially for fb.watch / share)
+
+            # Use cookies if available
+            if self._cookie_file:
+                try:
+                    from http.cookiejar import MozillaCookieJar
+                    cj = MozillaCookieJar(self._cookie_file)
+                    cj.load(ignore_discard=True, ignore_expires=True)
+                    scraper.cookies.update(cj)
+                    LOGS.info("Extractor | Facebook: Cookies loaded from cookies.txt")
+                except Exception as e:
+                    LOGS.warning(f"Extractor | Facebook: Failed to load cookies: {e}")
+
+            # Follow initial redirect
             resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
-            html = resp.text
             final_url = resp.url
+            html_text = resp.text
             
+            # Normalize for scraping
+            content_id = None
+            id_match = re.search(r"(?:v|videos|reel|reels|story_fbid|posts|share/p)/([0-9A-Za-z_-]+)", final_url)
+            if id_match:
+                content_id = id_match.group(1)
+                # Try to access reel surface for better scraping
+                scrape_target = f"https://www.facebook.com/reel/{content_id}/"
+                resp = scraper.get(scrape_target, headers=headers, timeout=15)
+                html_text = resp.text
+            
+            if "/login" in resp.url:
+                LOGS.warning("Extractor | Facebook redirected to login page. Scraping might fail without fresh cookies.")
+
             def unescape_fb(text):
                 return text.replace(r"\/", "/").encode().decode('unicode-escape')
 
-            # Search for HD/SD URLs in script tags
-            hd_match = FB_HD_RE.search(html)
-            sd_match = FB_SD_RE.search(html)
-            
+            # Step 2: Multi-Pattern Extraction
             video_url = None
-            if hd_match:
-                video_url = unescape_fb(hd_match.group(1))
-            elif sd_match:
-                video_url = unescape_fb(sd_match.group(1))
-                
-            if not video_url:
-                # Secondary attempt via specific script JSON parsing
-                m = re.search(r'video_url":"(.*?)"', html)
-                if m: video_url = unescape_fb(m.group(1))
+            # Patterns from groupbot and others
+            patterns = [
+                FB_HD_RE, 
+                FB_SD_RE,
+                re.compile(r'"browser_native_hd_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"'),
+                re.compile(r'"browser_native_sd_url"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"'),
+                re.compile(r'video_url":"(.*?)"'),
+                re.compile(r'hd_src:"(.*?)"'),
+                re.compile(r'sd_src:"(.*?)"')
+            ]
+            
+            for pat in patterns:
+                match = pat.search(html_text)
+                if match:
+                    video_url = unescape_fb(match.group(1))
+                    if video_url: break
             
             if not video_url:
-                return {"error": "Facebook video URL not found in HTML"}
+                # Last resort: search for any large mp4 link in the HTML
+                m = re.search(r'https?://[^\s"\'\\]+?\.mp4[^\s"\'\\]*', html_text)
+                if m: video_url = unescape_fb(m.group(0))
+
+            if not video_url:
+                return {"error": "Facebook video URL not found. Session might be required."}
             
-            # Extract title / uploader
+            # Step 3: Metadata
             title = "Facebook Video"
-            title_match = re.search(r'<title.*?>(.*?)</title>', html)
+            title_match = re.search(r'<title.*?>(.*?)</title>', html_text)
             if title_match:
                 title = title_match.group(1).split(" | Facebook")[0]
-
+            
             return {
                 "url": video_url,
                 "title": title,
                 "ext": "mp4",
                 "uploader": "Facebook",
-                "extractor": "facebook_scraper"
+                "extractor": "facebook_scraper",
+                "cookies": "; ".join([f"{c.name}={c.value}" for c in scraper.cookies])
             }
         except Exception as e:
             return {"error": str(e)}
