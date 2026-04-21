@@ -141,7 +141,7 @@ if asst:
         nh_id = event.data_match.group(2).decode().strip("'").strip("b") # Ensure it's a clean string ID
         
         # Show loading
-        await event.answer("Sabar ya, lagi ambil halaman...", wheel=True)
+        await event.answer("Sabar ya, lagi ambil halaman...", alert=False)
         
         data = await fetch_nh_api(nh_id)
         if not data:
