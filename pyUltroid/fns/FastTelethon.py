@@ -176,22 +176,20 @@ class ParallelTransferrer:
     def _get_connection_count(file_size: int) -> int:
         """Scale connection count proportionally to file size.
 
-        Telegram allows up to 20 parallel upload senders per session.
+        Telegram allows up to 20-30 parallel upload senders per session for high-end IPs.
         Scaling too aggressively on small files wastes connection setup overhead.
         """
         if file_size <= 0:
             return 1
         mb = file_size / (1024 * 1024)
         if mb >= 100:
-            return 20
+            return 24  # Turbo mode for large files
         if mb >= 50:
-            return 15
-        if mb >= 20:
-            return 10
-        if mb >= 5:
-            return 5
-        # For small files (<5MB), 2 connections is enough — avoid wasting senders
-        return 2
+            return 16
+        if mb >= 10:
+            return 8
+        # For small files, 4 connections is a sweet spot for VPS-to-Telegram
+        return 4
 
     async def _init_download(
         self, connections: int, file: TypeLocation, part_count: int, part_size: int
@@ -296,11 +294,14 @@ class ParallelTransferrer:
         connection_count: Optional[int] = None,
     ) -> Tuple[int, int, bool]:
         connection_count = connection_count or self._get_connection_count(file_size)
+        # Fixed 512KB chunks for large files to maximize MTProto throughput
+        is_large = file_size > 10 * (1024 ** 2)
+        if part_size_kb is None and is_large:
+            part_size_kb = 512
         part_size = (part_size_kb or utils.get_appropriated_part_size(file_size)) * 1024
         part_count = (file_size + part_size - 1) // part_size
-        is_large = file_size > 10 * (1024 ** 2)
         await self._init_upload(connection_count, file_id, part_count, is_large)
-        return part_size, part_count, is_large
+        return int(part_size), part_count, is_large
 
     async def upload(self, part: bytes) -> None:
         await self.senders[self.upload_ticker].next(part)
