@@ -527,13 +527,11 @@ _NO_FLOOD_PRUNE_THRESHOLD = 80
 
 
 async def progress(current, total, event, start, type_of_ps, file_name=None, buttons=None):
-    """Universal progress bar with button support and flood protection."""
+    """Universal progress bar with modern UI and flood protection."""
     now = time.time()
     chat_id = event.chat_id
     msg_id = event.id
 
-    # Lazy pruning: only scan and evict when the dict grows large.
-    # Avoids O(n) scan on every call in normal operation.
     if len(No_Flood) > _NO_FLOOD_PRUNE_THRESHOLD:
         for c_id in list(No_Flood.keys()):
             for m_id in list(No_Flood[c_id].keys()):
@@ -555,19 +553,23 @@ async def progress(current, total, event, start, type_of_ps, file_name=None, but
     speed = current / diff if diff > 0 else 0
     eta = round((total - current) / speed) * 1000 if speed > 0 else 0
 
-    filled = math.floor(percentage / 5)
-    progress_str = f"`[{'●' * filled}{' ' * (20 - filled)}] {percentage:.2f}%`"
-
-    tmp = (
-        f"{progress_str}\n\n"
-        f"`{humanbytes(current)} of {humanbytes(total)}`\n\n"
-        f"`✦ Speed: {humanbytes(speed)}/s`\n\n"
-        f"`✦ ETA: {time_formatter(eta)}`"
-    )
-    caption = f"`✦ {type_of_ps}`\n\n"
+    # Modern High-Density Progress Bar
+    filled = math.floor(percentage / 10)
+    bar = "▰" * filled + "▱" * (10 - filled)
+    
+    ui_header = f"**[ {type_of_ps.upper()} ]**\n"
     if file_name:
-        caption += f"`File Name: {file_name}`\n\n"
-    await event.edit(caption + tmp, buttons=buttons)
+        ui_header += f"📄 `{file_name}`\n"
+    
+    ui_body = (
+        f"**Status:** `{bar} {percentage:.1f}%`\n"
+        f"**Processed:** `{humanbytes(current)}` of `{humanbytes(total)}`\n"
+        f"**Speed:** `{humanbytes(speed)}/s` | **ETA:** `{time_formatter(eta)}`"
+    )
+    
+    ui_footer = "\n`─── Powered by Ultroid ───`"
+    
+    await event.edit(ui_header + "───\n" + ui_body + ui_footer, buttons=buttons)
 
 
 # ------------------System\\Heroku stuff----------------

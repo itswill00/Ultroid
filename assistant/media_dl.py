@@ -106,6 +106,13 @@ async def show_dl_prompt(event, url, info=None):
         "🌐 Universal Media"
     )
 
+    header = f"**[ {source.upper()} | DOWNLOADER ]**"
+    body = (
+        f"───\n"
+        f"🔗 **URL:** `{url[:35]}...`" if len(url) > 35 else f"───\n🔗 **URL:** `{url}`"
+    )
+    footer = "\n`─── Select Download Format ───`"
+
     if "YouTube" in source or "NSFW" in source or "Universal" in source:
         buttons = [
             [
@@ -113,7 +120,10 @@ async def show_dl_prompt(event, url, info=None):
                 Button.inline("🎬 720p", data=f"get_dl|720|{msg_id}"),
                 Button.inline("🎬 480p", data=f"get_dl|480|{msg_id}")
             ],
-            [Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}"), Button.inline("🗑️ Dismiss", data="close_dl")]
+            [
+                Button.inline("🎵 Audio", data=f"get_dl|audio|{msg_id}"),
+                Button.inline("🗑️ Dismiss", data="close_dl")
+            ]
         ]
     else:
         buttons = [
@@ -126,7 +136,7 @@ async def show_dl_prompt(event, url, info=None):
 
     await asst.send_message(
         event.chat_id,
-        f"**[ {source} | Downloader ]**\nSelect download format:",
+        f"{header}\n{body}\n{footer}",
         buttons=buttons,
         reply_to=event.id
     )
