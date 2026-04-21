@@ -23,16 +23,49 @@ def decode_url(data):
     padding = '=' * (4 - len(data) % 4)
     return base64.urlsafe_b64decode(data + padding).decode()
 
-async def fetch_nh_api(id):
+async def fetch_nh_api(nh_id):
+    """Certainty Fetcher: API Proxy + Mirror Fallback"""
     try:
-        url = f"https://nhentai.net/api/gallery/{id}"
-        async with httpx.AsyncClient(timeout=15) as client:
-            proxy_url = f"https://api.codetabs.com/v1/proxy?quest={url}"
-            res = await client.get(proxy_url)
+        url = f"https://nhentai.net/api/gallery/{nh_id}"
+        # Use AllOrigins for better stability
+        proxy_url = f"https://api.allorigins.win/raw?url={url}"
+        
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            res = await client.get(proxy_url, headers={"User-Agent": "Mozilla/5.0"})
             if res.status_code == 200:
                 return res.json()
     except Exception as e:
-        LOGS.error(f"NHentai API Error: {e}")
+        LOGS.error(f"NH Detail API Proxy Error: {e}. Switching to mirror fallback...")
+
+    # Fallback: Scrape Mirror nhentai.xxx
+    try:
+        mirror_url = f"https://nhentai.xxx/g/{nh_id}/"
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            res = await client.get(mirror_url, headers={"User-Agent": "Mozilla/5.0"})
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, 'html.parser')
+                # Extract media_id from thumbnail URL or script
+                # On mirror, thumbs are often: https://t.nhentai.net/galleries/12345/thumb.jpg
+                img_tag = soup.find('div', id='thumbnail-container').find('img')
+                thumb_url = img_tag.get('data-src') or img_tag.get('src')
+                media_id = thumb_url.split('/')[-2]
+                
+                # Count pages
+                page_tags = soup.find_all('div', class_='thumb-container')
+                total_pages = len(page_tags)
+                
+                # Get Title
+                title_tag = soup.find('h1', class_='title')
+                title = title_tag.text.strip() if title_tag else f"NHentai {nh_id}"
+                
+                # Construct basic data structure expected by reader
+                return {
+                    "media_id": media_id,
+                    "images": {"pages": [{"t": "j"}] * total_pages}, # Assume jpg as default
+                    "title": {"pretty": title}
+                }
+    except Exception as e:
+        LOGS.error(f"NH Detail Mirror Fallback Error: {e}")
     return None
 
 async def fetch_latest_nh():
