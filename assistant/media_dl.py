@@ -106,12 +106,12 @@ async def show_dl_prompt(event, url, info=None):
         "🌐 Universal Media"
     )
 
-    header = f"**[ {source.upper()} | DOWNLOADER ]**"
+    header = f"**{source.upper()} DOWNLOADER**"
     body = (
         f"───\n"
         f"🔗 **URL:** `{url[:35]}...`" if len(url) > 35 else f"───\n🔗 **URL:** `{url}`"
     )
-    footer = "\n`─── Select Download Format ───`"
+    footer = "\n`─── Select Format ───`"
 
     if "YouTube" in source or "NSFW" in source or "Universal" in source:
         buttons = [

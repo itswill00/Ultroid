@@ -530,7 +530,7 @@ def technical_ui(body, header=None):
     """Zero-gimmick technical UI formatter."""
     res = ""
     if header:
-        res += f"**[ {header.upper()} ]**\n───\n"
+        res += f"**{header.upper()}**\n───\n"
     res += body
     return res
 
