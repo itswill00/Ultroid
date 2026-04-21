@@ -34,7 +34,7 @@ def main():
     if (
         udB.get_key("UPDATE_ON_RESTART")
         and os.path.exists(".git")
-        and ultroid_bot.run_in_loop(updater())
+        and ultroid_bot.run_in_loop(updater())[0]
     ):
         ultroid_bot.run_in_loop(bash("bash installer.sh"))
 

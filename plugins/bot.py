@@ -335,39 +335,38 @@ async def inline_alive(ult):
 
 @ultroid_cmd(pattern="update( (.*)|$)")
 async def _(e):
-    xx = await e.eor(get_string("upd_1"))
-    if e.pattern_match.group(1).strip() and (
-        "fast" in e.pattern_match.group(1).strip()
-        or "soft" in e.pattern_match.group(1).strip()
-    ):
-        await bash("git pull -f && pip3 install -r requirements.txt")
-        await bash("pip3 install -r requirements.txt --break-system-packages")
-        call_back()
-        await xx.edit(get_string("upd_7"))
-        os.execl(sys.executable, "python3", "-m", "pyUltroid")
-        # return
-    m = await updater()
-    branch = (Repo.init()).active_branch
-    if m:
-        x = await asst.send_file(
-            udB.get_key("LOG_CHANNEL"),
-            ULTPIC(),
-            caption="• **Update Available** •",
-            force_document=False,
-            buttons=Button.inline("Changelogs", data="changes"),
-        )
-        Link = x.message_link
-        await xx.edit(
-            f'<strong><a href="{Link}">[ChangeLogs]</a></strong>',
-            parse_mode="html",
-            link_preview=False,
-        )
-    else:
-        await xx.edit(
-            f'<code>Your BOT is </code><strong>up-to-date</strong><code> with </code><strong><a href="https://github.com/TeamUltroid/Ultroid/tree/{branch}">[{branch}]</a></strong>',
-            parse_mode="html",
-            link_preview=False,
-        )
+    """Update Ultroid with a minimalist UI"""
+    opt = e.pattern_match.group(1).strip()
+    if "now" in opt or "fast" in opt:
+        xx = await e.eor("`Pembaruan paksa dimulai...`")
+        await bash("git pull -f && pip3 install -r requirements.txt --break-system-packages")
+        await xx.edit("`Berhasil diperbarui! Merestart...`")
+        return os.execl(sys.executable, "python3", "-m", "pyUltroid")
+
+    xx = await e.eor("`Memeriksa pembaruan...`")
+    update_avail, changelog, _ = await updater()
+    
+    if not update_avail:
+        return await xx.edit(f"✅ **Ultroid kamu sudah versi terbaru.**", link_preview=False)
+
+    # Minimalist Changelog UI
+    msg = f"{changelog}\n\n**Apakah kamu ingin memperbarui sekarang?**"
+    buttons = [
+        [Button.inline("✅ Update Sekarang", data="do_update"), 
+         Button.inline("❌ Batal", data="cancel_update")]
+    ]
+    await xx.edit(msg, parse_mode="html", buttons=buttons, link_preview=False)
+
+@callback("do_update", owner=True)
+async def exec_update(event):
+    await event.edit("`Memulai pembaruan... Silakan tunggu.`")
+    await bash("git pull -f && pip3 install -r requirements.txt --break-system-packages")
+    await event.edit("`Update berhasil! Bot sedang merestart...`")
+    os.execl(sys.executable, "python3", "-m", "pyUltroid")
+
+@callback("cancel_update", owner=True)
+async def cancel_upd(event):
+    await event.edit("❌ **Pembaruan dibatalkan.**")
 
 
 @callback("updtavail", owner=True)

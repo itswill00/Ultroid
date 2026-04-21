@@ -583,18 +583,19 @@ async def ready():
 
 
     # ── Buttons ───────────────────────────────────────────────
-    has_update = False
-    try:
-        has_update = await updater()
-    except Exception:
-        pass
-
     if getattr(asst, "_bot", False):
         BTTS = [[
             Button.inline("Ping",  data="pkng"),
             Button.inline("Help",  data="open"),
             Button.inline("Stats", data="alive"),
         ]]
+        has_update = False
+        try:
+            updates = await updater()
+            has_update = updates[0]
+        except Exception:
+            pass
+
         if has_update:
             BTTS.insert(0, [Button.inline("Update available", data="doupdate")])
     else:
