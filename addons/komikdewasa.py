@@ -20,16 +20,15 @@ def decode_url(data):
     return base64.urlsafe_b64decode(data + padding).decode()
 
 async def fetch_page(url):
-    import cloudscraper
-    scraper = cloudscraper.create_scraper()
+    import httpx
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            "Referer": "https://komikdewasa.art/",
-        }
-        res = scraper.get(url, headers=headers, timeout=15)
-        if res.status_code == 200:
-            return res.text
+        from urllib.parse import quote
+        # Metode licik: Bypassing ISP & Cloudflare via CodeTabs
+        proxy_url = f"https://api.codetabs.com/v1/proxy?quest={quote(url)}"
+        async with httpx.AsyncClient(follow_redirects=True, timeout=20) as client:
+            res = await client.get(proxy_url)
+            if res.status_code == 200:
+                return res.text
     except Exception as e:
         LOGS.error(f"KomikDewasa Fetch Error: {e}")
     return None
@@ -86,7 +85,7 @@ if asst:
         if not html:
             return await event.respond("Gagal mengambil data. Cloudflare memblokir akses.")
 
-        soup = BeautifulSoup(html, 'parser.parser' if 'lxml' not in str(BeautifulSoup) else 'lxml')
+        soup = BeautifulSoup(html, 'html.parser' if 'lxml' not in str(BeautifulSoup) else 'lxml')
         chapters = soup.find_all('li', class_='wp-manga-chapter')
         
         if not chapters:
