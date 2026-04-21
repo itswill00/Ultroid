@@ -228,6 +228,17 @@ class MediaExtractor:
             except Exception as e:
                 LOGS.warning(f"Extractor | Facebook scraping failed: {e}. Falling back to yt-dlp.")
 
+        # YouTube Specific Fallback (Sonzai API)
+        if YOUTUBE_RE.search(url):
+            try:
+                # Try Sonzai API if yt-dlp is known to be failing or as proactive fallback
+                res = self._youtube_sonzai(url)
+                if res and not "error" in res:
+                    self._extract_cache[url] = res
+                    return res
+            except Exception as e:
+                LOGS.warning(f"Extractor | YouTube Sonzai API failed: {e}. Falling back to yt-dlp.")
+
         opts = self.get_opts(format_type="extract")
         # Keep quiet=True to avoid yt-dlp spam in production logs.
         # Only log warnings/errors that are actionable.
@@ -513,22 +524,25 @@ class MediaExtractor:
         return info
 
     def _facebook_scrape(self, url):
-        """Scrape Facebook HTML for HD/SD video URLs."""
+        """Robust Facebook scraping for HD/SD video URLs with metadata."""
         try:
             import cloudscraper
+            import json
             scraper = cloudscraper.create_scraper()
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept-Language": "en-US,en;q=0.5",
             }
             
-            # Follow redirects (especially for fb.watch)
+            # Follow redirects (especially for fb.watch / share)
             resp = scraper.get(url, headers=headers, allow_redirects=True, timeout=15)
             html = resp.text
+            final_url = resp.url
             
             def unescape_fb(text):
                 return text.replace(r"\/", "/").encode().decode('unicode-escape')
 
+            # Search for HD/SD URLs in script tags
             hd_match = FB_HD_RE.search(html)
             sd_match = FB_SD_RE.search(html)
             
@@ -539,13 +553,18 @@ class MediaExtractor:
                 video_url = unescape_fb(sd_match.group(1))
                 
             if not video_url:
+                # Secondary attempt via specific script JSON parsing
+                m = re.search(r'video_url":"(.*?)"', html)
+                if m: video_url = unescape_fb(m.group(1))
+            
+            if not video_url:
                 return {"error": "Facebook video URL not found in HTML"}
             
-            # Extract title if possible
+            # Extract title / uploader
             title = "Facebook Video"
-            title_match = re.search(r'<title id="pageTitle">(.*?)</title>', html)
+            title_match = re.search(r'<title.*?>(.*?)</title>', html)
             if title_match:
-                title = title_match.group(1)
+                title = title_match.group(1).split(" | Facebook")[0]
 
             return {
                 "url": video_url,
@@ -556,6 +575,35 @@ class MediaExtractor:
             }
         except Exception as e:
             return {"error": str(e)}
+
+    def _youtube_sonzai(self, url):
+        """YouTube API fallback using Sonzai/Indevs API."""
+        try:
+            import cloudscraper
+            scraper = cloudscraper.create_scraper()
+            # This API endpoint is often used as a bypass for blocked VPS IPs
+            api_url = f"https://api.sonzaix.indevs.in/youtube/video?url={url}"
+            resp = scraper.get(api_url, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                links = data.get("download_link", {})
+                if not links:
+                    return {"error": "No download links found in Sonzai API"}
+                
+                # Pick best available resolution (e.g. 720p)
+                best_label = sorted(links.keys(), key=lambda x: int(re.search(r"\d+", x).group(0) if re.search(r"\d+", x) else 0), reverse=True)[0]
+                video_url = links[best_label]
+                
+                return {
+                    "url": video_url,
+                    "title": data.get("filename", "YouTube Video").split(".mp4")[0],
+                    "ext": "mp4",
+                    "uploader": "YouTube",
+                    "extractor": "sonzai_youtube"
+                }
+        except Exception as e:
+            LOGS.debug(f"Extractor | YouTube Sonzai API error: {e}")
+        return {"error": "YouTube API fallback failed"}
 
     def _tiktok_scrape(self, url):
         """Robust TikTok scraping with detailed logging."""
