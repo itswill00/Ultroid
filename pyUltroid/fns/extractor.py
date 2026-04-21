@@ -98,7 +98,7 @@ class MediaExtractor:
         if _vd:
             self._yt_extractor_args["visitor_data"] = [_vd]
 
-    def get_opts(self, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
+    def get_opts(self, url=None, format_type="video", custom_opts=None, job_id=None, progress_callback=None):
         out_path = f"{self.download_path}{job_id}/" if job_id else self.download_path
 
         opts = {
@@ -110,7 +110,7 @@ class MediaExtractor:
             "age_limit": 21,
             "geo_bypass": True,
             "nocheckcertificate": True,
-            "concurrent_fragment_downloads": 1 if ADULT_RE.search(url) else 10,
+            "concurrent_fragment_downloads": 1 if (url and ADULT_RE.search(url)) else 10,
             "buffersize": 1048576,  # 1 MB buffer for VPS throughput
             "extractor_args": {"youtube": self._yt_extractor_args},
             "http_headers": {
@@ -126,7 +126,7 @@ class MediaExtractor:
 
         if self._aria2c:
             # Disable aria2c for NSFW sites as they often block multi-connection downloads
-            if not ADULT_RE.search(url):
+            if not (url and ADULT_RE.search(url)):
                 opts["external_downloader"] = "aria2c"
                 opts["external_downloader_args"] = [
                     "--min-split-size=1M",
@@ -148,6 +148,23 @@ class MediaExtractor:
                 'preferredquality': '192',
             }]
         elif format_type in ["1080", "720", "480"]:
+            opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]/best"
+            opts["merge_output_format"] = "mp4"
+        elif format_type == "extract":
+            # Avoid any format selection for raw metadata extraction
+            pass
+        else:
+            # Default to 'best' single-file format to avoid merge/ffmpeg issues on certain VPS
+            opts["format"] = "best"
+            opts["merge_output_format"] = "mp4"
+
+        if custom_opts:
+            opts.update(custom_opts)
+
+        if progress_callback:
+            opts["progress_hooks"] = [progress_callback]
+
+        return opts
             opts["format"] = f"bestvideo[height<={format_type}]+bestaudio/best[height<={format_type}]/best"
             opts["merge_output_format"] = "mp4"
         elif format_type == "extract":
