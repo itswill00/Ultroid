@@ -2,89 +2,76 @@
   <img src="./resources/extras/logo_readme.jpg" width="180" alt="Ultroid Logo">
 </p>
 
-<h1 align="center">🚀 Ultroid v3.2.0 — Stable Reborn</h1>
+<h1 align="center">Ultroid</h1>
 
 <p align="center">
-  <b>The most refined, developer-friendly Telegram userbot. Built on Telethon, crafted for stability.</b>
+  <b>Userbot Telegram yang simpel, stabil, dan bisa diandalkan.</b>
 </p>
 
 <p align="center">
-  <a href="https://t.me/ultroid_next"><img src="https://img.shields.io/badge/Stay_Updated-@ultroid__next-blue?style=for-the-badge&logo=telegram" alt="Telegram Channel"></a>
+  <img src="https://img.shields.io/github/v/release/itswill00/Ultroid?style=flat-square&color=blue" alt="Release">
+  <img src="https://img.shields.io/github/license/itswill00/Ultroid?style=flat-square&color=orange" alt="License">
+  <a href="https://t.me/ultroid_next"><img src="https://img.shields.io/badge/Telegram-Join-blue?style=flat-square&logo=telegram" alt="Telegram"></a>
 </p>
 
 ---
 
-### 🌟 Why choose Ultroid?
+### Apa itu Ultroid?
+Ultroid adalah asisten pribadi untuk akun Telegram Anda. Fokus utama kami adalah kecepatan dan kemudahan penggunaan. Anda bisa menambah fitur baru melalui addon tanpa harus mengutak-atik kode utama.
 
-Ultroid is a productivity powerhouse designed for those who demand excellence. We've stripped away the noise and focused on what matters: performance, security, and a rich feature set that works out of the box.
+### Cara Pasang
+Pilih metode yang paling cocok untuk Anda:
 
-| **System Stats** | **Metric** |
-| :--- | :--- |
-| **Core Plugins** | 86 (Official Modules) |
-| **Addon Modules** | 71 (Extended Utility) |
-| **User Experience** | Fluid & Minimalist |
-| **Engine** | Telethon (Asynchronous) |
-| **License** | AGPL-3.0 |
-
----
-
-### 🔥 Key Features
-
-*   🛡️ **Admin Surveillance Suite**: Keep your communities safe with advanced **Group Intel**. Real-time monitoring with a sophisticated **Risk Scoring** system to identify bad actors instantly.
-*   🧠 **Unified AI Intelligence**: Powered by **Groq LPU™** and **Google Gemini** fallback. Seamlessly handle text generation, computer vision, and real-time web research with `.ai` and `.ask`.
-*   🎨 **Multipurpose Media Engine**: A complete tools suite for your chat. Create dynamic logos, manipulate images, and stream high-quality audio in Voice Calls.
-*   🔐 **Global Protection**: Integrated **GBan** checks and spam detection database to protect your account and your groups from known malicious entities.
-*   ⌨️ **Developer Toolkit**: Professional-grade dev tools including a built-in code evaluator, terminal shell, and deep database management.
-*   ⚡ **Optimized Deployment**: Scalable architecture optimized for a smooth experience on Termux, VPS, and Cloud environments.
-
----
-
-### 🛠️ Quick Installation
-
-#### **Termux (Android)**
-Deploy Ultroid right from your phone:
+**Docker (Rekomendasi)**
 ```bash
-pkg update && pkg upgrade
-pkg install python git ffmpeg -y
-git clone https://github.com/itswill00/Ultroid
-cd Ultroid
-bash install-termux
+git clone https://github.com/itswill00/Ultroid && cd Ultroid
+# Atur variabel di .env
+docker-compose up -d
 ```
 
-#### **VPS / Local System**
-For server-grade performance:
+**Termux**
 ```bash
-# Clone and enter directory
-git clone https://github.com/itswill00/Ultroid.git && cd Ultroid
+pkg update && pkg install python git ffmpeg -y
+git clone https://github.com/itswill00/Ultroid && cd Ultroid
+./install-termux
+```
 
-# Virtual environment setup
+**VPS / Linux**
+```bash
 python3 -m venv venv && source venv/bin/activate
-pip install -U -r requirements.txt
-
-# Launch
-bash startup
+pip install -r requirements.txt
+python3 -m pyUltroid
 ```
 
 ---
 
-### 🍪 Media Downloader (Cookies Setup)
+### Konfigurasi Dasar
+Pastikan variabel berikut sudah terisi di `.env` Anda:
 
-To enable downloading restricted media from **Facebook**, **Instagram**, and **YouTube**, you need to provide your account cookies:
-1. Install an extension like **Get cookies.txt LOCALLY** on Chrome/Firefox.
-2. Log in to the respective platform (e.g., Facebook).
-3. Export the cookies in **Netscape format**.
-4. Rename the downloaded file to `cookies.txt` and place it in the root directory (`Ultroid/cookies.txt`) before starting the bot.
-
----
-
-### 🤝 Credits & Support
-
-Respect to the original **TeamUltroid** for providing the incredible foundation that made this project possible.
-
-*   [TeamUltroid](https://t.me/TeamUltroid) — Original Codebase.
-*   [Lonami Webs](https://github.com/LonamiWebs/) — For Telethon.
-*   [itswill00](https://github.com/itswill00) — Modern Maintenance & Performance Hardening.
+| Variabel | Kegunaan |
+| :--- | :--- |
+| `API_ID` | API ID dari my.telegram.org |
+| `API_HASH` | API Hash dari my.telegram.org |
+| `SESSION` | String sesi Telethon |
+| `BOT_TOKEN` | Token bot untuk fitur asisten |
+| `REDIS_URI` | URL database Redis |
 
 ---
 
-> **Support & Updates:** Join [@ultroid_next](https://t.me/ultroid_next) for the latest release notes and official announcements.
+### Fitur Unggulan
+- **Manajemen Grup:** Kick, ban, mute, dan pembersihan pesan otomatis.
+- **AI Integration:** Chatting dengan Groq atau Gemini langsung dari kolom chat.
+- **Media Tools:** Edit gambar, konversi audio, dan download video dari berbagai platform.
+- **Addon Manager:** Pasang fitur tambahan cukup dengan perintah `.install`.
+- **Log Activity:** Pantau semua aktivitas bot melalui grup log khusus.
+
+---
+
+### Kontribusi & Support
+Punya ide atau menemukan bug? Silakan buka **Issue** atau kirim **Pull Request**.
+
+*   **Telegram:** [@ultroid_next](https://t.me/ultroid_next)
+*   **Maintenance:** [itswill00](https://github.com/itswill00)
+
+---
+<p align="center">Lisensi: AGPL-3.0</p>
