@@ -22,7 +22,7 @@ __doc__ = get_help("speedtest")
 import asyncio
 from datetime import datetime
 
-from . import HOSTED_ON, LOGS, asst_cmd, humanbytes, ultroid_cmd
+from . import HOSTED_ON, LOGS, Button, asst_cmd, humanbytes, ultroid_cmd
 
 try:
     import speedtest
