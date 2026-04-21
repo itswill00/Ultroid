@@ -1,32 +1,24 @@
-# Strings Analytics
+# 🌍 Ultroid Language Synchronization
 
+Ultroid supports a comprehensive multi-language architecture. The localization strings are maintained in YAML format under this directory.
+
+### **Translation Analytics**
 
 | Code | Language | Translated | Remaining |
-|----|-------|-------|---|
-| en | English [English] | 494 | 0 |
-| ar | Arabic [العربية] | 490 | 4 |
-| az | Azerbaijan [Azərbaycan] | 490 | 4 |
-| bn | Bengali [বাংলা] | 490 | 4 |
-| cn | Chinese [简体中文] | 490 | 4 |
-| es | Spanish [Español] | 490 | 4 |
-| fa | Persian [Farsi] | 491 | 3 |
-| fr | French [Français] | 490 | 4 |
-| gu | Gujarati [ગુજરાતી] | 490 | 4 |
-| hi | Hindi [हिंदी] | 489 | 5 |
-| id | Indonesia [Indonesia] | 490 | 4 |
-| it | Italian [italiano] | 490 | 4 |
-| jp | Japanese [日本] | 490 | 4 |
-| ka | Kannada [ಕನ್ನಡ] | 490 | 4 |
-| ml | Malayalam [മലയാളം] | 490 | 4 |
-| mr | Marathi [मराठी] | 491 | 3 |
-| ms | Malay [Bahasa Melayu] | 494 | NULL |
-| or | Odia [ଓଡିଆ] | 490 | 4 |
-| pt-br | Português [Português] | 490 | 4 |
-| ru | Russian [Русский] | 490 | 4 |
-| si | sinhala [සිංහල] | 490 | 4 |
-| ta | தமிழ் [தமிழ்] | 490 | 4 |
-| tr | Turkish [Türk] | 490 | 4 |
-| uz | Uzbekcha [Uzbekcha] | 490 | 4 |
+|:---:|:---:|:---:|:---:|
+| **en** | English | 494 | 0 |
+| **id** | Indonesia | 490 | 4 |
+| **ar** | Arabic | 490 | 4 |
+| **ru** | Russian | 490 | 4 |
+| **es** | Spanish | 490 | 4 |
+| **ms** | Malay | 494 | 0 |
+| **hi** | Hindi | 489 | 5 |
+| ... | (and many more) | ... | ... |
 
+### **Localization Logic**
+If a specific translation is not available in the target language's YAML file, the system will dynamically attempt to provide a context-aware fallback.
 
-If Strings are not present, Google Translation will be used to Translate them at time of Usage.
+---
+<p align="center">
+  <i>Contribute to translations at <a href="https://t.me/ultroid_next">@ultroid_next</a>.</i>
+</p>

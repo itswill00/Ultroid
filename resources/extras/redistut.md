@@ -1,17 +1,28 @@
-# Tutorial To Get Redis DB URL and Password
-![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+# Redis Database Provisioning Guide
 
-## Process For Creating DB :-   
-- Go To [Redis.com](Https://redis.com) and click "`Try Free`" in Top Right Corner.   
-- Fill All The Required Details Like email, first and last name, password, etc.   
-- Tick Below "I agree the corresponding...Privacy Policy." and Click "Get Started".   
-- Now Check Your Email, and click the "Activate Now" sent by redislabs via email.   
-- Now Login and Chose Free Plan in "Fixed Size" Area and Write any name in "Subscription Area".   
-- On the Next Page Write Database Name and click Activate.   
-   
-> Congrats! Your DB has been created 🥳   
-   
-## Process For Getting DB Credentials:-   
-- Wait 5 mins after DB creation.   
-- Then There Would Be 2 Things Named "`Endpoint`" and "`Access Control & Security`".   
-- Copy Both Of Them and Paste Endpoint url in `REDIS_URI` and "Access ...Security" in `REDIS_PASSWORD`.   
+Follow these steps to initialize a managed Redis instance for Ultroid.
+
+### 1. Account Initialization
+- Navigate to [Redis.com](https://redis.com) and select the **Try Free** option.
+- Complete the registration process with valid credentials.
+- Verify your account through the confirmation link sent to your email.
+
+### 2. Subscription Deployment
+- Log in to the Cloud Console.
+- Deploy a new subscription under the **Fixed Size** tier (choose the free plan).
+- Assign a unique name to your subscription.
+
+### 3. Database Activation
+- Create a new database instance within your subscription.
+- Wait approximately 5 minutes for the environment to provision.
+
+### 4. Credential Extraction
+- Locate the **Endpoint** URL and the **Access Control & Security** section.
+- Map these credentials to your `.env` file:
+    - `Endpoint URL` → `REDIS_URI`
+    - `Security Password` → `REDIS_PASSWORD`
+
+---
+<p align="center">
+  <i>Ensure your credentials remain private. Never share your .env file.</i>
+</p>

@@ -1,46 +1,50 @@
-# <p align="center"><a href="https://github.com/Teamultroid/UltroidAddons"><img src="https://github-readme-stats.vercel.app/api/pin?username=TeamUltroid&show_icons=true&theme=dracula&hide_border=true&repo=UltroidAddons"></a></p>
 <p align="center">
+  <img src="../resources/extras/logo_readme.jpg" width="150" alt="Ultroid Logo">
+</p>
 
-# UltroidAddons
-Plugins repository for [@TheUltroid](https://github.com/TeamUltroid/Ultroid).
+<h1 align="center">Ultroid Addons</h1>
 
+<p align="center">
+  <b>Extended utility modules and community-driven features for the Ultroid Framework.</b>
+</p>
 
-# Contributing
-If you want to contribute to this repository (adding your plugins/porting from other bots), use the format given below and create a pull request.   
-⚠️ First check whether the stuff you push works. Also, if the pull request doesn't follow the below format, it will be closed without prior notice.
+---
 
+### 🔱 About Addons
+
+Addons are external plugins that extend the core functionality of Ultroid. They are loaded dynamically from this directory and can be managed (installed, updated, or removed) directly from the Telegram interface.
+
+### 🤝 Contributing
+
+We welcome community contributions. To ensure stability and maintainability, please follow these technical guidelines when submitting a pull request:
+
+1. **Verify Functionality**: Always test your module in a live environment before submission.
+2. **Metadata Header**: Include appropriate credits and source information at the top of your file:
+   ```python
+   # Credits: @username
+   # Source: [Link if ported]
+   # Refactored for Ultroid: https://github.com/itswill00/Ultroid
+   ```
+3. **Async Standard**: All modules must utilize `asyncio` patterns correctly.
+4. **Dependencies**: If your addon requires additional Python packages, add them to `requirements.txt` in the root directory.
+
+### 💻 Module Examples
+
+#### **Standard Command**
 ```python
-# Credits @username (creator of plugin and who ported)   
-   
-# Ported from (if ported else skip)   
-   
-# Ported for Ultroid < https://github.com/TeamUltroid/Ultroid >   
+@ultroid_cmd(pattern="hello")
+async def hello_world(event):
+    await event.eor("Hello. I am active and responsive.")
 ```
-   
-Kindly do not **steal** others works without credits.<br>
 
-# Example Plugin
-   Required Import are Automatically Done.
-
-<kbd>This Example Works Everywhere. (e.g. Groups, Personal Chats ...)</kbd>
+#### **Group-Restricted Command**
 ```python
-@ultroid_cmd(pattern="hoi")
-async def hello_world_example(event):
-    # As telethon is an asyncio based lib, you will have to use `async`/`await` Syntax.
-    await event.reply("Hello **World**.")
+@ultroid_cmd(pattern="status", groups_only=True)
+async def group_status(event):
+    await event.eor("Group analytics synchronized.")
 ```
 
-<kbd>This Example Works Only In Groups.</kbd>
-```python
-@ultroid_cmd(pattern="hoi", groups_only=True,)
-async def hello_world_example(event):
-    await event.reply("Hello **World**.")
-```
-
-If Your plugin need any additional requirements, it can be added to <a href="https://github.com/TeamUltroid/UltroidAddons/blob/main/addons.txt">addons.txt</a><br><br>
-
-<br>
-
-> For More Information See [The Pypi Page](https://pypi.org/project/py-Ultroid).
-
-> Made with 💕 by [@TeamUltroid](https://t.me/TeamUltroid).
+---
+<p align="center">
+  <i>Maintained by <a href="https://github.com/itswill00">itswill00</a> & the Ultroid community.</i>
+</p>
