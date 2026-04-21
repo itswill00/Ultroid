@@ -67,6 +67,16 @@ bash startup
 
 ---
 
+### 🍪 Media Downloader (Cookies Setup)
+
+To enable downloading restricted media from **Facebook**, **Instagram**, and **YouTube**, you need to provide your account cookies:
+1. Install an extension like **Get cookies.txt LOCALLY** on Chrome/Firefox.
+2. Log in to the respective platform (e.g., Facebook).
+3. Export the cookies in **Netscape format**.
+4. Rename the downloaded file to `cookies.txt` and place it in the root directory (`Ultroid/cookies.txt`) before starting the bot.
+
+---
+
 ### 🤝 Credits & Support
 
 Respect to the original **TeamUltroid** for providing the incredible foundation that made this project possible.
