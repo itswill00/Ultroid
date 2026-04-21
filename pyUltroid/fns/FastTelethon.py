@@ -294,10 +294,10 @@ class ParallelTransferrer:
         connection_count: Optional[int] = None,
     ) -> Tuple[int, int, bool]:
         connection_count = connection_count or self._get_connection_count(file_size)
-        # Fixed 512KB chunks for large files to maximize MTProto throughput
+        # Force 1024KB (1MB) chunks for files > 10MB to reach absolute MTProto limit
         is_large = file_size > 10 * (1024 ** 2)
         if part_size_kb is None and is_large:
-            part_size_kb = 512
+            part_size_kb = 1024
         part_size = (part_size_kb or utils.get_appropriated_part_size(file_size)) * 1024
         part_count = (file_size + part_size - 1) // part_size
         await self._init_upload(connection_count, file_id, part_count, is_large)
@@ -373,7 +373,7 @@ async def _internal_transfer_to_telegram(
                     await _maybe_await(progress_callback(current_sent, file_size))
                 except:
                     pass
-            await asyncio.sleep(1) # Faster refresh rate for VPS speed
+            await asyncio.sleep(5) # Throttled: update every 5 seconds to prioritize CPU for transfer
 
     reporter_task = asyncio.create_task(progress_reporter())
 
