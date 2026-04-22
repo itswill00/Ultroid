@@ -41,7 +41,7 @@ async def _(e):
         for x in k:
             try:
                 title = get_display_name(await e.client.get_entity(x))
-            except BaseException:
+            except Exception:
                 title = get_string("clan_3")
             o += f"{x} {title}\n"
         return await e.eor(o)

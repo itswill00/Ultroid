@@ -326,7 +326,7 @@ async def _(e):
                 else:
                     text += f"{emoji} `{nam}`" + "\n"
                 flc += 1
-        except BaseException:
+        except Exception:
             pass
     tfos, tfls, ttol = hb(fos), hb(fls), hb(fos + fls)
     if not hb(fos):

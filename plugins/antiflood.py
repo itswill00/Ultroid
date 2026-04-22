@@ -61,7 +61,7 @@ if Redis("ANTIFLOOD"):
                         "Unmute", data=f"anti_{event.sender_id}_{event.chat_id}"
                     ),
                 )
-            except BaseException:
+            except Exception:
                 pass
 
 
@@ -104,7 +104,7 @@ async def remove_flood(e):
     hmm = rem_flood(e.chat_id)
     try:
         del _check_flood[e.chat_id]
-    except BaseException:
+    except Exception:
         pass
     if hmm:
         return await e.eor(get_string("antiflood_1"), time=5)

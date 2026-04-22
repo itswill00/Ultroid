@@ -74,7 +74,7 @@ async def pinterest(e):
     )
     try:
         _soup = bs(soup, "html.parser").find("table").tbody.find_all("tr")
-    except BaseException:
+    except Exception:
         return await e.eor("`Wrong link or private pin.`", time=5)
     file = _soup[1] if len(_soup) > 1 else _soup[0]
     file = file.td.a["href"]

@@ -55,18 +55,18 @@ async def warn(e):
                 user = ok.id
             else:
                 user = int(user)
-        except BaseException:
+        except Exception:
             return await e.eor("Reply To A User", time=5)
         try:
             reason = e.text.split(maxsplit=2)[-1]
-        except BaseException:
+        except Exception:
             reason = "unknown"
     count, r = warns(e.chat_id, user)
     r = f"{r}|$|{reason}" if r else reason
     try:
         x = udB.get_key("SETWARN")
         number, action = int(x.split()[0]), x.split()[1]
-    except BaseException:
+    except Exception:
         number, action = 3, "kick"
     if ("ban" or "kick" or "mute") not in action:
         action = "kick"
@@ -74,19 +74,19 @@ async def warn(e):
         if "ban" in action:
             try:
                 await ultroid_bot.edit_permissions(e.chat_id, user, view_messages=False)
-            except BaseException:
+            except Exception:
                 return await e.eor("`Something Went Wrong.`", time=5)
         elif "kick" in action:
             try:
                 await ultroid_bot.kick_participant(e.chat_id, user)
-            except BaseException:
+            except Exception:
                 return await e.eor("`Something Went Wrong.`", time=5)
         elif "mute" in action:
             try:
                 await ultroid_bot.edit_permissions(
                     e.chat_id, user, until_date=None, send_messages=False
                 )
-            except BaseException:
+            except Exception:
                 return await e.eor("`Something Went Wrong.`", time=5)
         add_warn(e.chat_id, user, count + 1, r)
         c, r = warns(e.chat_id, user)
@@ -125,7 +125,7 @@ async def rwarn(e):
                 user = ok.id
             else:
                 user = int(user)
-        except BaseException:
+        except Exception:
             return await e.eor("Reply To user")
     reset_warn(e.chat_id, user)
     ok = await e.client.get_entity(user)
@@ -151,7 +151,7 @@ async def twarns(e):
                 user = ok.id
             else:
                 user = int(user)
-        except BaseException:
+        except Exception:
             return await e.eor("Reply To A User", time=5)
     c, r = warns(e.chat_id, user)
     if c and r:

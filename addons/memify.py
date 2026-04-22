@@ -72,7 +72,7 @@ async def ultd(event):
         os.remove(ultt)
         os.remove(file)
         os.remove(stick)
-    except BaseException:
+    except Exception:
         pass
 
 
@@ -225,7 +225,7 @@ async def mms(event):
     try:
         os.remove(ultt)
         os.remove(file)
-    except BaseException:
+    except Exception:
         pass
     os.remove(pic)
 

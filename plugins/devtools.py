@@ -182,7 +182,7 @@ def _parse_eval(value=None):
     elif isinstance(value, dict):
         try:
             return json_parser(value, indent=1)
-        except BaseException:
+        except Exception:
             pass
     elif isinstance(value, list):
         newlist = "["
@@ -232,7 +232,7 @@ async def _(event):
     if black:
         try:
             cmd = black.format_str(cmd, mode=black.Mode())
-        except BaseException:
+        except Exception:
             # Consider it as Code Error, and move on to be shown ahead.
             pass
     reply_to_id = event.reply_to_msg_id or event

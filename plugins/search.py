@@ -70,7 +70,7 @@ async def gitsearch(event):
         urepos = ult["public_repos"]
         ufollowers = ult["followers"]
         ufollowing = ult["following"]
-    except BaseException:
+    except Exception:
         return await event.eor(get_string("srch_2"))
     fullusr = f"""
 **[GITHUB]({ulink})**
@@ -122,7 +122,7 @@ async def goimg(event):
         try:
             lmt = int(query.split(";")[1])
             query = query.split(";")[0]
-        except BaseException:
+        except Exception:
             pass
     images = await get_google_images(query)
     for img in images[:lmt]:

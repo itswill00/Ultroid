@@ -69,7 +69,7 @@ async def nsfw_check(e):
         pic, name, nsfw = "", "", 0
         try:
             pic = await e.download_media(thumb=-1)
-        except BaseException:
+        except Exception:
             pass
         if e.file:
             name = e.file.name
@@ -116,7 +116,7 @@ async def nsfw_check(e):
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\n**Action Taken** : {action}",
                         )
-                    except BaseException:
+                    except Exception:
                         await ultroid_bot.send_message(
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\nUnable to {action}.",
@@ -130,7 +130,7 @@ async def nsfw_check(e):
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\n**Action Taken** : {action}",
                         )
-                    except BaseException:
+                    except Exception:
                         await ultroid_bot.send_message(
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\nUnable to {action}.",
@@ -142,7 +142,7 @@ async def nsfw_check(e):
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\n**Action Taken** : {action}",
                         )
-                    except BaseException:
+                    except Exception:
                         await ultroid_bot.send_message(
                             chat,
                             f"NSFW Warn 3/3 to [{e.sender.first_name}](tg://user?id={e.sender_id})\n\nUnable to {action}.",

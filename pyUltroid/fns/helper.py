@@ -671,7 +671,7 @@ async def catbox_upload(path: str):
                                 return res["files"][0]["url"]
                             if res.get("error"):
                                 return res["error"]
-                    except:
+                    except Exception:
                         pass
                     return text[:100] or "Unknown Error"
             except Exception as e:

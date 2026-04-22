@@ -108,6 +108,6 @@ async def decod(e):
         det = cv2.QRCodeDetector()
         tx, y, z = det.detectAndDecode(im)
         await kk.edit("**Decoded Text:\n\n**" + tx)
-    except BaseException:
+    except Exception:
         await kk.edit("`Reply To Media in Which Qr image present.`")
     os.remove(dl)

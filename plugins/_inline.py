@@ -201,7 +201,7 @@ async def uptd_plugin(event):
     try:
         doc = key_[file]
         help_ += doc.replace("{i}", HNDLR)
-    except BaseException:
+    except Exception:
         if file in LIST:
             help_ = get_string("help_11").format(file)
             for d in LIST[file]:

@@ -107,7 +107,7 @@ async def remove_afk(event):
         for x in old_afk_msg:
             try:
                 await x.delete()
-            except BaseException:
+            except Exception:
                 pass
         await asyncio.sleep(10)
         await off.delete()
@@ -148,7 +148,7 @@ async def on_afk(event):
     for x in old_afk_msg:
         try:
             await x.delete()
-        except BaseException:
+        except Exception:
             pass
     old_afk_msg.append(msg1)
     if msg2:

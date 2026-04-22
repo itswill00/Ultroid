@@ -227,7 +227,7 @@ async def bdcast(event):
             try:
                 await asst.send_message(int(i), response)
                 success += 1
-            except BaseException:
+            except Exception:
                 fail += 1
         end = datetime.now()
         time_taken = (end - start).seconds
@@ -273,7 +273,7 @@ async def timezone_(event):
                 f"{name} changed to {themssg}\n",
                 buttons=get_back_button("mainmenu"),
             )
-        except BaseException:
+        except Exception:
             await conv.send_message(
                 "Wrong TimeZone, Try again",
                 buttons=get_back_button("mainmenu"),

@@ -212,7 +212,7 @@ async def stats(
     try:
         sp = await event.client(GetAllStickersRequest(0))
         sp_count = len(sp.sets)
-    except BaseException:
+    except Exception:
         sp_count = 0
     full_name = inline_mention(event.client.me)
     response = f"🔸 **Stats for {full_name}** \n\n"
@@ -630,7 +630,7 @@ async def ipinfo(event):
                 tz,
             ),
         )
-    except BaseException:
+    except Exception:
         err = det["error"]["title"]
         msg = det["error"]["message"]
         await event.eor(f"**Terjadi kesalahan:**\n{err}\n{msg}", time=5)

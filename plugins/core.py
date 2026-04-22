@@ -81,7 +81,7 @@ async def load(event):
     try:
         try:
             un_plug(shortname)
-        except BaseException:
+        except Exception:
             pass
         load_addons(f"addons/{shortname}.py")
         await event.eor(get_string("core_17").format(shortname), time=3)

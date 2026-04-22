@@ -68,7 +68,7 @@ async def _help(ult):
                         x += "\n"
                     x += ""
                     await ult.eor(x)
-                except BaseException:
+                except Exception:
                     file = None
                     compare_strings = []
                     for file_name in LIST:

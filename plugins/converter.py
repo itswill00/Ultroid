@@ -185,7 +185,7 @@ async def _(event):
         return await xx.eor(get_string("cvt_8"), time=5)
     try:
         await xx.edit(f"```{d}```")
-    except BaseException:
+    except Exception:
         what, data = await get_paste(d)
         await xx.edit(
             f"**MESSAGE EXCEEDS TELEGRAM LIMITS**\n\nSo Pasted It On [SPACEBIN]({data['link']})"

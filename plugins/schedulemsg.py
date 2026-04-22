@@ -40,7 +40,7 @@ async def _(e):
                 z = ban_time(y)
                 await e.respond(k, schedule=z)
                 await e.eor(get_string("schdl_1"), time=5)
-            except BaseException:
+            except Exception:
                 await e.eor(get_string("schdl_2"), time=5)
     elif xx and x:
         if x.isdigit():
@@ -51,7 +51,7 @@ async def _(e):
                 z = ban_time(x)
                 await e.respond(xx, schedule=z)
                 await e.eor(get_string("schdl_1"), time=5)
-            except BaseException:
+            except Exception:
                 await e.eor(get_string("schdl_2"), time=5)
     else:
         return await e.eor(get_string("schdl_2"), time=5)

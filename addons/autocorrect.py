@@ -53,7 +53,7 @@ async def gramme(event):
     res = x["result"]
     try:
         await event.edit(res)
-    except BaseException:
+    except Exception:
         pass
 
 

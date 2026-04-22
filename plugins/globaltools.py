@@ -131,7 +131,7 @@ async def _(e):
                         ),
                     )
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             elif (
                 ("group" not in key.lower() or x.is_group)
@@ -171,7 +171,7 @@ async def _(e):
             user = int(user)
         try:
             name = await e.client.get_entity(user)
-        except BaseException:
+        except Exception:
             return await e.eor(f"`No User Found Regarding {user}`", time=5)
         ev = await e.eor(f"`Promoting {name.first_name} globally.`")
         key = "all"
@@ -200,7 +200,7 @@ async def _(e):
                         ),
                     )
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
         await eor(ev, f"Promoted {name.first_name} in Total : {c} {key} chats.")
 
@@ -242,7 +242,7 @@ async def _(e):
                         ),
                     )
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
         await eor(ev, f"Demoted The Replied Users in Total : {c} {key} chats")
     else:
@@ -256,7 +256,7 @@ async def _(e):
             user = int(user)
         try:
             name = await ultroid_bot.get_entity(user)
-        except BaseException:
+        except Exception:
             return await e.eor(f"`No User Found Regarding {user}`", time=5)
         ev = await e.eor(f"`Demoting {name.first_name} globally.`")
         key = "all"
@@ -285,7 +285,7 @@ async def _(e):
                         ),
                     )
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
         await eor(ev, f"Demoted {name.first_name} in Total : {c} {key} chats.")
 
@@ -316,7 +316,7 @@ async def _(e):
         if not peer:
             peer = await e.client.get_entity(userid)
         name = inline_mention(peer)
-    except BaseException:
+    except Exception:
         userid = int(userid)
         name = str(userid)
     chats = 0
@@ -386,7 +386,7 @@ async def _(e):
     try:
         user = await e.client.get_entity(userid)
         name = inline_mention(user)
-    except BaseException:
+    except Exception:
         userid = int(userid)
         name = str(userid)
     chats = 0
@@ -565,7 +565,7 @@ async def gucast(event):
                             chat, msg, file=reply.media if reply else None
                         )
                     done += 1
-                except BaseException:
+                except Exception:
                     er += 1
     await kk.edit(f"Done in {done} chats, error in {er} chat(s)")
 
@@ -597,7 +597,7 @@ async def gkick(e):
             try:
                 await e.client.kick_participant(gkick.id, userid)
                 chats += 1
-            except BaseException:
+            except Exception:
                 pass
     await xx.edit(f"`Gkicked` [{name}](tg://user?id={userid}) `in {chats} chats.`")
 
@@ -631,7 +631,7 @@ async def _(e):
             try:
                 await e.client.edit_permissions(onmute.id, userid, send_messages=False)
                 chats += 1
-            except BaseException:
+            except Exception:
                 pass
     gmute(userid)
     await xx.edit(f"`Gmuted` {inline_mention(name)} `in {chats} chats.`")
@@ -662,7 +662,7 @@ async def _(e):
             try:
                 await e.client.edit_permissions(hurr.id, userid, send_messages=True)
                 chats += 1
-            except BaseException:
+            except Exception:
                 pass
     ungmute(userid)
     await xx.edit(f"`Ungmuted` {inline_mention(name)} `in {chats} chats.`")
@@ -680,7 +680,7 @@ async def list_gengbanned(event):
     for i in users:
         try:
             name = await event.client.get_entity(int(i))
-        except BaseException:
+        except Exception:
             name = i
         msg += f"<strong>User</strong>: {inline_mention(name, html=True)}\n"
         reason = users[i]

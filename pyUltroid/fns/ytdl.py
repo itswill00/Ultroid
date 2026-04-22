@@ -110,7 +110,7 @@ async def download_yt(event, link, ytd):
 
     try:
         await event.delete()
-    except:
+    except Exception:
         pass
 
 

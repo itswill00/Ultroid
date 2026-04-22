@@ -46,7 +46,7 @@ async def _(ult):
                 id = inputs
         try:
             name = await ult.client.get_entity(int(id))
-        except BaseException:
+        except Exception:
             name = None
     elif ult.is_private:
         id = ult.chat_id
@@ -86,7 +86,7 @@ async def _(ult):
                 id = inputs
         try:
             name = await ult.client.get_entity(int(id))
-        except BaseException:
+        except Exception:
             name = None
     elif ult.is_private:
         id = ult.chat_id
@@ -115,7 +115,7 @@ async def _(ult):
     for i in sudos:
         try:
             name = await ult.client.get_entity(int(i))
-        except BaseException:
+        except Exception:
             name = None
         if name:
             msg += f"• {inline_mention(name)} ( `{i}` )\n"

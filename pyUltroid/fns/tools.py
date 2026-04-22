@@ -222,7 +222,7 @@ async def saavn_search(query: str):
             url=f"https://saavn-api.vercel.app/search/{query.replace(' ', '%20')}",
             re_json=True,
         )
-    except BaseException:
+    except Exception:
         data = None
     return data
 

@@ -371,15 +371,15 @@ async def hehe(args):
         )
         try:
             os.remove(photo)
-        except BaseException:
+        except Exception:
             pass
         try:
             os.remove("AnimatedSticker.tgs")
-        except BaseException:
+        except Exception:
             pass
         try:
             os.remove("ult.webp")
-        except BaseException:
+        except Exception:
             pass
 
 

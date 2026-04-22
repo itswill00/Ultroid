@@ -109,7 +109,7 @@ async def _(e):
             try:
                 num = float(out)
                 await e.answer(f"Answer : {num}", cache_time=0, alert=True)
-            except BaseException:
+            except Exception:
                 CALC.pop(user)
                 await e.answer(get_string("sf_8"), cache_time=0, alert=True)
         await e.answer("None")

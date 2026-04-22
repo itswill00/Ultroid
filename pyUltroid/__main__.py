@@ -105,7 +105,7 @@ def main():
         await WasItRestart(udB)
         try:
             cleanup_cache()
-        except BaseException:
+        except Exception:
             pass
         LOGS.info("All Background Tasks Completed.")
 

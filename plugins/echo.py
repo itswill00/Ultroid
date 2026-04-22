@@ -43,7 +43,7 @@ async def echo(e):
                 user = ok.id
             else:
                 user = int(user)
-        except BaseException:
+        except Exception:
             return await e.eor("Reply To A user.", time=5)
     if check_echo(e.chat_id, user):
         return await e.eor("Echo already activated for this user.", time=5)
@@ -66,7 +66,7 @@ async def rm(e):
                 user = ok.id
             else:
                 user = int(user)
-        except BaseException:
+        except Exception:
             return await e.eor("Reply To A User.", time=5)
     if check_echo(e.chat_id, user):
         rem_echo(e.chat_id, user)

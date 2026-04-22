@@ -59,7 +59,7 @@ async def lister(event):
         try:
             user = await event.client.get_entity(int(i))
             user = inline_mention(user)
-        except BaseException:
+        except Exception:
             user = f"`{i}`"
         msg += f"• {user}\n"
     await event.eor(msg, link_preview=False)

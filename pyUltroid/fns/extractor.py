@@ -278,7 +278,7 @@ class MediaExtractor:
                         f_list = [f.get('format_id') for f in info_raw.get('formats', [])]
                         LOGS.info(f"Extractor | Available formats on VPS: {f_list}")
                         err_msg += f" | Available IDs: {f_list[:10]}"
-                    except:
+                    except Exception:
                         pass
 
                 if "Sign in to confirm" in err_msg:
@@ -570,7 +570,7 @@ class MediaExtractor:
             def unescape_fb(text):
                 try:
                     return text.replace(r"\/", "/").encode().decode('unicode-escape', errors='ignore')
-                except: return text.replace(r"\/", "/")
+                except Exception: return text.replace(r"\/", "/")
 
             # --- CUNNING STRATEGY 1: Nuclear Regex Vacuum ---
             def nuclear_vacuum(text):
@@ -622,7 +622,7 @@ class MediaExtractor:
                 if ss_resp.status_code == 200:
                     res = nuclear_vacuum(ss_resp.text)
                     if res: return res
-            except: pass
+            except Exception: pass
 
             # --- CUNNING STRATEGY 4: FDown.net Hijack (The Classic) ---
             LOGS.info("Extractor | Cunning Strategy 4: FDown Hijack...")
@@ -634,7 +634,7 @@ class MediaExtractor:
                     if m_hd: return {"url": unescape_fb(m_hd.group(1)), "ext": "mp4", "extractor": "fb_fdown_hd"}
                     m_sd = re.search(r'id="sdlink"\s+href="([^"]+)"', fd_resp.text)
                     if m_sd: return {"url": unescape_fb(m_sd.group(1)), "ext": "mp4", "extractor": "fb_fdown_sd"}
-            except: pass
+            except Exception: pass
 
             # --- PHASE 1: Direct ID Extraction ---
             content_id = None
@@ -687,7 +687,7 @@ class MediaExtractor:
                                     if "stp=dst-jpg" in img or "/v/" in img:
                                         return {"url": unescape_fb(img), "ext": "jpg", "extractor": "fb_mbasic_img"}
                                 return {"url": unescape_fb(imgs[0]), "ext": "jpg", "extractor": "fb_mbasic_img"}
-                    except: continue
+                    except Exception: continue
 
             # --- PHASE 3: Fallback URL Resolution ---
             LOGS.info(f"Extractor | Resolving Facebook URL (Fallback): {url}")
@@ -695,7 +695,7 @@ class MediaExtractor:
             try:
                 r = scraper.get(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}, allow_redirects=True, timeout=10)
                 resolved_url = r.url
-            except: pass
+            except Exception: pass
 
             # --- PHASE 3: Wild Card Fallback ---
             return self._facebook_public_api(resolved_url)

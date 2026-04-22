@@ -72,6 +72,8 @@ from . import *
 Logm = KeyManager("PMLOGS", cast=list)
 keym = KeyManager("PMPERMIT", cast=list)
 
+_not_approved = {}
+
 # ========================= PERSISTENCE =============================
 
 # KeyManager handles the main approved list, but we need another for
@@ -178,7 +180,7 @@ if udB.get_key("PMSETTING"):
             await delete_pm_warn_msgs(miss.id)
             try:
                 await ultroid_bot.edit_folder(miss.id, folder=0)
-            except BaseException:
+            except Exception:
                 pass
             try:
                 await asst.edit_message(
@@ -414,7 +416,7 @@ if udB.get_key("PMSETTING"):
             try:
                 await delete_pm_warn_msgs(user.id)
                 await apprvpm.client.edit_folder(user.id, folder=0)
-            except BaseException:
+            except Exception:
                 pass
             await eod(
                 apprvpm,
@@ -613,7 +615,7 @@ async def list_approved(event):
     for i in all:
         try:
             name = get_display_name(await ultroid_bot.get_entity(i))
-        except BaseException:
+        except Exception:
             name = ""
         users.append([name.strip(), str(i)])
     with open("approved_pms.txt", "w") as list_appr:
@@ -647,11 +649,11 @@ async def apr_in(event):
         keym.add(uid)
         try:
             await ultroid_bot.edit_folder(uid, folder=0)
-        except BaseException:
+        except Exception:
             pass
         try:
             user = await ultroid_bot.get_entity(uid)
-        except BaseException:
+        except Exception:
             return await event.delete()
         await event.edit(
             f"#APPROVED\n\n<b>{inline_mention(user, html=True)}</b> [<code>{user.id}</code>] <code>was approved to PM you!</code>",
@@ -689,7 +691,7 @@ async def disapr_in(event):
         keym.remove(uid)
         try:
             user = await ultroid_bot.get_entity(uid)
-        except BaseException:
+        except Exception:
             return await event.delete()
         await event.edit(
             f"#DISAPPROVED\n\n<b>{inline_mention(user, html=True)}</b> [<code>{user.id}</code>] <code>was disapproved to PM you!</code>",
@@ -724,11 +726,11 @@ async def blck_in(event):
     uid = int(event.data_match.group(1).decode("UTF-8"))
     try:
         await ultroid_bot(BlockRequest(uid))
-    except BaseException:
+    except Exception:
         pass
     try:
         user = await ultroid_bot.get_entity(uid)
-    except BaseException:
+    except Exception:
         return await event.delete()
     await event.edit(
         f"BLOCKED\n\n<b>{inline_mention(user, html=True)}</b> [<code>{user.id}</code>] <code>was blocked!</code>",
@@ -748,11 +750,11 @@ async def unblck_in(event):
     uid = int(event.data_match.group(1).decode("UTF-8"))
     try:
         await ultroid_bot(UnblockRequest(uid))
-    except BaseException:
+    except Exception:
         pass
     try:
         user = await ultroid_bot.get_entity(uid)
-    except BaseException:
+    except Exception:
         return await event.delete()
     await event.edit(
         f"#UNBLOCKED\n\n<b>{inline_mention(user, html=True)}</b> [<code>{user.id}</code>] <code>was unblocked!</code>",
@@ -767,7 +769,7 @@ async def ytfuxist(e):
     try:
         await e.answer("Deleted.")
         await e.delete()
-    except BaseException:
+    except Exception:
         await ultroid_bot.delete_messages(e.chat_id, e.id)
 
 

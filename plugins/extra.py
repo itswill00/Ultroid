@@ -49,7 +49,7 @@ async def editer(edit):
         try:
             await reply.edit(string)
             await edit.delete()
-        except BaseException:
+        except Exception:
             pass
     else:
         i = 1

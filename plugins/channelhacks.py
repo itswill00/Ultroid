@@ -126,7 +126,7 @@ async def list_all(event):
         name = ""
         try:
             name = get_display_name(await event.client.get_entity(int(channel)))
-        except BaseException:
+        except Exception:
             name = ""
         msg += f"\n=> **{name}** [`{channel}`]"
     msg += f"\nTotal {num} channels."
@@ -199,7 +199,7 @@ async def list_all(event):
         name = ""
         try:
             name = get_display_name(await ultroid_bot.get_entity(int(channel)))
-        except BaseException:
+        except Exception:
             name = ""
         msg += f"\n=> **{name}** [`{channel}`]"
     msg += f"\nTotal {num} channels."

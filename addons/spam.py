@@ -52,7 +52,7 @@ async def spammer(e):
         counter = int(counter)
         if counter >= 100:
             return await eod(e, "`Use bigspam cmd`")
-    except BaseException:
+    except Exception:
         return await eod(e, "`Use in Proper Format`")
     tasks = [asyncio.create_task(e.respond(spam_message)) for _ in range(counter)]
     await asyncio.wait(tasks)
@@ -73,7 +73,7 @@ async def bigspam(e):
     counter = message.split()[1]
     try:
         counter = int(counter)
-    except BaseException:
+    except Exception:
         return await eod(e, "`Use in Proper Format`")
     await asyncio.wait([e.respond(spam_message) for i in range(counter)])
     await e.delete()
@@ -86,7 +86,7 @@ async def delayspammer(e):
         delay = float(args[1])
         count = int(args[2])
         msg = str(args[3])
-    except BaseException:
+    except Exception:
         return await e.edit(f"**Usage :** {HNDLR}delayspam <delay time> <count> <msg>")
     await e.delete()
     try:

@@ -61,7 +61,7 @@ async def blacklist(e):
         if any((z in text) for z in x):
             try:
                 await e.delete()
-            except BaseException:
+            except Exception:
                 pass
 
 

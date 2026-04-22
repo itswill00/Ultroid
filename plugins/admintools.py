@@ -347,7 +347,7 @@ async def fastpurgerme(purg):
     if num := purg.pattern_match.group(1).strip():
         try:
             nnt = int(num)
-        except BaseException:
+        except Exception:
             await eor(purg, get_string("com_3"), time=5)
             return
         mp = 0

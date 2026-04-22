@@ -276,7 +276,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 y += 1
@@ -285,7 +285,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 m += 1
@@ -294,7 +294,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 w += 1
@@ -303,7 +303,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 o += 1
@@ -312,7 +312,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 q += 1
@@ -321,7 +321,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 r += 1
@@ -330,7 +330,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 b += 1
@@ -339,7 +339,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 d += 1
@@ -348,7 +348,7 @@ async def _(event):
                 try:
                     await event.client.kick_participant(event.chat_id, i)
                     c += 1
-                except BaseException:
+                except Exception:
                     pass
             else:
                 n += 1

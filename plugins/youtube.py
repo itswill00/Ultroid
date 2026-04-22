@@ -48,7 +48,7 @@ async def download_from_youtube_(event):
             return await xx.eor(get_string("youtube_1"))
         try:
             requests.get(url)
-        except BaseException:
+        except Exception:
             return await xx.eor(get_string("youtube_2"))
     elif opt == "v":
         ytd["format"] = "best"
@@ -59,7 +59,7 @@ async def download_from_youtube_(event):
             return await xx.eor(get_string("youtube_3"))
         try:
             requests.get(url)
-        except BaseException:
+        except Exception:
             return await xx.eor(get_string("youtube_4"))
     elif opt == "sa":
         ytd["format"] = "bestaudio"

@@ -69,7 +69,7 @@ async def hbd(event):
     month = r
     try:
         jn = dt.strptime(match, "%d/%m/%Y")
-    except BaseException:
+    except Exception:
         return await event.eor(get_string("spcltool_6"))
     jnm = zn.localize(jn)
     zinda = abhi - jnm

@@ -371,7 +371,7 @@ async def _internal_transfer_to_telegram(
                     # Sum all bytes sent across parallel senders
                     current_sent = sum(getattr(s.sender, '_uploader_sent_bytes', 0) for s in uploader.senders)
                     await _maybe_await(progress_callback(current_sent, file_size))
-                except:
+                except Exception:
                     pass
             await asyncio.sleep(5) # Throttled: update every 5 seconds to prioritize CPU for transfer
 
@@ -427,7 +427,7 @@ async def download_file(
         if progress_callback:
             try:
                 await _maybe_await(progress_callback(out.tell(), size))
-            except BaseException:
+            except Exception:
                 pass
     return out
 

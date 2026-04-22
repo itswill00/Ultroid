@@ -43,7 +43,7 @@ async def DummyHandler(ult):
     if ult.chat_id in key:
         try:
             await ult.delete()
-        except BaseException:
+        except Exception:
             pass
 
     # thank members
@@ -95,7 +95,7 @@ async def DummyHandler(ult):
                         f'**@UltroidBans:** Banned user detected and banned!\n`{str(is_banned)}`.\nBan reason: {is_banned["reason"]}',
                     )
 
-            except BaseException:
+            except Exception:
                 pass
         reason = is_gbanned(user.id)
         if reason and chat.admin_rights:

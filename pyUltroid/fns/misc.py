@@ -67,7 +67,7 @@ async def randomchannel(
         caption = caption or x.text
         try:
             await client.send_message(tochat, caption, file=x.media)
-        except BaseException:
+        except Exception:
             pass
 
 

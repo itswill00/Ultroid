@@ -63,7 +63,7 @@ async def addfor(e):
         return await e.eor(get_string("fsub_1"), time=5)
     try:
         match = await e.client.parse_id(match)
-    except BaseException:
+    except Exception:
         return await e.eor(get_string("fsub_2"), time=5)
     add_forcesub(e.chat_id, match)
     await e.eor("Added ForceSub in This Chat !")

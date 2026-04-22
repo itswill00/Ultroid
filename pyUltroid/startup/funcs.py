@@ -174,7 +174,7 @@ async def startup_stuff():
             time.tzset()
         except AttributeError as er:
             LOGS.debug(er)
-        except BaseException:
+        except Exception:
             LOGS.critical(
                 "Incorrect Timezone ,\nCheck Available Timezone From Here https://graph.org/Ultroid-06-18-2\nSo Time is Default UTC"
             )

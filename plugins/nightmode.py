@@ -63,7 +63,7 @@ async def set_time(e):
         tm = [int(x) for x in ok]
         udB.set_key("NIGHT_TIME", str(tm))
         await e.eor(get_string("nightm_2"))
-    except BaseException:
+    except Exception:
         await e.eor(get_string("nightm_1"))
 
 
@@ -73,7 +73,7 @@ async def add_grp(e):
         try:
             keym.add((await ultroid_bot.get_entity(pat)).id)
             return await e.eor(f"Done, Added {pat} To Night Mode.")
-        except BaseException:
+        except Exception:
             return await e.eor(get_string("nightm_5"), time=5)
     keym.add(e.chat_id)
     await e.eor(get_string("nightm_3"))
@@ -85,7 +85,7 @@ async def r_em_grp(e):
         try:
             keym.remove((await ultroid_bot.get_entity(pat)).id)
             return await e.eor(f"Done, Removed {pat} To Night Mode.")
-        except BaseException:
+        except Exception:
             return await e.eor(get_string("nightm_5"), time=5)
     keym.remove(e.chat_id)
     await e.eor(get_string("nightm_4"))
@@ -99,7 +99,7 @@ async def rem_grp(e):
         try:
             ok = await ultroid_bot.get_entity(x)
             name += f"@{ok.username}" if ok.username else ok.title
-        except BaseException:
+        except Exception:
             name += str(x)
     await e.eor(name)
 

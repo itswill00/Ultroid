@@ -135,7 +135,7 @@ async def _call_gemini(messages, model=None):
                     data = await resp.json()
                     ans = data['candidates'][0]['content']['parts'][0]['text']
                     return ans, 0
-        except: continue
+        except Exception: continue
     return None, "Gemini fallback failed."
 
 # --------------------------------------------------------------------------

@@ -85,7 +85,7 @@ async def kang_cmd(ult):
         try:
             await asst(GetSticker(InputStickerSetShortName(sn), hash=0))
             sn = sn.replace(str(ult.sender_id), f"{ult.sender_id}_{ult.id}")
-        except StickersetInvalidError:
+        except StickerSetInvalidError:
             pass
         try:
             pack = await ult.client(
@@ -113,7 +113,7 @@ async def kang_cmd(ult):
     name = get_[ult.sender_id][type_][-1]
     try:
         await asst(GetSticker(InputStickerSetShortName(name), hash=0))
-    except StickersetInvalidError:
+    except StickerSetInvalidError:
         get_[ult.sender_id][type_].remove(name)
     try:
         await asst(

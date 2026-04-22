@@ -49,7 +49,7 @@ async def pokedex(event):
     esatge = a["family"]["evolutionStage"]
     try:
         weaknesses = lol["cards"][0]["weaknesses"][0]["type"]
-    except BaseException:
+    except Exception:
         weaknesses = None
     l = a["family"]["evolutionLine"]
     # ambiguous variable name 'l' flake8(E741)
@@ -136,6 +136,6 @@ async def pokecard(event):
             await event.client.get_input_entity(event.chat_id), o
         )
         await event.delete()
-    except BaseException:
+    except Exception:
         await event.eor("`Be sure To give correct Name`")
         return

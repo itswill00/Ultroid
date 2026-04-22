@@ -32,7 +32,7 @@ async def _(ult):
             f"**DB Key Value Pair Updated\nKey :** `{data[0]}`\n**Value :** `{data[1]}`"
         )
 
-    except BaseException:
+    except Exception:
         await ult.eor(get_string("com_7"))
 
 
@@ -52,7 +52,7 @@ async def _(ult):
         if k == 0:
             return await ult.eor("`No Such Key.`")
         await ult.eor(f"`Successfully deleted key {key}`")
-    except BaseException:
+    except Exception:
         await ult.eor(get_string("com_7"))
 
 
@@ -71,7 +71,7 @@ async def _(ult):
                 f"**DB Key Rename Successful\nOld Key :** `{data[0]}`\n**New Key :** `{data[1]}`",
             )
 
-        except BaseException:
+        except Exception:
             await ult.eor(get_string("com_7"))
     else:
         await ult.eor("Key not found")

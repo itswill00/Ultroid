@@ -75,7 +75,7 @@ async def _(e):
         try:
             await e.client(invitetovc(call=await get_call(e), users=p))
             z += 6
-        except BaseException:
+        except Exception:
             pass
     await ok.edit(get_string("vct_5").format(z))
 
