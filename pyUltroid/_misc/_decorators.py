@@ -88,6 +88,20 @@ async def command_logger(ult, pattern):
     except Exception:
         pass
 
+def parse_flags(text):
+    """Simple flag parser for Ultroid commands."""
+    flags = {}
+    if not text:
+        return flags
+    # Matches -f (short), --force (long), or --key=value
+    matches = re.findall(r"(?:-([a-zA-Z]))|(?:--([a-zA-Z0-9_-]+)(?:=([^\s]+))?)", text)
+    for short, long, val in matches:
+        if short:
+            flags[short] = True
+        elif long:
+            flags[long] = val if val else True
+    return flags
+
 def ultroid_cmd(
     pattern=None, manager=False, ultroid_bot=ultroid_bot, asst=asst, **kwargs
 ):
@@ -96,10 +110,14 @@ def ultroid_cmd(
     admins_only = kwargs.get("admins_only", False)
     fullsudo = kwargs.get("fullsudo", False)
     only_devs = kwargs.get("only_devs", False)
+    about = kwargs.get("about")
     func = kwargs.get("func", lambda e: not (e and e.via_bot_id))
 
     def decor(dec):
         async def wrapp(ult):
+            # Injecting flags automatically
+            ult.flags = parse_flags(ult.text)
+
             # Background logging to avoid blocking
             asyncio.create_task(command_logger(ult, pattern))
 
@@ -234,5 +252,12 @@ def ultroid_cmd(
             LOADED.setdefault(file.stem, []).append(wrapp)
         if pattern:
             LIST.setdefault(file.stem, []).append(pattern)
+            # Store rich documentation for help system
+            if about:
+                if "RICH_HELP" not in HELP:
+                    HELP["RICH_HELP"] = {}
+                # Match pattern with its about metadata
+                cmd_key = pattern.lstrip("^.\\").split("(?: |$|:)", 1)[0]
+                HELP["RICH_HELP"][cmd_key] = about
         return wrapp
     return decor

@@ -36,12 +36,43 @@ _main_help_menu = [
 ]
 
 
+def format_rich_help(about):
+    """Format the Userge-style rich help menu."""
+    header = about.get("header", "Command Info")
+    usage = about.get("usage", "").replace("{i}", HNDLR)
+    examples = about.get("examples", [])
+    flags = about.get("flags", {})
+
+    output = f"🔰 **{header}**\n\n"
+    if usage:
+        output += f"📖 **Usage:** `{usage}`\n"
+    
+    if flags:
+        output += "\n🏳️ **Flags:**\n"
+        for flag, desc in flags.items():
+            output += f"  • `{flag}` : {desc}\n"
+    
+    if examples:
+        output += "\n💡 **Examples:**\n"
+        if isinstance(examples, list):
+            for ex in examples:
+                output += f"  • `{ex.replace('{i}', HNDLR)}`\n"
+        else:
+            output += f"  • `{examples.replace('{i}', HNDLR)}`\n"
+            
+    return output
+
 @ultroid_cmd(pattern="help( (.*)|$)")
 async def _help(ult):
     plug = ult.pattern_match.group(1).strip()
     chat = await ult.get_chat()
     if plug:
         try:
+            # Check for Rich Help first
+            rich_help = HELP.get("RICH_HELP", {}).get(plug)
+            if rich_help:
+                return await ult.eor(format_rich_help(rich_help))
+
             if plug in HELP["Official"]:
                 output = f"**Plugin** - `{plug}`\n"
                 doc = HELP["Official"][plug]
