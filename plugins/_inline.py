@@ -36,6 +36,18 @@ from ._help import _main_help_menu
 
 # ================================================#
 
+
+def _media_kind(pic):
+    name = str(pic).split("?")[0].rsplit("/", 1)[-1]
+    return name.rsplit(".", 1)[-1].lower() if "." in name else ""
+
+
+async def _inline_pic_result(builder, pic, **kwargs):
+    if _media_kind(pic) in ("jpg", "jpeg", "png", "webp"):
+        return await builder.photo(pic, link_preview=False, **kwargs)
+    return await builder.document(pic, type="gif", **kwargs)
+
+
 helps = get_string("inline_1")
 
 add_ons = udB.get_key("ADDONS")
@@ -99,9 +111,9 @@ async def inline_handler(event):
         len(z),
     )
     if inline_pic():
-        result = await event.builder.photo(
-            file=inline_pic(),
-            link_preview=False,
+        result = await _inline_pic_result(
+            event.builder,
+            inline_pic(),
             text=text,
             buttons=_main_help_menu,
         )

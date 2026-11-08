@@ -41,26 +41,26 @@ uploader = CatboxUploader()
 # --------------------------------------------------------------------#
 
 
-def _pomf_upload(path):
+def _kappa_upload(path):
     with open(path, "rb") as file:
         response = requests.post(
-            "https://pomf.lain.la/upload.php",
-            files={"files[]": (basename(path), file, "application/octet-stream")},
+            "https://kappa.lol/api/upload",
+            files={"file": (basename(path), file, "application/octet-stream")},
             headers={"User-Agent": "Mozilla/5.0"},
             timeout=120,
         )
     response.raise_for_status()
     data = response.json()
-    if data.get("success") and data.get("files"):
-        return data["files"][0]["url"]
-    raise RuntimeError(f"Pomf upload failed: {data}")
+    if data.get("id"):
+        return f"https://kappa.lol/{data['id']}{data.get('ext', '')}"
+    raise RuntimeError(f"Kappa upload failed: {data}")
 
 
 def _upload_media_sync(path):
     try:
         return uploader.upload_file(path)
     except Exception:
-        return _pomf_upload(path)
+        return _kappa_upload(path)
 
 
 async def upload_media(path):

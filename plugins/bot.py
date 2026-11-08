@@ -309,6 +309,9 @@ async def inline_alive(ult):
                         pic,
                         title="Inline Alive",
                         description="@TeamUltroid",
+                        type="gif"
+                        if str(pic).split("?")[0].lower().endswith((".gif", ".mp4"))
+                        else "file",
                         parse_mode="html",
                         buttons=buttons,
                     )
