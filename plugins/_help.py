@@ -5,6 +5,8 @@
 # PLease read the GNU Affero General Public License in
 # <https://www.github.com/TeamUltroid/Ultroid/blob/main/LICENSE/>.
 
+import time
+
 from telethon.errors.rpcerrorlist import (
     BotInlineDisabledError,
     BotMethodInvalidError,
@@ -108,7 +110,9 @@ async def _help(ult):
             await ult.eor("Error 🤔 occured.")
     else:
         try:
-            results = await ult.client.inline_query(asst.me.username, "ultd")
+            results = await ult.client.inline_query(
+                asst.me.username, f"ultd {int(time.time())}"
+            )
         except BotMethodInvalidError:
             z = []
             for x in LIST.values():

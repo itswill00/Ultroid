@@ -93,7 +93,7 @@ async def inline_alive(o):
     await o.answer(
         RES,
         private=True,
-        cache_time=300,
+        cache_time=0,
         switch_pm="👥 ULTROID PORTAL",
         switch_pm_param="start",
     )
@@ -121,7 +121,7 @@ async def inline_handler(event):
         result = await event.builder.article(
             title="Ultroid Help Menu", text=text, buttons=_main_help_menu
         )
-    await event.answer([result], private=True, cache_time=300, gallery=True)
+    await event.answer([result], private=True, cache_time=0, gallery=True)
 
 
 @in_pattern("pasta", owner=True)

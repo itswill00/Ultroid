@@ -112,7 +112,9 @@ async def lol(ult):
     inline = None
     if match in ["inline", "i"]:
         try:
-            res = await ult.client.inline_query(asst.me.username, "alive")
+            res = await ult.client.inline_query(
+                asst.me.username, f"alive {int(time.time())}"
+            )
             return await res[0].click(ult.chat_id)
         except BotMethodInvalidError:
             pass
@@ -316,7 +318,7 @@ async def inline_alive(ult):
                         buttons=buttons,
                     )
                 ]
-            return await ult.answer(results)
+            return await ult.answer(results, cache_time=0)
         except BaseException as er:
             LOGS.exception(er)
     result = [
@@ -324,7 +326,7 @@ async def inline_alive(ult):
             "Alive", text=als, parse_mode="html", link_preview=False, buttons=buttons
         )
     ]
-    await ult.answer(result)
+    await ult.answer(result, cache_time=0)
 
 
 @ultroid_cmd(pattern="update( (.*)|$)")
