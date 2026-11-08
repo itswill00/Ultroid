@@ -18,6 +18,7 @@
 """
 
 import math
+import os
 import shutil
 from random import choice
 
@@ -174,6 +175,13 @@ def db_usage():
         total = 30
     elif udB.name == "SQL":
         total = 20
+    else:
+        used = (
+            os.path.getsize("ultroid.json")
+            if os.path.exists("ultroid.json")
+            else udB.usage
+        )
+        return f"**{udB.name}**\n\n**Storage Used**: `{humanbytes(used)}`"
     total = total * (2**20)
     used = udB.usage
     a = f"{humanbytes(used)}/{humanbytes(total)}"
