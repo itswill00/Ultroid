@@ -11,6 +11,10 @@ from traceback import format_exc
 
 from telethon import Button
 from telethon.errors import QueryIdInvalidError
+from telethon.errors.rpcerrorlist import (
+    MessageIdInvalidError,
+    MessageNotModifiedError,
+)
 from telethon.events import CallbackQuery, InlineQuery, NewMessage
 from telethon.tl.types import InputWebDocument
 
@@ -84,6 +88,8 @@ def callback(data=None, from_users=None, admins=False, owner=False, **kwargs):
                 return await event.answer(f"This is {OWNER}'s bot!!")
             try:
                 await func(event)
+            except (MessageIdInvalidError, MessageNotModifiedError):
+                pass
             except Exception as er:
                 LOGS.exception(er)
 
