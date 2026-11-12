@@ -21,6 +21,8 @@ except ImportError:
     timezone = None
 
 from telethon.errors import (
+    ChannelInvalidError,
+    ChannelPrivateError,
     ChannelsTooMuchError,
     ChatAdminRequiredError,
     MessageIdInvalidError,
@@ -254,18 +256,69 @@ async def autobot():
         sys.exit(1)
 
 
+async def _find_existing_log_channel(channel=None):
+    """Resolve the log channel without relying on Telethon's entity cache.
+
+    The userbot session is rebuilt from the SESSION string on every start, so
+    no entity is cached yet. A plain ``get_entity(-100...)`` then fails even
+    for a valid channel, and the old code assumed the channel was deleted and
+    created a brand new log group on every restart.
+    """
+    from .. import ultroid_bot
+
+    if channel:
+        try:
+            return await ultroid_bot.get_entity(channel)
+        except (ChannelInvalidError, ChannelPrivateError):
+            pass
+        except BaseException:
+            # Most likely the entity cache is empty; looking through the
+            # dialogs below will fill it in.
+            pass
+
+    wanted = None
+    if channel:
+        try:
+            wanted = int(channel)
+        except (TypeError, ValueError):
+            wanted = None
+
+    fallback = None
+    try:
+        async for dialog in ultroid_bot.iter_dialogs():
+            entity = dialog.entity
+            if wanted is not None and get_peer_id(entity) == wanted:
+                return entity
+            title = (getattr(entity, "title", "") or "").strip().lower()
+            created = getattr(entity, "date", None)
+            oldest = getattr(fallback, "date", None) if fallback is not None else None
+            if (
+                title == "my ultroid logs"
+                and getattr(entity, "megagroup", False)
+                and (fallback is None or (created and oldest and created < oldest))
+            ):
+                fallback = entity
+    except BaseException as er:
+        LOGS.exception(er)
+    return fallback
+
+
 async def autopilot():
     from .. import asst, udB, ultroid_bot
 
-    channel = udB.get_key("LOG_CHANNEL")
+    channel = udB.get_key("LOG_CHANNEL") or Var.LOG_CHANNEL or None
     new_channel = None
-    if channel:
-        try:
-            chat = await ultroid_bot.get_entity(channel)
-        except BaseException as err:
-            LOGS.exception(err)
-            udB.del_key("LOG_CHANNEL")
-            channel = None
+    chat = await _find_existing_log_channel(channel)
+    if chat is not None:
+        resolved = get_peer_id(chat)
+        if channel and str(channel) != str(resolved):
+            LOGS.info(f"Reusing existing Log Channel {resolved}")
+        channel = resolved
+        udB.set_key("LOG_CHANNEL", channel)
+    elif channel:
+        LOGS.info(f"Log Channel {channel} is no longer available.")
+        udB.del_key("LOG_CHANNEL")
+        channel = None
     if not channel:
 
         async def _save(exc):
