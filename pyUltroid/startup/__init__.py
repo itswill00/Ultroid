@@ -12,6 +12,10 @@ from logging import INFO, WARNING, FileHandler, StreamHandler, basicConfig, getL
 
 from .. import run_as_module
 from ._extra import _ask_input
+from .buttonstyle import patch_button_styles
+
+# Color every inline button (primary/success/danger) by default.
+patch_button_styles()
 
 if run_as_module:
     from ..configs import Var
