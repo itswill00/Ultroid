@@ -22,6 +22,9 @@
 • `{i}countdown <when> [| text]`
     Send a live countdown that updates automatically.
 
+• `{i}rank <tag>`
+    Set a participant's group tag/rank (reply to them, admin only).
+
 • `{i}stars`
     Show your current Telegram Stars balance.
 """
@@ -29,7 +32,10 @@
 import re
 from datetime import datetime, timedelta
 
-from telethon.tl.functions.messages import GetAvailableEffectsRequest
+from telethon.tl.functions.messages import (
+    EditChatParticipantRankRequest,
+    GetAvailableEffectsRequest,
+)
 from telethon.tl.functions.payments import GetStarsStatusRequest
 from telethon.tl.types import MessageEntityFormattedDate
 
@@ -285,6 +291,37 @@ async def date_cmd(event):
 @ultroid_cmd(pattern="countdown( (.*)|$)")
 async def countdown_cmd(event):
     await _send_formatted(event, relative=True)
+
+
+@ultroid_cmd(pattern="rank( (.*)|$)")
+async def rank_cmd(event):
+    if not event.is_group:
+        return await event.eor("`Use this in a group.`", time=8)
+    reply = await event.get_reply_message()
+    if not reply:
+        return await event.eor(
+            "**Usage:** `.rank <tag>` (reply to a member)\n"
+            "Max 16 characters, no emojis.",
+            time=10,
+        )
+    rank = event.pattern_match.group(1).strip()
+    if not rank:
+        return await event.eor(
+            "**Usage:** `.rank <tag>` (reply to a member)", time=10
+        )
+    if len(rank) > 16:
+        return await event.eor("`A rank can be at most 16 characters.`", time=8)
+    try:
+        await event.client(
+            EditChatParticipantRankRequest(
+                peer=event.chat_id,
+                participant=reply.sender_id,
+                rank=rank,
+            )
+        )
+        await event.eor(f"✅ Rank set to `{rank}`.", time=10)
+    except Exception as er:
+        await event.eor(f"`Failed to set rank: {er}`", time=10)
 
 
 @ultroid_cmd(pattern="stars$")
