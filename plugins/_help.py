@@ -107,7 +107,7 @@ async def _help(ult):
                     await ult.eor(output)
         except BaseException as er:
             LOGS.exception(er)
-            await ult.eor("Error 🤔 occured.")
+            await ult.eor("`Something went wrong while loading help.`")
     else:
         try:
             results = await ult.client.inline_query(
@@ -118,8 +118,9 @@ async def _help(ult):
             for x in LIST.values():
                 z.extend(x)
             cmd = len(z) + 10
+            menu = list(_main_help_menu)
             if udB.get_key("MANAGER") and udB.get_key("DUAL_HNDLR") == "/":
-                _main_help_menu[2:3] = [[Button.inline("• Manager Help •", "mngbtn")]]
+                menu[2:3] = [[Button.inline("• Manager Help •", "mngbtn")]]
             return await ult.reply(
                 get_string("inline_4").format(
                     OWNER_NAME,
@@ -128,7 +129,7 @@ async def _help(ult):
                     cmd,
                 ),
                 file=inline_pic(),
-                buttons=_main_help_menu,
+                buttons=menu,
             )
         except BotResponseTimeoutError:
             return await ult.eor(
